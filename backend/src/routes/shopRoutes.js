@@ -4,6 +4,7 @@ import {
   createShopValidators,
   listShops,
   getShop,
+  getShopCredentials,
   updateShop,
   setShopStatus,
   renewShop,
@@ -20,6 +21,7 @@ router.use(requireAuth, requireSuper);
 router.get('/stats', superStats);
 router.get('/', listShops);
 router.post('/', createShopValidators, createShop);
+router.get('/:id/credentials', getShopCredentials);
 router.get('/:id', getShop);
 router.put('/:id', updateShop);
 router.patch('/:id/status', setShopStatus);

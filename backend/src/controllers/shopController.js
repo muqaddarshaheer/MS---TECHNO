@@ -12,6 +12,7 @@ import {
   shopLoginLink,
   generateShopPassword,
 } from '../config/plans.js';
+import { decryptPassword } from '../utils/passwordVault.js';
 
 function validate(req, res) {
   const errors = validationResult(req);
@@ -192,6 +193,33 @@ export async function listShops(req, res, next) {
       })
     );
     res.json({ shops: withUsers, total, page, limit });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getShopCredentials(req, res, next) {
+  try {
+    const shop = await Shop.findById(req.params.id);
+    if (!shop) return res.status(404).json({ message: 'Shop not found' });
+
+    const user = await User.findOne({ shop: shop._id, role: 'shop' }).select(
+      '+passwordVault username isActive'
+    );
+    if (!user) return res.status(404).json({ message: 'Shop user not found' });
+
+    const password = decryptPassword(user.passwordVault);
+    res.json({
+      shopId: shop._id,
+      shopName: shop.name,
+      username: user.username,
+      password: password || null,
+      recoverable: Boolean(password),
+      loginLink: shopLoginLink(user.username),
+      message: password
+        ? null
+        : 'Password was set before vault storage. Reset the password once to enable viewing.',
+    });
   } catch (err) {
     next(err);
   }

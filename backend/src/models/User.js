@@ -1,10 +1,13 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { encryptPassword } from '../utils/passwordVault.js';
 
 const userSchema = new mongoose.Schema(
   {
     username: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String, required: true, minlength: 6 },
+    /** AES vault of shop plaintext password for Super Admin reveal only */
+    passwordVault: { type: String, default: null, select: false },
     role: { type: String, enum: ['super', 'shop'], required: true },
     shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null },
     isActive: { type: Boolean, default: true },
@@ -14,6 +17,9 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) return next();
+  if (this.role === 'shop') {
+    this.passwordVault = encryptPassword(this.password);
+  }
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });

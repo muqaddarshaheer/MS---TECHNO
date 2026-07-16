@@ -65,9 +65,11 @@ export default function AllShops() {
   const [editId, setEditId] = useState(null);
   const [resetPw, setResetPw] = useState({ shopId: '', newPassword: '' });
   const [credentials, setCredentials] = useState(null);
+  const [viewCreds, setViewCreds] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [revealingId, setRevealingId] = useState('');
   const limit = 12;
 
   const load = useCallback(async () => {
@@ -241,6 +243,19 @@ export default function AllShops() {
     if (!confirm('Delete shop and all related data?')) return;
     await api.delete(`/shops/${id}`);
     await load();
+  }
+
+  async function viewPassword(shop) {
+    setRevealingId(shop._id);
+    setError('');
+    try {
+      const { data } = await api.get(`/shops/${shop._id}/credentials`);
+      setViewCreds(data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not load password');
+    } finally {
+      setRevealingId('');
+    }
   }
 
   async function resetPassword(e) {
@@ -508,12 +523,21 @@ export default function AllShops() {
               <button
                 className="btn btn-primary btn-sm"
                 onClick={async () => {
-                  const link = s.loginLink || `${window.location.origin}/login?u=${encodeURIComponent(s.username || '')}`;
+                  const link =
+                    s.loginLink ||
+                    `${window.location.origin}/login?u=${encodeURIComponent(s.username || '')}`;
                   const ok = await copyText(link);
                   setMessage(ok ? `Link copied for ${s.name}` : 'Copy failed');
                 }}
               >
                 Copy shop link
+              </button>
+              <button
+                className="btn btn-outline btn-sm"
+                disabled={revealingId === s._id}
+                onClick={() => viewPassword(s)}
+              >
+                {revealingId === s._id ? 'Loading...' : 'View password'}
               </button>
               <button className="btn btn-outline btn-sm" onClick={() => openEdit(s)}>
                 Edit plan
@@ -578,6 +602,51 @@ export default function AllShops() {
           Next
         </button>
       </div>
+
+      {viewCreds && (
+        <div className="modal-backdrop" onClick={() => setViewCreds(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Shop credentials — {viewCreds.shopName}</h3>
+            <p>
+              Username: <code>{viewCreds.username}</code>
+            </p>
+            {viewCreds.recoverable ? (
+              <p>
+                Password: <code>{viewCreds.password}</code>
+              </p>
+            ) : (
+              <div className="error">
+                {viewCreds.message ||
+                  'Password not recoverable. Reset password once, then you can view it here.'}
+              </div>
+            )}
+            {viewCreds.loginLink && (
+              <p>
+                Link: <code>{viewCreds.loginLink}</code>
+              </p>
+            )}
+            <div className="row">
+              {viewCreds.recoverable && (
+                <button
+                  className="btn btn-primary btn-sm"
+                  type="button"
+                  onClick={async () => {
+                    const ok = await copyText(
+                      `Username: ${viewCreds.username}\nPassword: ${viewCreds.password}\nLink: ${viewCreds.loginLink}`
+                    );
+                    setMessage(ok ? 'Credentials copied' : 'Copy failed');
+                  }}
+                >
+                  Copy all
+                </button>
+              )}
+              <button className="btn btn-outline btn-sm" type="button" onClick={() => setViewCreds(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {(modal === 'create' || modal === 'edit') && (
         <div className="modal-backdrop" onClick={() => setModal(null)}>
