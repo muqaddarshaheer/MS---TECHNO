@@ -13,11 +13,18 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status;
+    const url = String(err.config?.url || '');
+    const isLogin = url.includes('/auth/login');
+    const isMe = url.includes('/auth/me');
+
+    // Only clear session on real auth failures for protected calls.
+    // /auth/me is handled by AuthContext (avoid racing password-change requests).
+    if (status === 401 && !isLogin && !isMe) {
       localStorage.removeItem('scentra_token');
       localStorage.removeItem('scentra_user');
       if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+        window.location.assign('/login');
       }
     }
     return Promise.reject(err);

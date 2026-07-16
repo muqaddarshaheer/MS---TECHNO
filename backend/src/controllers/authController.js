@@ -156,13 +156,27 @@ export async function changePassword(req, res, next) {
 
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
     if (!(await user.comparePassword(currentPassword))) {
       return res.status(400).json({ message: 'Current password is incorrect' });
     }
 
     user.password = newPassword;
     await user.save();
-    res.json({ message: 'Password updated successfully' });
+
+    // Re-issue token so the session stays valid after password change
+    const token = signToken(user);
+    await user.populate('shop');
+    res.json({
+      message: 'Password updated successfully',
+      token,
+      user: {
+        ...user.toSafeJSON(),
+        shop: user.role === 'shop' ? shopPayload(user.shop) : null,
+      },
+    });
   } catch (err) {
     next(err);
   }

@@ -17,11 +17,20 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) return next();
-  if (this.role === 'shop') {
-    this.passwordVault = encryptPassword(this.password);
+  try {
+    const plain = this.password;
+    if (this.role === 'shop' && plain && !String(plain).startsWith('$2')) {
+      this.set('passwordVault', encryptPassword(plain));
+    }
+    // Avoid double-hashing if password was already hashed
+    if (String(plain).startsWith('$2a$') || String(plain).startsWith('$2b$')) {
+      return next();
+    }
+    this.password = await bcrypt.hash(plain, 12);
+    next();
+  } catch (err) {
+    next(err);
   }
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 userSchema.methods.comparePassword = function comparePassword(candidate) {

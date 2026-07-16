@@ -19,19 +19,27 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return;
     }
+    let cancelled = false;
     api
       .get('/auth/me')
       .then((res) => {
+        if (cancelled) return;
         setUser(res.data.user);
         localStorage.setItem('scentra_user', JSON.stringify(res.data.user));
       })
       .catch(() => {
+        if (cancelled) return;
         localStorage.removeItem('scentra_token');
         localStorage.removeItem('scentra_user');
         setToken(null);
         setUser(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   async function login(username, password) {
@@ -51,7 +59,19 @@ export function AuthProvider({ children }) {
   }
 
   async function changePassword(currentPassword, newPassword) {
-    await api.post('/auth/change-password', { currentPassword, newPassword });
+    const { data } = await api.post('/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
+    if (data.token) {
+      localStorage.setItem('scentra_token', data.token);
+      setToken(data.token);
+    }
+    if (data.user) {
+      localStorage.setItem('scentra_user', JSON.stringify(data.user));
+      setUser(data.user);
+    }
+    return data;
   }
 
   const value = {
