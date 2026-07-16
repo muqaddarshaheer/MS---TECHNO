@@ -95,19 +95,19 @@ export async function login(req, res, next) {
       if (!shop) {
         return res.status(403).json({ message: 'Shop account is not linked' });
       }
-      if (shop.status === 'blocked' || shop.status === 'suspended') {
-        return res.status(403).json({
-          message: 'This shop is blocked or suspended. Contact admin.',
-          code: 'SHOP_DISABLED',
-        });
-      }
+      // blocked/suspended: allow login so UI can show lock screen; APIs stay denied
       if (new Date(shop.expiry) < new Date() || shop.status === 'expired') {
         return res.status(403).json({
           message: 'Subscription expired. Contact admin to renew.',
           code: 'SHOP_EXPIRED',
         });
       }
-      if (shop.restrictOnPaymentOverdue && shop.isPaymentOverdue()) {
+      if (
+        shop.status !== 'blocked' &&
+        shop.status !== 'suspended' &&
+        shop.restrictOnPaymentOverdue &&
+        shop.isPaymentOverdue()
+      ) {
         return res.status(403).json({
           message: 'Access restricted: payment is past due. Contact admin.',
           code: 'PAYMENT_OVERDUE',

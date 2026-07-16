@@ -81,7 +81,7 @@ export default function AllShops() {
           page,
           limit,
           q: q || undefined,
-          status: statusFilter || undefined,
+          shopStatus: statusFilter || undefined,
           package: packageFilter || undefined,
         },
       });
@@ -202,9 +202,27 @@ export default function AllShops() {
     }
   }
 
-  async function setStatus(id, status) {
-    await api.patch(`/shops/${id}/status`, { status });
-    await load();
+  async function updateShopStatus(id, nextStatus) {
+    setError('');
+    try {
+      await api.patch(`/shops/${id}/status`, { status: nextStatus });
+      setMessage(`Shop marked as ${nextStatus}`);
+      // Always show full list after a status change (don't keep a narrow status filter)
+      setStatusFilter('');
+      setPage(1);
+      const { data } = await api.get('/shops', {
+        params: {
+          page: 1,
+          limit,
+          q: q || undefined,
+          package: packageFilter || undefined,
+        },
+      });
+      setShops(data.shops || []);
+      setTotal(data.total || 0);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Status update failed');
+    }
   }
 
   async function renew(id, payload) {
@@ -465,7 +483,6 @@ export default function AllShops() {
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="blocked">Blocked</option>
-          <option value="suspended">Suspended</option>
           <option value="expired">Expired</option>
         </select>
         <select
@@ -543,14 +560,19 @@ export default function AllShops() {
               <button className="btn btn-outline btn-sm" onClick={() => openEdit(s)}>
                 Edit plan
               </button>
-              <button className="btn btn-outline btn-sm" onClick={() => setStatus(s._id, 'active')}>
-                Activate
-              </button>
-              <button className="btn btn-outline btn-sm" onClick={() => setStatus(s._id, 'suspended')}>
-                Suspend
-              </button>
-              <button className="btn btn-outline btn-sm" onClick={() => setStatus(s._id, 'blocked')}>
-                Block
+              <button
+                type="button"
+                className={`btn btn-sm ${
+                  s.status === 'blocked' || s.status === 'suspended' ? 'btn-primary' : 'btn-danger'
+                }`}
+                onClick={() =>
+                  updateShopStatus(
+                    s._id,
+                    s.status === 'blocked' || s.status === 'suspended' ? 'active' : 'blocked'
+                  )
+                }
+              >
+                {s.status === 'blocked' || s.status === 'suspended' ? 'Unblock shop' : 'Block shop'}
               </button>
               <button className="btn btn-outline btn-sm" onClick={() => renew(s._id, { years: 1 })}>
                 +1 year

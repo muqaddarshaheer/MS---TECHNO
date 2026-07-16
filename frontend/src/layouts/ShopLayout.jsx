@@ -1,10 +1,37 @@
+import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import DashboardShell from './DashboardShell';
+import api from '../api';
 
 export default function ShopLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const shop = user?.shop;
   const hasPos = Boolean(shop?.plan?.hasPos);
+  const isBlocked = shop?.status === 'blocked' || shop?.status === 'suspended';
+
+  // Refresh shop status so a mid-session block shows the lock screen
+  useEffect(() => {
+    if (!token) return undefined;
+    let cancelled = false;
+    async function refresh() {
+      try {
+        const { data } = await api.get('/auth/me');
+        if (!cancelled && data.user) {
+          localStorage.setItem('scentra_user', JSON.stringify(data.user));
+          window.dispatchEvent(new CustomEvent('ms-auth-refresh', { detail: data.user }));
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    refresh();
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [token]);
 
   const links = [
     { to: '/shop', end: true, label: 'Dashboard' },
@@ -30,6 +57,9 @@ export default function ShopLayout() {
       subtitle={`${shop?.package || 'Basic'} plan${shop?.owner ? ` · ${shop.owner}` : ''}`}
       links={links}
       onLogout={logout}
+      accountLocked={isBlocked}
+      lockTitle="Your account is blocked"
+      lockMessage="Kindly contact your software provider."
     />
   );
 }

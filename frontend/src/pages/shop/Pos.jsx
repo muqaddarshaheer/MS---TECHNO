@@ -1,41 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api, { money } from '../../api';
 import { useAuth } from '../../context/AuthContext';
-
-function printReceipt({ shopName, sale, total, invoice }) {
-  const rows = (sale?.items || [])
-    .map(
-      (i) =>
-        `<tr><td>${i.name}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(
-          i.price * i.qty
-        )}</td></tr>`
-    )
-    .join('');
-  const w = window.open('', '_blank', 'width=420,height=640');
-  if (!w) return;
-  w.document.write(`<!DOCTYPE html><html><head><title>${invoice}</title>
-    <style>
-      body{font-family:ui-monospace,Menlo,Consolas,monospace;padding:16px;max-width:320px;margin:0 auto;color:#111}
-      h1{font-size:18px;margin:0 0 4px;text-align:center}
-      p{margin:4px 0;font-size:12px;text-align:center}
-      table{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}
-      th,td{border-bottom:1px dashed #ccc;padding:6px 0;text-align:left}
-      .total{font-size:14px;font-weight:700;margin-top:12px;text-align:right}
-      .foot{margin-top:18px;font-size:10px;color:#888;text-align:center}
-      @media print{button{display:none}}
-    </style></head><body>
-    <h1>${shopName}</h1>
-    <p>${invoice} · ${sale?.date || ''}</p>
-    <p>${sale?.payment || 'Cash'} · ${sale?.source || 'Walk-in'}</p>
-    <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amt</th></tr></thead>
-    <tbody>${rows}</tbody></table>
-    <div class="total">Total: ${money(total)}</div>
-    <p class="foot">Powered by MS Techno</p>
-    <button onclick="print()">Print</button>
-    <script>window.onload=function(){setTimeout(function(){window.print()},250)}</script>
-    </body></html>`);
-  w.document.close();
-}
+import {
+  THERMAL_SIZES,
+  getStoredPaperSize,
+  openThermalReceipt,
+  setStoredPaperSize,
+} from '../../utils/thermalReceipt';
 
 export default function Pos() {
   const { user } = useAuth();
@@ -51,11 +22,36 @@ export default function Pos() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [lastSale, setLastSale] = useState(null);
+  const [paperSize, setPaperSize] = useState(getStoredPaperSize);
+  const [autoPrint, setAutoPrint] = useState(
+    () => localStorage.getItem('ms_thermal_autoprint') !== '0'
+  );
   const searchRef = useRef(null);
   const busyLock = useRef(false);
 
   const shopName = user?.shop?.name || 'Shop';
 
+  function onPaperChange(value) {
+    setPaperSize(value);
+    setStoredPaperSize(value);
+  }
+
+  function onAutoPrintChange(checked) {
+    setAutoPrint(checked);
+    localStorage.setItem('ms_thermal_autoprint', checked ? '1' : '0');
+  }
+
+  function previewReceipt(salePayload, opts = {}) {
+    if (!salePayload) return;
+    openThermalReceipt({
+      shopName: salePayload.shopName || shopName,
+      sale: salePayload.sale,
+      total: salePayload.total,
+      invoice: salePayload.invoice,
+      paper: paperSize,
+      autoPrint: opts.autoPrint ?? false,
+    });
+  }
   async function load() {
     const [p, s] = await Promise.all([
       api.get('/products', { params: { limit: 100 } }),
@@ -157,6 +153,18 @@ export default function Pos() {
       setTax(5);
       await load();
       searchRef.current?.focus();
+      if (autoPrint) {
+        openThermalReceipt({
+          shopName: data.shopName || shopName,
+          sale: data.sale,
+          total: data.total,
+          invoice: data.invoice,
+          paper: paperSize,
+          autoPrint: true,
+        });
+      } else {
+        previewReceipt(data, { autoPrint: false });
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Sale failed');
     } finally {
@@ -290,6 +298,26 @@ export default function Pos() {
                 ))}
               </select>
             </div>
+            <div className="field">
+              <label>Thermal paper</label>
+              <select value={paperSize} onChange={(e) => onPaperChange(e.target.value)}>
+                {Object.values(THERMAL_SIZES).map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field" style={{ justifyContent: 'flex-end' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '1.4rem' }}>
+                <input
+                  type="checkbox"
+                  checked={autoPrint}
+                  onChange={(e) => onAutoPrintChange(e.target.checked)}
+                />
+                Auto-print after sale
+              </label>
+            </div>
           </div>
 
           <h3 style={{ marginBottom: '0.75rem' }}>Total: {money(total)}</h3>
@@ -308,21 +336,37 @@ export default function Pos() {
               Clear
             </button>
             {lastSale && (
-              <button
-                className="btn btn-outline"
-                onClick={() =>
-                  printReceipt({
-                    shopName: lastSale.shopName || shopName,
-                    sale: lastSale.sale,
-                    total: lastSale.total,
-                    invoice: lastSale.invoice,
-                  })
-                }
-              >
-                Print last receipt
-              </button>
+              <>
+                <button
+                  className="btn btn-outline"
+                  type="button"
+                  onClick={() => previewReceipt(lastSale, { autoPrint: false })}
+                >
+                  Preview thermal
+                </button>
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={() =>
+                    openThermalReceipt({
+                      shopName: lastSale.shopName || shopName,
+                      sale: lastSale.sale,
+                      total: lastSale.total,
+                      invoice: lastSale.invoice,
+                      paper: paperSize,
+                      autoPrint: true,
+                    })
+                  }
+                >
+                  Print receipt
+                </button>
+              </>
             )}
           </div>
+          <p className="page-sub" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+            Receipt uses {THERMAL_SIZES[paperSize]?.label || '80mm'} width with monospace alignment for
+            thermal printers. In the print dialog, select your thermal printer and matching paper size.
+          </p>
         </div>
 
         <div className="card">

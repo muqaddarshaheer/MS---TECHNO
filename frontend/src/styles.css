@@ -985,6 +985,73 @@ th {
   }
 }
 
+/* ===== Account lock (blocked shop) ===== */
+.app-shell.account-locked {
+  position: relative;
+}
+
+.main-blurred {
+  filter: blur(7px);
+  pointer-events: none;
+  user-select: none;
+  min-height: 60vh;
+}
+
+.account-lock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(18, 22, 20, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.account-lock-card {
+  width: min(100%, 420px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.75rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+
+.account-lock-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.account-lock-card h2 {
+  font-family: var(--display);
+  font-size: 1.45rem;
+  margin-bottom: 0.5rem;
+  color: var(--danger);
+}
+
+.account-lock-card p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 0.65rem;
+}
+
+.account-lock-hint {
+  font-size: 0.85rem;
+}
+
+.account-lock-card .btn {
+  margin-top: 0.75rem;
+  min-width: 140px;
+}
+
+.account-locked .sidebar .nav-link:not(.logout-btn) {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 /* ===== Landing v2 ===== */
 .landing-v2 .saas-hero.hero-v2 {
   max-width: 1100px;

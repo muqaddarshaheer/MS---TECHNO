@@ -156,15 +156,15 @@ export async function createShop(req, res, next) {
 export async function listShops(req, res, next) {
   try {
     const q = String(req.query.q || '').trim();
-    const status = req.query.status;
+    const shopStatus = req.query.shopStatus || req.query.status;
     const pkg = req.query.package;
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 25));
 
     const filter = {};
     if (pkg) filter.package = pkg;
-    if (status && ['active', 'expired', 'blocked', 'suspended'].includes(status)) {
-      filter.status = status;
+    if (shopStatus && ['active', 'expired', 'blocked', 'suspended'].includes(shopStatus)) {
+      filter.status = shopStatus;
     }
     if (q) {
       filter.$or = [

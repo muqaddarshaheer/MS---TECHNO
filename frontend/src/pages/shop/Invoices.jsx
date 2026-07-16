@@ -1,43 +1,17 @@
 import { useEffect, useState } from 'react';
 import api, { money } from '../../api';
 import { useAuth } from '../../context/AuthContext';
-
-function printInvoice(sale, shopName) {
-  const rows = (sale.items || [])
-    .map(
-      (i) =>
-        `<tr><td>${i.name}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(
-          i.price * i.qty
-        )}</td></tr>`
-    )
-    .join('');
-  const w = window.open('', '_blank');
-  if (!w) return;
-  w.document.write(`<!DOCTYPE html><html><head><title>${sale.invoice}</title>
-    <style>
-      body{font-family:Georgia,serif;padding:24px;color:#111;max-width:480px;margin:0 auto}
-      h1{margin:0;font-size:22px;text-align:center}
-      .meta{text-align:center;color:#555;font-size:13px;margin:6px 0}
-      table{width:100%;border-collapse:collapse;margin-top:16px;font-family:system-ui,sans-serif;font-size:13px}
-      th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}
-      h3{text-align:right;font-family:system-ui,sans-serif}
-      .foot{text-align:center;color:#999;margin-top:20px;font-size:11px;font-family:system-ui,sans-serif}
-    </style></head><body>
-    <h1>${shopName}</h1>
-    <p class="meta">Invoice ${sale.invoice} · ${sale.date}</p>
-    <p class="meta">Customer: ${sale.customerName} · ${sale.payment} · ${sale.source}</p>
-    <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
-    <tbody>${rows}</tbody></table>
-    <h3>Total: ${money(sale.total)}</h3>
-    <p class="foot">Powered by MS Techno</p>
-    <script>window.onload=function(){window.print()}</script>
-    </body></html>`);
-  w.document.close();
-}
+import {
+  THERMAL_SIZES,
+  getStoredPaperSize,
+  openThermalReceipt,
+  setStoredPaperSize,
+} from '../../utils/thermalReceipt';
 
 export default function Invoices() {
   const { user } = useAuth();
   const [sales, setSales] = useState([]);
+  const [paperSize, setPaperSize] = useState(getStoredPaperSize);
 
   useEffect(() => {
     api.get('/sales', { params: { limit: 100 } }).then((res) => setSales(res.data.sales || []));
@@ -45,9 +19,40 @@ export default function Invoices() {
 
   const shopName = user?.shop?.name || 'Shop';
 
+  function printThermal(sale, autoPrint = true) {
+    openThermalReceipt({
+      shopName,
+      sale,
+      total: sale.total,
+      invoice: sale.invoice,
+      paper: paperSize,
+      autoPrint,
+    });
+  }
+
   return (
     <div>
-      <h2 className="page-title">Invoices</h2>
+      <div className="page-header">
+        <h2 className="page-title" style={{ marginBottom: 0 }}>
+          Invoices
+        </h2>
+        <div className="field" style={{ marginBottom: 0, minWidth: 180 }}>
+          <label>Thermal paper</label>
+          <select
+            value={paperSize}
+            onChange={(e) => {
+              setPaperSize(e.target.value);
+              setStoredPaperSize(e.target.value);
+            }}
+          >
+            {Object.values(THERMAL_SIZES).map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="card table-wrap">
         <table>
           <thead>
@@ -70,8 +75,11 @@ export default function Invoices() {
                 <td>{money(s.total)}</td>
                 <td>{s.date}</td>
                 <td>{s.payment}</td>
-                <td>
-                  <button className="btn btn-outline btn-sm" onClick={() => printInvoice(s, shopName)}>
+                <td className="row">
+                  <button className="btn btn-outline btn-sm" onClick={() => printThermal(s, false)}>
+                    Preview
+                  </button>
+                  <button className="btn btn-primary btn-sm" onClick={() => printThermal(s, true)}>
                     Print
                   </button>
                 </td>

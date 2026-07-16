@@ -15,6 +15,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(!!localStorage.getItem('scentra_token'));
 
   useEffect(() => {
+    function onRefresh(e) {
+      if (e.detail) setUser(e.detail);
+    }
+    window.addEventListener('ms-auth-refresh', onRefresh);
+    return () => window.removeEventListener('ms-auth-refresh', onRefresh);
+  }, []);
+
+  useEffect(() => {
     if (!token) {
       setLoading(false);
       return;
