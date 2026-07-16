@@ -5,7 +5,9 @@ import { useAuth } from '../context/AuthContext';
 export default function Login() {
   const { login } = useAuth();
   const [searchParams] = useSearchParams();
-  const [username, setUsername] = useState(() => searchParams.get('u') || '');
+  const prefills = searchParams.get('u') || '';
+  const [tab, setTab] = useState(prefills ? 'shop' : 'shop');
+  const [username, setUsername] = useState(prefills);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -13,8 +15,25 @@ export default function Login() {
 
   useEffect(() => {
     const u = searchParams.get('u');
-    if (u) setUsername(u);
+    if (u) {
+      setTab('shop');
+      setUsername(u);
+    }
   }, [searchParams]);
+
+  function switchTab(next) {
+    setTab(next);
+    setPassword('');
+    setShowPassword(false);
+    setError('');
+    if (next === 'super') {
+      setUsername((u) => (u && u !== prefills ? u : 'admin'));
+    } else if (!prefills) {
+      setUsername('');
+    } else {
+      setUsername(prefills);
+    }
+  }
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -22,6 +41,16 @@ export default function Login() {
     setBusy(true);
     try {
       const user = await login(username.trim(), password);
+      if (tab === 'super' && user.role !== 'super') {
+        setError('This account is not a Super Admin. Use the Shop tab.');
+        setBusy(false);
+        return;
+      }
+      if (tab === 'shop' && user.role === 'super') {
+        setError('Use the Super Admin tab for this account.');
+        setBusy(false);
+        return;
+      }
       window.location.assign(user.role === 'super' ? '/super' : '/shop');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
@@ -36,8 +65,25 @@ export default function Login() {
           MS <span>TECHNO</span>
         </Link>
         <p className="page-sub" style={{ textAlign: 'center' }}>
-          Cloud Retail ERP — enter your username and password
+          Cloud Retail ERP
         </p>
+
+        <div className="tabs">
+          <button
+            type="button"
+            className={`tab ${tab === 'shop' ? 'active' : ''}`}
+            onClick={() => switchTab('shop')}
+          >
+            Shop
+          </button>
+          <button
+            type="button"
+            className={`tab ${tab === 'super' ? 'active' : ''}`}
+            onClick={() => switchTab('super')}
+          >
+            Super Admin
+          </button>
+        </div>
 
         <form onSubmit={onSubmit}>
           <div className="field">
@@ -47,7 +93,7 @@ export default function Login() {
               onChange={(e) => setUsername(e.target.value)}
               required
               autoComplete="username"
-              placeholder="Your shop username"
+              placeholder={tab === 'super' ? 'Super admin username' : 'Shop username'}
               autoFocus={!username}
             />
           </div>
@@ -77,12 +123,12 @@ export default function Login() {
           {error && <div className="error">{error}</div>}
 
           <button className="btn btn-primary" style={{ width: '100%' }} disabled={busy}>
-            {busy ? 'Signing in...' : 'Sign in'}
+            {busy ? 'Signing in...' : tab === 'super' ? 'Enter Super Admin' : 'Enter shop dashboard'}
           </button>
         </form>
 
         <p className="page-sub" style={{ textAlign: 'center', marginTop: '1rem', marginBottom: 0 }}>
-          Need access? <Link to="/signup">Request a demo account</Link>
+          Need a shop account? <Link to="/signup">Request a demo</Link>
         </p>
       </div>
     </div>
