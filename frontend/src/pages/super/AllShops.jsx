@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../../api';
 
 function todayStr() {
@@ -44,23 +44,61 @@ function statusLabel(status) {
   return status;
 }
 
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function AllShops() {
   const [shops, setShops] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [q, setQ] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [packageFilter, setPackageFilter] = useState('');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(blankForm);
   const [editId, setEditId] = useState(null);
   const [resetPw, setResetPw] = useState({ shopId: '', newPassword: '' });
+  const [credentials, setCredentials] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const limit = 12;
 
-  async function load() {
-    const { data } = await api.get('/shops');
-    setShops(data.shops || []);
-  }
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/shops', {
+        params: {
+          page,
+          limit,
+          q: q || undefined,
+          status: statusFilter || undefined,
+          package: packageFilter || undefined,
+        },
+      });
+      setShops(data.shops || []);
+      setTotal(data.total || 0);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, q, statusFilter, packageFilter]);
 
   useEffect(() => {
-    load().catch((err) => setError(err.response?.data?.message || 'Failed to load'));
-  }, []);
+    const t = setTimeout(() => {
+      load();
+    }, 200);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  const pages = Math.max(1, Math.ceil(total / limit));
 
   const createPreviewDuration = useMemo(() => {
     const start = new Date(form.planStart);
@@ -91,9 +129,7 @@ export default function AllShops() {
       planStart: String(shop.planStart || shop.createdAt).slice(0, 10),
       durationMonths: shop.durationMonths || 12,
       expiry: String(shop.expiry).slice(0, 10),
-      paymentDueDate: shop.paymentDueDate
-        ? String(shop.paymentDueDate).slice(0, 10)
-        : '',
+      paymentDueDate: shop.paymentDueDate ? String(shop.paymentDueDate).slice(0, 10) : '',
       restrictOnPaymentOverdue: shop.restrictOnPaymentOverdue !== false,
       openTime: shop.openTime || '09:00',
       closeTime: shop.closeTime || '22:00',
@@ -124,8 +160,9 @@ export default function AllShops() {
     e.preventDefault();
     setError('');
     try {
-      await api.post('/shops', form);
-      setMessage('Shop created');
+      const { data } = await api.post('/shops', form);
+      setCredentials(data.credentials || null);
+      setMessage('Shop created — copy login link and password once');
       setModal(null);
       setForm(blankForm());
       await load();
@@ -177,9 +214,7 @@ export default function AllShops() {
       restrictOnPaymentOverdue: enabled,
     });
     setMessage(
-      enabled
-        ? `Auto-restrict enabled for ${shop.name}`
-        : `Auto-restrict disabled for ${shop.name}`
+      enabled ? `Auto-restrict enabled for ${shop.name}` : `Auto-restrict disabled for ${shop.name}`
     );
     await load();
   }
@@ -194,9 +229,7 @@ export default function AllShops() {
   }
 
   async function markPaid(shop) {
-    await api.patch(`/shops/${shop._id}/payment-restriction`, {
-      payment: 'paid',
-    });
+    await api.patch(`/shops/${shop._id}/payment-restriction`, { payment: 'paid' });
     if (shop.status === 'blocked' && shop.paymentOverdue) {
       await api.patch(`/shops/${shop._id}/status`, { status: 'active' });
     }
@@ -215,6 +248,12 @@ export default function AllShops() {
     setError('');
     try {
       const { data } = await api.post('/auth/reset-shop-password', resetPw);
+      setCredentials({
+        username: data.username,
+        password: resetPw.newPassword,
+        loginLink: data.loginLink,
+        note: 'New password — share once.',
+      });
       setMessage(`Password reset for ${data.username}`);
       setResetPw({ shopId: '', newPassword: '' });
       setModal(null);
@@ -266,10 +305,7 @@ export default function AllShops() {
       )}
       <div className="field">
         <label>Package</label>
-        <select
-          value={form.package}
-          onChange={(e) => setForm({ ...form, package: e.target.value })}
-        >
+        <select value={form.package} onChange={(e) => setForm({ ...form, package: e.target.value })}>
           {['Basic', 'Premium', 'Enterprise'].map((p) => (
             <option key={p}>{p}</option>
           ))}
@@ -277,10 +313,7 @@ export default function AllShops() {
       </div>
       <div className="field">
         <label>Payment status</label>
-        <select
-          value={form.payment}
-          onChange={(e) => setForm({ ...form, payment: e.target.value })}
-        >
+        <select value={form.payment} onChange={(e) => setForm({ ...form, payment: e.target.value })}>
           <option value="paid">Paid</option>
           <option value="pending">Pending</option>
         </select>
@@ -296,10 +329,7 @@ export default function AllShops() {
       </div>
       <div className="field">
         <label>Duration (months)</label>
-        <select
-          value={form.durationMonths}
-          onChange={(e) => onDurationChange(e.target.value)}
-        >
+        <select value={form.durationMonths} onChange={(e) => onDurationChange(e.target.value)}>
           {[1, 3, 6, 12, 24].map((m) => (
             <option key={m} value={m}>
               {m} month{m > 1 ? 's' : ''}
@@ -329,9 +359,7 @@ export default function AllShops() {
           <input
             type="checkbox"
             checked={form.restrictOnPaymentOverdue}
-            onChange={(e) =>
-              setForm({ ...form, restrictOnPaymentOverdue: e.target.checked })
-            }
+            onChange={(e) => setForm({ ...form, restrictOnPaymentOverdue: e.target.checked })}
           />
           Restrict shop access if payment is past due date
         </label>
@@ -353,6 +381,93 @@ export default function AllShops() {
       {message && <div className="success">{message}</div>}
       {error && !modal && <div className="error">{error}</div>}
 
+      {credentials && (
+        <div className="card" style={{ marginBottom: '1rem' }}>
+          <strong>Share once — credentials</strong>
+          <p>
+            Username: <code>{credentials.username}</code>
+          </p>
+          {credentials.password && (
+            <p>
+              Password: <code>{credentials.password}</code>
+            </p>
+          )}
+          {credentials.loginLink && (
+            <p>
+              Login link: <code>{credentials.loginLink}</code>
+            </p>
+          )}
+          <div className="row">
+            <button
+              className="btn btn-primary btn-sm"
+              type="button"
+              onClick={async () => {
+                const ok = await copyText(credentials.loginLink || '');
+                setMessage(ok ? 'Login link copied' : 'Could not copy');
+              }}
+            >
+              Copy shop link
+            </button>
+            {credentials.password && (
+              <button
+                className="btn btn-outline btn-sm"
+                type="button"
+                onClick={async () => {
+                  const ok = await copyText(
+                    `Username: ${credentials.username}\nPassword: ${credentials.password}\nLink: ${credentials.loginLink}`
+                  );
+                  setMessage(ok ? 'Credentials copied' : 'Could not copy');
+                }}
+              >
+                Copy all
+              </button>
+            )}
+            <button className="btn btn-outline btn-sm" type="button" onClick={() => setCredentials(null)}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="row" style={{ marginBottom: '0.85rem', flexWrap: 'wrap' }}>
+        <input
+          style={{ minWidth: 200, flex: 1 }}
+          value={q}
+          onChange={(e) => {
+            setPage(1);
+            setQ(e.target.value);
+          }}
+          placeholder="Search shops..."
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setPage(1);
+            setStatusFilter(e.target.value);
+          }}
+        >
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="blocked">Blocked</option>
+          <option value="suspended">Suspended</option>
+          <option value="expired">Expired</option>
+        </select>
+        <select
+          value={packageFilter}
+          onChange={(e) => {
+            setPage(1);
+            setPackageFilter(e.target.value);
+          }}
+        >
+          <option value="">All packages</option>
+          <option value="Basic">Basic</option>
+          <option value="Premium">Premium</option>
+          <option value="Enterprise">Enterprise</option>
+        </select>
+      </div>
+
+      {loading && <p className="empty">Loading...</p>}
+
       <div className="grid grid-2">
         {shops.map((s) => (
           <div className="card" key={s._id}>
@@ -371,49 +486,49 @@ export default function AllShops() {
 
             <div style={{ marginTop: '0.75rem', fontSize: '0.86rem', color: 'var(--muted)' }}>
               <div>
-                <strong style={{ color: 'var(--ink)' }}>Plan start:</strong>{' '}
-                {String(s.planStart || s.createdAt).slice(0, 10)}
+                <strong style={{ color: 'var(--ink)' }}>Plan:</strong>{' '}
+                {String(s.planStart || s.createdAt).slice(0, 10)} →{' '}
+                {String(s.planEnd || s.expiry).slice(0, 10)} ({s.durationLabel})
               </div>
               <div>
-                <strong style={{ color: 'var(--ink)' }}>Duration:</strong> {s.durationLabel}
-              </div>
-              <div>
-                <strong style={{ color: 'var(--ink)' }}>Package end:</strong>{' '}
-                {String(s.planEnd || s.expiry).slice(0, 10)}
-              </div>
-              <div>
-                <strong style={{ color: 'var(--ink)' }}>Payment due:</strong>{' '}
-                {s.paymentDueDate ? String(s.paymentDueDate).slice(0, 10) : '—'}{' '}
+                <strong style={{ color: 'var(--ink)' }}>Payment:</strong>{' '}
                 <span className={`badge ${s.payment === 'paid' ? '' : 'warn'}`}>{s.payment}</span>
                 {s.paymentOverdue && <span className="badge danger">Overdue</span>}
               </div>
-              {s.plan?.maxProducts != null && (
-                <div>
-                  <strong style={{ color: 'var(--ink)' }}>Plan limit:</strong>{' '}
-                  {s.plan.maxProducts} products
-                </div>
-              )}
-              <div style={{ marginTop: '0.35rem' }}>
-                Auto-restrict on overdue:{' '}
-                <strong>{s.restrictOnPaymentOverdue ? 'On' : 'Off'}</strong>
+              <div>
+                <strong style={{ color: 'var(--ink)' }}>Products:</strong>{' '}
+                {s.plan?.unlimitedProducts || s.plan?.maxProducts == null
+                  ? 'Unlimited'
+                  : `max ${s.plan.maxProducts}`}
+                {s.plan?.hasPos ? ' · POS on' : ' · POS off'}
               </div>
             </div>
 
             <div className="row" style={{ marginTop: '0.75rem' }}>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={async () => {
+                  const link = s.loginLink || `${window.location.origin}/login?u=${encodeURIComponent(s.username || '')}`;
+                  const ok = await copyText(link);
+                  setMessage(ok ? `Link copied for ${s.name}` : 'Copy failed');
+                }}
+              >
+                Copy shop link
+              </button>
               <button className="btn btn-outline btn-sm" onClick={() => openEdit(s)}>
                 Edit plan
               </button>
-              <button className="btn btn-primary btn-sm" onClick={() => setStatus(s._id, 'active')}>
+              <button className="btn btn-outline btn-sm" onClick={() => setStatus(s._id, 'active')}>
                 Activate
+              </button>
+              <button className="btn btn-outline btn-sm" onClick={() => setStatus(s._id, 'suspended')}>
+                Suspend
               </button>
               <button className="btn btn-outline btn-sm" onClick={() => setStatus(s._id, 'blocked')}>
                 Block
               </button>
               <button className="btn btn-outline btn-sm" onClick={() => renew(s._id, { years: 1 })}>
                 +1 year
-              </button>
-              <button className="btn btn-outline btn-sm" onClick={() => renew(s._id, { days: 30 })}>
-                +30 days
               </button>
               <button
                 className="btn btn-outline btn-sm"
@@ -423,7 +538,7 @@ export default function AllShops() {
               </button>
               {s.paymentOverdue && (
                 <button className="btn btn-danger btn-sm" onClick={() => restrictIfOverdue(s)}>
-                  Restrict overdue now
+                  Restrict overdue
                 </button>
               )}
               {s.payment !== 'paid' && (
@@ -446,6 +561,22 @@ export default function AllShops() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="row" style={{ marginTop: '1rem', justifyContent: 'center' }}>
+        <button className="btn btn-outline btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+          Prev
+        </button>
+        <span className="page-sub" style={{ margin: 0 }}>
+          Page {page} / {pages} · {total} shops
+        </span>
+        <button
+          className="btn btn-outline btn-sm"
+          disabled={page >= pages}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </button>
       </div>
 
       {(modal === 'create' || modal === 'edit') && (

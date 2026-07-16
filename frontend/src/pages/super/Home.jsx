@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../api';
+import api, { money } from '../../api';
 
 function statusBadge(status) {
   if (status === 'active') return '';
@@ -15,89 +15,103 @@ function statusLabel(status) {
 
 export default function SuperHome() {
   const [stats, setStats] = useState(null);
-  const [shops, setShops] = useState([]);
 
   useEffect(() => {
-    Promise.all([api.get('/shops/stats'), api.get('/shops')]).then(([st, sh]) => {
-      setStats(st.data);
-      setShops(sh.data.shops || []);
-    });
+    api.get('/shops/stats').then((st) => setStats(st.data));
   }, []);
 
   if (!stats) return <p className="empty">Loading...</p>;
 
   return (
     <div>
-      <h2 className="page-title">MS Techno Super Dashboard</h2>
-      <p className="page-sub">Full control over shops, plans, and payments</p>
+      <h2 className="page-title">MS Techno Control Center</h2>
+      <p className="page-sub">Shops, packages, demo requests, and platform analytics</p>
+
       <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
         <div className="card stat">
-          <h6>Total</h6>
+          <h6>Total shops</h6>
           <h2>{stats.total}</h2>
         </div>
         <div className="card stat">
-          <h6>Active</h6>
+          <h6>Active shops</h6>
           <h2 style={{ color: 'var(--ok)' }}>{stats.active}</h2>
         </div>
-        <div className="card stat danger">
-          <h6>Expired</h6>
-          <h2>{stats.expired}</h2>
-        </div>
         <div className="card stat warn">
-          <h6>Payment overdue</h6>
-          <h2>{stats.paymentOverdue ?? 0}</h2>
+          <h6>Pending demos</h6>
+          <h2>{stats.pendingDemoRequests ?? 0}</h2>
+        </div>
+        <div className="card stat danger">
+          <h6>Blocked / overdue</h6>
+          <h2>
+            {stats.blocked}/{stats.paymentOverdue ?? 0}
+          </h2>
         </div>
       </div>
+
+      <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
+        <div className="card stat">
+          <h6>Platform sales</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{stats.salesCount ?? 0}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Total revenue</h6>
+          <h2 style={{ fontSize: '1.05rem' }}>{money(stats.revenue || 0)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Total profit</h6>
+          <h2 style={{ fontSize: '1.05rem' }}>{money(stats.profit || 0)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Stock / customers</h6>
+          <h2 style={{ fontSize: '1.05rem' }}>
+            {stats.stockQty ?? 0} / {stats.customers ?? 0}
+          </h2>
+        </div>
+      </div>
+
       <div className="row" style={{ marginBottom: '0.85rem' }}>
         <Link className="btn btn-gold" to="/super/shops">
           Manage shops
         </Link>
+        <Link className="btn btn-primary" to="/super/requests">
+          Demo requests ({stats.pendingDemoRequests ?? 0})
+        </Link>
+        <Link className="btn btn-outline" to="/super/announcements">
+          Announcements
+        </Link>
       </div>
+
       <div className="card table-wrap">
+        <h3 style={{ fontFamily: 'var(--display)', marginBottom: '0.75rem' }}>Recent shops</h3>
         <table>
           <thead>
             <tr>
               <th>Shop</th>
               <th>Package</th>
-              <th>Plan start</th>
-              <th>Duration</th>
-              <th>Package end</th>
-              <th>Payment due</th>
-              <th>Payment</th>
-              <th>Restrict</th>
               <th>Status</th>
+              <th>Created</th>
             </tr>
           </thead>
           <tbody>
-            {shops.map((s) => (
-              <tr key={s._id}>
+            {(stats.recentShops || []).map((s) => (
+              <tr key={s.id}>
                 <td>
                   <strong>{s.name}</strong>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{s.owner}</div>
                 </td>
                 <td>{s.package}</td>
-                <td>{String(s.planStart || s.createdAt).slice(0, 10)}</td>
-                <td>{s.durationLabel || '—'}</td>
-                <td>{String(s.planEnd || s.expiry).slice(0, 10)}</td>
                 <td>
-                  {s.paymentDueDate ? String(s.paymentDueDate).slice(0, 10) : '—'}
-                  {s.paymentOverdue && (
-                    <div>
-                      <span className="badge danger">Overdue</span>
-                    </div>
-                  )}
+                  <span className={`badge ${statusBadge(s.status)}`}>{statusLabel(s.status)}</span>
                 </td>
-                <td>
-                  <span className={`badge ${s.payment === 'paid' ? '' : 'warn'}`}>{s.payment}</span>
-                </td>
-                <td>{s.restrictOnPaymentOverdue ? 'On' : 'Off'}</td>
-                <td>
-                  <span className={`badge ${statusBadge(s.computedStatus)}`}>
-                    {statusLabel(s.computedStatus)}
-                  </span>
-                </td>
+                <td>{s.createdAt ? String(s.createdAt).slice(0, 10) : '—'}</td>
               </tr>
             ))}
+            {!(stats.recentShops || []).length && (
+              <tr>
+                <td colSpan={4} className="empty">
+                  No shops yet
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -49,8 +49,16 @@ export default function ShopDashboard() {
             <div className="tenant-pill">
               <span className="badge gold">{plan.name} plan</span>
               <span className="badge">
-                Products {stats.products}/{plan.maxProducts}
+                Products {stats.products}
+                {plan.unlimitedProducts || plan.maxProducts == null
+                  ? ' · Unlimited'
+                  : `/${plan.maxProducts}`}
               </span>
+              {plan.hasPos ? (
+                <span className="badge">POS enabled</span>
+              ) : (
+                <span className="badge warn">POS locked — upgrade</span>
+              )}
               {user?.shop?.slug && <span className="badge">tenant:{user.shop.slug}</span>}
             </div>
           )}
@@ -81,6 +89,25 @@ export default function ShopDashboard() {
         <div className="card stat danger">
           <h6>Out of stock</h6>
           <h2>{stats.out}</h2>
+        </div>
+      </div>
+
+      <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
+        <div className="card stat">
+          <h6>Revenue</h6>
+          <h2 style={{ fontSize: '1.1rem' }}>{money(stats.revenue)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Profit</h6>
+          <h2 style={{ fontSize: '1.1rem' }}>{money(stats.profit)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Customers</h6>
+          <h2>{stats.customers ?? 0}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Net</h6>
+          <h2 style={{ fontSize: '1.1rem' }}>{money(stats.net)}</h2>
         </div>
       </div>
 

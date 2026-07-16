@@ -33,4 +33,6 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
   };
 };
 
+userSchema.index({ shop: 1, role: 1 });
+
 export const User = mongoose.model('User', userSchema);

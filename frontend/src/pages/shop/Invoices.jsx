@@ -2,38 +2,48 @@ import { useEffect, useState } from 'react';
 import api, { money } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 
+function printInvoice(sale, shopName) {
+  const rows = (sale.items || [])
+    .map(
+      (i) =>
+        `<tr><td>${i.name}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(
+          i.price * i.qty
+        )}</td></tr>`
+    )
+    .join('');
+  const w = window.open('', '_blank');
+  if (!w) return;
+  w.document.write(`<!DOCTYPE html><html><head><title>${sale.invoice}</title>
+    <style>
+      body{font-family:Georgia,serif;padding:24px;color:#111;max-width:480px;margin:0 auto}
+      h1{margin:0;font-size:22px;text-align:center}
+      .meta{text-align:center;color:#555;font-size:13px;margin:6px 0}
+      table{width:100%;border-collapse:collapse;margin-top:16px;font-family:system-ui,sans-serif;font-size:13px}
+      th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}
+      h3{text-align:right;font-family:system-ui,sans-serif}
+      .foot{text-align:center;color:#999;margin-top:20px;font-size:11px;font-family:system-ui,sans-serif}
+    </style></head><body>
+    <h1>${shopName}</h1>
+    <p class="meta">Invoice ${sale.invoice} · ${sale.date}</p>
+    <p class="meta">Customer: ${sale.customerName} · ${sale.payment} · ${sale.source}</p>
+    <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <h3>Total: ${money(sale.total)}</h3>
+    <p class="foot">Powered by MS Techno</p>
+    <script>window.onload=function(){window.print()}</script>
+    </body></html>`);
+  w.document.close();
+}
+
 export default function Invoices() {
   const { user } = useAuth();
   const [sales, setSales] = useState([]);
 
   useEffect(() => {
-    api.get('/sales').then((res) => setSales(res.data.sales || []));
+    api.get('/sales', { params: { limit: 100 } }).then((res) => setSales(res.data.sales || []));
   }, []);
 
-  function printInvoice(sale) {
-    const shopName = user?.shop?.name || 'MS Techno';
-    const rows = (sale.items || [])
-      .map(
-        (i) =>
-          `<tr><td>${i.name}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(
-            i.price * i.qty
-          )}</td></tr>`
-      )
-      .join('');
-    const w = window.open('', '_blank');
-    w.document.write(`<!DOCTYPE html><html><head><title>${sale.invoice}</title>
-      <style>body{font-family:sans-serif;padding:24px}table{width:100%;border-collapse:collapse;margin-top:16px}
-      th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}h1{margin:0}h1 span{color:#b0892e}</style></head><body>
-      <h1>MS <span>Techno</span></h1><p>${shopName}</p>
-      <p>Invoice ${sale.invoice} · ${sale.date}</p>
-      <p>Customer: ${sale.customerName} · ${sale.payment} · ${sale.source}</p>
-      <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
-      <tbody>${rows}</tbody></table>
-      <h3 style="text-align:right">Total: ${money(sale.total)}</h3>
-      <p style="text-align:center;color:#999;margin-top:16px">MS Techno — Cloud Perfume Management</p>
-      <button onclick="print()">Print</button></body></html>`);
-    w.document.close();
-  }
+  const shopName = user?.shop?.name || 'Shop';
 
   return (
     <div>
@@ -61,7 +71,7 @@ export default function Invoices() {
                 <td>{s.date}</td>
                 <td>{s.payment}</td>
                 <td>
-                  <button className="btn btn-outline btn-sm" onClick={() => printInvoice(s)}>
+                  <button className="btn btn-outline btn-sm" onClick={() => printInvoice(s, shopName)}>
                     Print
                   </button>
                 </td>

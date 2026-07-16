@@ -2,7 +2,14 @@ import { body, validationResult } from 'express-validator';
 import { TenantRequest } from '../models/TenantRequest.js';
 import { Shop } from '../models/Shop.js';
 import { User } from '../models/User.js';
-import { listPlans, getPlan, slugify, uniqueSlug as makeUniqueSlug } from '../config/plans.js';
+import {
+  listPlans,
+  getPlan,
+  slugify,
+  uniqueSlug as makeUniqueSlug,
+  generateShopPassword,
+  shopLoginLink,
+} from '../config/plans.js';
 
 function validate(req, res) {
   const errors = validationResult(req);
@@ -18,7 +25,7 @@ export async function getPublicPlans(req, res) {
     platform: 'MS Techno',
     product: 'Cloud Perfume ERP',
     multiTenant: true,
-    plans: listPlans(),
+    plans: listPlans({ publicOnly: true }),
   });
 }
 
@@ -110,7 +117,7 @@ export async function approveSignupRequest(req, res, next) {
       username = `${username}${Date.now().toString().slice(-4)}`;
     }
 
-    const password = req.body.password || `MsT${Math.random().toString(36).slice(2, 8)}!`;
+    const password = req.body.password || generateShopPassword();
     const planStart = new Date();
     const durationMonths = Number(req.body.durationMonths || request.durationMonths) || 12;
     const pkg = req.body.package || request.package;
@@ -150,9 +157,15 @@ export async function approveSignupRequest(req, res, next) {
     await request.save();
 
     const plan = getPlan(pkg);
+    const loginLink = shopLoginLink(username);
     res.json({
       message: 'Tenant approved and shop created',
-      credentials: { username, password },
+      credentials: {
+        username,
+        password,
+        loginLink,
+        note: 'Share these credentials once. Passwords are never shown again in shop listings.',
+      },
       shop,
       plan,
       request,

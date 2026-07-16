@@ -16,6 +16,8 @@ function validate(req, res) {
 function shopPayload(shop) {
   if (!shop) return null;
   const plan = getPlan(shop.package);
+  const maxProducts =
+    shop.maxProductsOverride != null ? shop.maxProductsOverride : plan.maxProducts;
   return {
     id: shop._id,
     name: shop.name,
@@ -33,7 +35,9 @@ function shopPayload(shop) {
     closeTime: shop.closeTime,
     plan: {
       ...plan,
-      maxProducts: shop.maxProductsOverride || plan.maxProducts,
+      maxProducts,
+      hasPos: Boolean(plan.features?.pos),
+      unlimitedProducts: maxProducts == null,
     },
   };
 }
@@ -183,7 +187,14 @@ export async function resetShopPassword(req, res, next) {
 
     user.password = req.body.newPassword;
     await user.save();
-    res.json({ message: 'Shop password reset successfully', username: user.username });
+    res.json({
+      message: 'Shop password reset successfully',
+      username: user.username,
+      loginLink: `${String(process.env.CLIENT_URL || 'http://localhost:5173')
+        .split(',')[0]
+        .trim()
+        .replace(/\/$/, '')}/login?u=${encodeURIComponent(user.username)}`,
+    });
   } catch (err) {
     next(err);
   }

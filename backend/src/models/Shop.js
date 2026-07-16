@@ -39,9 +39,13 @@ const shopSchema = new mongoose.Schema(
 
 shopSchema.methods.getPlanLimits = function getPlanLimits() {
   const plan = getPlan(this.package);
+  const maxProducts =
+    this.maxProductsOverride != null ? this.maxProductsOverride : plan.maxProducts;
   return {
     ...plan,
-    maxProducts: this.maxProductsOverride || plan.maxProducts,
+    maxProducts,
+    hasPos: Boolean(plan.features?.pos),
+    unlimitedProducts: maxProducts == null,
   };
 };
 

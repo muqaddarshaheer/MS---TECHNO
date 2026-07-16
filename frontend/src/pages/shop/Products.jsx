@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api, { money } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 
 const emptyForm = {
   name: '',
-  brand: 'MS Techno',
+  brand: '',
   category: 'Oud',
   qty: 10,
   buyPrice: 2000,
@@ -13,26 +14,43 @@ const emptyForm = {
 };
 
 export default function Products() {
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [q, setQ] = useState('');
+  const savingLock = useRef(false);
+
+  const maxProducts = user?.shop?.plan?.maxProducts;
+  const unlimited = user?.shop?.plan?.unlimitedProducts || maxProducts == null;
+  const atLimit = !unlimited && products.length >= maxProducts;
 
   async function load() {
-    const { data } = await api.get('/products');
+    const { data } = await api.get('/products', { params: { limit: 100, q: q || undefined } });
     setProducts(data.products || []);
   }
 
   useEffect(() => {
-    load().catch((err) => setError(err.response?.data?.message || 'Failed to load'));
-  }, []);
+    const t = setTimeout(() => {
+      load().catch((err) => setError(err.response?.data?.message || 'Failed to load'));
+    }, 200);
+    return () => clearTimeout(t);
+  }, [q]);
 
   function openCreate() {
+    if (atLimit) {
+      setError('Product limit reached. Upgrade to Premium for unlimited products.');
+      return;
+    }
+    setError('');
     setForm({ ...emptyForm, barcode: `SKU${Date.now()}` });
     setModal('create');
   }
 
   function openEdit(p) {
+    setError('');
     setForm({
       name: p.name,
       brand: p.brand,
@@ -49,6 +67,9 @@ export default function Products() {
 
   async function save(e) {
     e.preventDefault();
+    if (savingLock.current) return;
+    savingLock.current = true;
+    setSaving(true);
     setError('');
     try {
       if (modal === 'create') {
@@ -60,6 +81,9 @@ export default function Products() {
       await load();
     } catch (err) {
       setError(err.response?.data?.message || 'Save failed');
+    } finally {
+      savingLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -72,24 +96,52 @@ export default function Products() {
   return (
     <div>
       <div className="page-header">
-        <h2 className="page-title" style={{ marginBottom: 0 }}>
-          Products
-        </h2>
-        <button className="btn btn-primary" onClick={openCreate}>
+        <div>
+          <h2 className="page-title" style={{ marginBottom: 0 }}>
+            Products
+          </h2>
+          <p className="page-sub" style={{ marginBottom: 0 }}>
+            {unlimited
+              ? `${products.length} products · Unlimited plan`
+              : `${products.length} / ${maxProducts} products`}
+          </p>
+        </div>
+        <button className="btn btn-primary" onClick={openCreate} disabled={atLimit}>
           + Add product
         </button>
       </div>
-      {error && <div className="error">{error}</div>}
+
+      {atLimit && (
+        <div className="card" style={{ marginBottom: '1rem' }}>
+          <strong>Product limit reached</strong>
+          <p className="page-sub">
+            Basic includes 100 products. Upgrade to Premium for unlimited catalog and POS.
+          </p>
+          <p className="page-sub" style={{ marginBottom: 0 }}>
+            Ask MS Techno Super Admin to upgrade your package.
+          </p>
+        </div>
+      )}
+
+      <div className="field" style={{ maxWidth: 360, marginBottom: '0.75rem' }}>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search name, brand, or barcode"
+        />
+      </div>
+
+      {error && !modal && <div className="error">{error}</div>}
       <div className="card table-wrap">
         <table>
           <thead>
             <tr>
               <th>Name</th>
+              <th>Barcode</th>
               <th>Brand</th>
-              <th>Category</th>
               <th>Qty</th>
               <th>Price</th>
-              <th>Profit</th>
+              <th>Status</th>
               <th />
             </tr>
           </thead>
@@ -99,11 +151,17 @@ export default function Products() {
                 <td>
                   <strong>{p.name}</strong>
                 </td>
-                <td>{p.brand}</td>
-                <td>{p.category}</td>
+                <td>
+                  <code>{p.barcode || '—'}</code>
+                </td>
+                <td>{p.brand || '—'}</td>
                 <td>{p.qty}</td>
                 <td>{money(p.sellPrice)}</td>
-                <td>{money(p.sellPrice - p.buyPrice)}</td>
+                <td>
+                  <span className={`badge ${p.qty === 0 ? 'danger' : p.qty <= 5 ? 'warn' : ''}`}>
+                    {p.qty === 0 ? 'Out of stock' : p.qty <= 5 ? 'Low' : 'In stock'}
+                  </span>
+                </td>
                 <td className="row">
                   <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>
                     Edit
@@ -119,14 +177,14 @@ export default function Products() {
       </div>
 
       {modal && (
-        <div className="modal-backdrop" onClick={() => setModal(null)}>
+        <div className="modal-backdrop" onClick={() => !saving && setModal(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>{modal === 'create' ? 'Add product' : 'Edit product'}</h3>
             <form onSubmit={save}>
               <div className="grid grid-2">
                 {['name', 'brand', 'category', 'barcode'].map((key) => (
                   <div className="field" key={key}>
-                    <label>{key}</label>
+                    <label>{key === 'barcode' ? 'Barcode (scanner OK)' : key}</label>
                     <input
                       value={form[key]}
                       onChange={(e) => setForm({ ...form, [key]: e.target.value })}
@@ -139,6 +197,7 @@ export default function Products() {
                     <label>{key}</label>
                     <input
                       type="number"
+                      min="0"
                       value={form[key]}
                       onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                     />
@@ -153,11 +212,17 @@ export default function Products() {
                   onChange={(e) => setForm({ ...form, desc: e.target.value })}
                 />
               </div>
+              {error && <div className="error">{error}</div>}
               <div className="row">
-                <button type="submit" className="btn btn-primary">
-                  Save
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? 'Saving...' : 'Save'}
                 </button>
-                <button type="button" className="btn btn-outline" onClick={() => setModal(null)}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={saving}
+                  onClick={() => setModal(null)}
+                >
                   Cancel
                 </button>
               </div>

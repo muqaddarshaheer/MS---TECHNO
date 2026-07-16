@@ -4,6 +4,7 @@ import { Customer } from '../models/Customer.js';
 import { Shop } from '../models/Shop.js';
 import { Expense } from '../models/Expense.js';
 import { getShopId } from '../middleware/auth.js';
+import { planHasPos } from '../config/plans.js';
 
 function today() {
   return new Date().toISOString().split('T')[0];
@@ -12,8 +13,18 @@ function today() {
 export async function listSales(req, res, next) {
   try {
     const shopId = getShopId(req);
-    const sales = await Sale.find({ shop: shopId }).sort({ createdAt: -1 });
-    res.json({ sales });
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const filter = { shop: shopId };
+    const [sales, total] = await Promise.all([
+      Sale.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Sale.countDocuments(filter),
+    ]);
+    res.json({ sales, total, page, limit });
   } catch (err) {
     next(err);
   }
@@ -30,32 +41,48 @@ export async function createSale(req, res, next) {
     const shop = await Shop.findById(shopId);
     if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
+    if (!planHasPos(shop.package)) {
+      return res.status(403).json({
+        message: 'POS is not included in your package. Upgrade to Premium to enable billing.',
+        code: 'POS_NOT_ALLOWED',
+      });
+    }
+
     let subtotal = 0;
     const lineItems = [];
-    const productsToUpdate = [];
+    const decremented = [];
 
     for (const item of items) {
-      const product = await Product.findOne({ _id: item.productId, shop: shopId });
-      if (!product) {
-        return res.status(400).json({ message: 'Product not found in cart' });
-      }
       const qty = Number(item.qty) || 0;
-      if (qty <= 0 || product.qty < qty) {
-        return res.status(400).json({ message: `Insufficient stock for ${product.name}` });
+      if (qty <= 0) {
+        return res.status(400).json({ message: 'Invalid quantity in cart' });
       }
-      productsToUpdate.push({ product, qty });
+      const product = await Product.findOneAndUpdate(
+        { _id: item.productId, shop: shopId, qty: { $gte: qty } },
+        { $inc: { qty: -qty } },
+        { new: true }
+      );
+      if (!product) {
+        for (const row of decremented) {
+          await Product.updateOne(
+            { _id: row.id, shop: shopId },
+            { $inc: { qty: row.qty } }
+          );
+        }
+        return res.status(400).json({
+          message: 'Insufficient stock or product missing',
+          code: 'INSUFFICIENT_STOCK',
+        });
+      }
+      decremented.push({ id: product._id, qty });
       subtotal += product.sellPrice * qty;
       lineItems.push({
         product: product._id,
         name: product.name,
         qty,
         price: product.sellPrice,
+        buyPrice: product.buyPrice,
       });
-    }
-
-    for (const row of productsToUpdate) {
-      row.product.qty -= row.qty;
-      await row.product.save();
     }
 
     const discountPct = Number(req.body.discountPct) || 0;
@@ -103,7 +130,7 @@ export async function createSale(req, res, next) {
     customer.source = source;
     await customer.save();
 
-    res.status(201).json({ sale, invoice, total });
+    res.status(201).json({ sale, invoice, total, shopName: shop.name });
   } catch (err) {
     next(err);
   }
@@ -138,10 +165,21 @@ export async function dashboardStats(req, res, next) {
 
     const productMap = Object.fromEntries(products.map((p) => [p._id.toString(), p]));
     let profit = 0;
+    let customersCount = 0;
+    try {
+      customersCount = await Customer.countDocuments({ shop: shopId });
+    } catch {
+      customersCount = 0;
+    }
     for (const sale of sales) {
       for (const item of sale.items) {
         const p = productMap[item.product?.toString()];
-        const buy = p ? p.buyPrice : item.price * 0.5;
+        const buy =
+          item.buyPrice != null
+            ? item.buyPrice
+            : p
+              ? p.buyPrice
+              : item.price * 0.5;
         profit += (item.price - buy) * item.qty;
       }
     }
@@ -182,26 +220,34 @@ export async function dashboardStats(req, res, next) {
         bucket.sales += sale.total;
         for (const item of sale.items) {
           const p = productMap[item.product?.toString()];
-          const buy = p ? p.buyPrice : item.price * 0.5;
+          const buy =
+            item.buyPrice != null
+              ? item.buyPrice
+              : p
+                ? p.buyPrice
+                : item.price * 0.5;
           bucket.profit += (item.price - buy) * item.qty;
         }
       }
     }
 
+    const limits = shop?.getPlanLimits?.() || null;
     res.json({
       shop,
+      plan: limits,
       stats: {
         products: products.length,
         stockQty,
         low,
         out,
         salesCount: sales.length,
-        revenue,
-        profit,
-        expenses: expenseTotal,
-        net: profit - expenseTotal,
+        revenue: Number(revenue.toFixed(2)),
+        profit: Number(profit.toFixed(2)),
+        expenses: Number(expenseTotal.toFixed(2)),
+        net: Number((profit - expenseTotal).toFixed(2)),
+        customers: customersCount,
         todaySalesCount: todaySales.length,
-        todayRevenue: todaySales.reduce((s, x) => s + x.total, 0),
+        todayRevenue: Number(todaySales.reduce((s, x) => s + x.total, 0).toFixed(2)),
       },
       recentOrders: sales.slice(0, 8),
       topSelling,
@@ -238,8 +284,29 @@ export async function report(req, res, next) {
       title = 'Monthly Report';
     }
 
+    const products = await Product.find({ shop: shopId }).lean();
+    const productMap = Object.fromEntries(products.map((p) => [p._id.toString(), p]));
+    let profit = 0;
+    for (const sale of data) {
+      for (const item of sale.items || []) {
+        const p = productMap[item.product?.toString()];
+        const buy =
+          item.buyPrice != null
+            ? item.buyPrice
+            : p
+              ? p.buyPrice
+              : item.price * 0.5;
+        profit += (item.price - buy) * item.qty;
+      }
+    }
     const total = data.reduce((s, x) => s + x.total, 0);
-    res.json({ title, count: data.length, total, sales: data });
+    res.json({
+      title,
+      count: data.length,
+      total: Number(total.toFixed(2)),
+      profit: Number(profit.toFixed(2)),
+      sales: data,
+    });
   } catch (err) {
     next(err);
   }

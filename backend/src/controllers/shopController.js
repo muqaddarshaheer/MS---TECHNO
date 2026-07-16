@@ -6,7 +6,12 @@ import { Sale } from '../models/Sale.js';
 import { Customer } from '../models/Customer.js';
 import { Review } from '../models/Review.js';
 import { Expense } from '../models/Expense.js';
-import { getPlan, uniqueSlug as makeUniqueSlug } from '../config/plans.js';
+import {
+  getPlan,
+  uniqueSlug as makeUniqueSlug,
+  shopLoginLink,
+  generateShopPassword,
+} from '../config/plans.js';
 
 function validate(req, res) {
   const errors = validationResult(req);
@@ -22,9 +27,13 @@ function enrichShop(shop, username) {
   const planStart = obj.planStart || obj.createdAt;
   const expiry = obj.expiry;
   const plan = getPlan(obj.package);
+  const maxProducts =
+    obj.maxProductsOverride != null ? obj.maxProductsOverride : plan.maxProducts;
   const limits = {
     ...plan,
-    maxProducts: obj.maxProductsOverride || plan.maxProducts,
+    maxProducts,
+    hasPos: Boolean(plan.features?.pos),
+    unlimitedProducts: maxProducts == null,
   };
   const paymentOverdue = (() => {
     if (obj.payment === 'paid') return false;
@@ -47,6 +56,7 @@ function enrichShop(shop, username) {
     ...obj,
     id: obj._id,
     username: username || null,
+    loginLink: username ? shopLoginLink(username) : null,
     planStart,
     planEnd: expiry,
     durationLabel: Shop.formatDuration(planStart, expiry, obj.durationMonths),
@@ -75,12 +85,16 @@ export async function createShop(req, res, next) {
   try {
     if (!validate(req, res)) return;
 
-    const username = req.body.username.trim().toLowerCase();
+    let username = req.body.username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24);
+    if (!username) {
+      return res.status(400).json({ message: 'Username is required' });
+    }
     const exists = await User.findOne({ username });
     if (exists) {
       return res.status(409).json({ message: 'Username already exists' });
     }
 
+    const password = req.body.password || generateShopPassword();
     const planStart = new Date(req.body.planStart || new Date());
     const durationMonths = Number(req.body.durationMonths) || 12;
     const expiry = req.body.expiry
@@ -117,15 +131,21 @@ export async function createShop(req, res, next) {
 
     await User.create({
       username,
-      password: req.body.password,
+      password,
       role: 'shop',
       shop: shop._id,
     });
 
+    const loginLink = shopLoginLink(username);
     res.status(201).json({
       message: 'Shop created successfully',
       shop: enrichShop(shop, username),
-      credentials: { username },
+      credentials: {
+        username,
+        password,
+        loginLink,
+        note: 'Copy once — passwords are never listed again.',
+      },
     });
   } catch (err) {
     next(err);
@@ -134,14 +154,44 @@ export async function createShop(req, res, next) {
 
 export async function listShops(req, res, next) {
   try {
-    const shops = await Shop.find().sort({ createdAt: -1 });
+    const q = String(req.query.q || '').trim();
+    const status = req.query.status;
+    const pkg = req.query.package;
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 25));
+
+    const filter = {};
+    if (pkg) filter.package = pkg;
+    if (status && ['active', 'expired', 'blocked', 'suspended'].includes(status)) {
+      filter.status = status;
+    }
+    if (q) {
+      filter.$or = [
+        { name: new RegExp(q, 'i') },
+        { owner: new RegExp(q, 'i') },
+        { email: new RegExp(q, 'i') },
+        { phone: new RegExp(q, 'i') },
+        { slug: new RegExp(q, 'i') },
+      ];
+    }
+
+    const [shops, total] = await Promise.all([
+      Shop.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      Shop.countDocuments(filter),
+    ]);
+
     const withUsers = await Promise.all(
       shops.map(async (shop) => {
-        const user = await User.findOne({ shop: shop._id, role: 'shop' }).select('username isActive');
+        const user = await User.findOne({ shop: shop._id, role: 'shop' }).select(
+          'username isActive'
+        );
         return enrichShop(shop, user?.username);
       })
     );
-    res.json({ shops: withUsers });
+    res.json({ shops: withUsers, total, page, limit });
   } catch (err) {
     next(err);
   }
@@ -305,7 +355,39 @@ export async function deleteShop(req, res, next) {
 
 export async function superStats(req, res, next) {
   try {
-    const shops = await Shop.find();
+    const [shops, salesAgg, productAgg, customerCount, expenseAgg, pendingRequests] =
+      await Promise.all([
+        Shop.find(),
+        Sale.aggregate([
+          {
+            $group: {
+              _id: null,
+              revenue: { $sum: '$total' },
+              salesCount: { $sum: 1 },
+            },
+          },
+        ]),
+        Product.aggregate([
+          {
+            $group: {
+              _id: null,
+              stockQty: { $sum: '$qty' },
+              products: { $sum: 1 },
+            },
+          },
+        ]),
+        Customer.countDocuments(),
+        Expense.aggregate([{ $group: { _id: null, total: { $sum: '$amount' } } }]),
+        (async () => {
+          try {
+            const { TenantRequest } = await import('../models/TenantRequest.js');
+            return TenantRequest.countDocuments({ status: 'pending' });
+          } catch {
+            return 0;
+          }
+        })(),
+      ]);
+
     let active = 0;
     let expired = 0;
     let blocked = 0;
@@ -318,7 +400,57 @@ export async function superStats(req, res, next) {
       else if (s.status === 'expired' || isExpired) expired += 1;
       else active += 1;
     }
-    res.json({ total: shops.length, active, expired, blocked, paymentOverdue });
+
+    const revenue = salesAgg[0]?.revenue || 0;
+    const salesCount = salesAgg[0]?.salesCount || 0;
+    const stockQty = productAgg[0]?.stockQty || 0;
+    const products = productAgg[0]?.products || 0;
+    const expenses = expenseAgg[0]?.total || 0;
+
+    // Platform-level profit estimate from sale line items vs current buy prices (approx)
+    const saleDocs = await Sale.find().select('items').lean();
+    const productDocs = await Product.find().select('buyPrice').lean();
+    const buyMap = Object.fromEntries(productDocs.map((p) => [p._id.toString(), p.buyPrice]));
+    let profit = 0;
+    for (const sale of saleDocs) {
+      for (const item of sale.items || []) {
+        const buy =
+          item.buyPrice != null
+            ? item.buyPrice
+            : buyMap[item.product?.toString()] ?? item.price * 0.5;
+        profit += (item.price - buy) * item.qty;
+      }
+    }
+
+    const recentShops = shops
+      .slice()
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 6)
+      .map((s) => ({
+        id: s._id,
+        name: s.name,
+        package: s.package,
+        status: s.status,
+        createdAt: s.createdAt,
+      }));
+
+    res.json({
+      total: shops.length,
+      active,
+      expired,
+      blocked,
+      paymentOverdue,
+      pendingDemoRequests: pendingRequests,
+      revenue: Number(revenue.toFixed(2)),
+      profit: Number(profit.toFixed(2)),
+      expenses: Number(expenses.toFixed(2)),
+      net: Number((profit - expenses).toFixed(2)),
+      salesCount,
+      stockQty,
+      products,
+      customers: customerCount,
+      recentShops,
+    });
   } catch (err) {
     next(err);
   }

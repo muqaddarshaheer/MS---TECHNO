@@ -1,65 +1,132 @@
 import { useEffect, useState } from 'react';
 import api from '../../api';
 
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function TenantRequests() {
   const [requests, setRequests] = useState([]);
+  const [filter, setFilter] = useState('pending');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [credentials, setCredentials] = useState(null);
+  const [busyId, setBusyId] = useState('');
 
   async function load() {
-    const { data } = await api.get('/tenants/signup-requests');
+    const { data } = await api.get('/tenants/signup-requests', {
+      params: filter ? { status: filter } : undefined,
+    });
     setRequests(data.requests || []);
   }
 
   useEffect(() => {
     load().catch((err) => setError(err.response?.data?.message || 'Failed to load'));
-  }, []);
+  }, [filter]);
 
   async function approve(id) {
     setError('');
+    setBusyId(id);
     try {
       const { data } = await api.post(`/tenants/signup-requests/${id}/approve`, {});
       setCredentials(data.credentials);
-      setMessage(`Approved ${data.shop?.name}. Share login credentials with the business.`);
+      setMessage(`Approved ${data.shop?.name}. Share login credentials once.`);
       await load();
     } catch (err) {
       setError(err.response?.data?.message || 'Approve failed');
+    } finally {
+      setBusyId('');
     }
   }
 
   async function reject(id) {
     if (!confirm('Reject this signup request?')) return;
-    await api.post(`/tenants/signup-requests/${id}/reject`, { notes: 'Rejected by admin' });
-    setMessage('Request rejected');
-    await load();
+    setBusyId(id);
+    try {
+      await api.post(`/tenants/signup-requests/${id}/reject`, { notes: 'Rejected by admin' });
+      setMessage('Request rejected');
+      await load();
+    } finally {
+      setBusyId('');
+    }
   }
+
+  const pendingCount = requests.filter((r) => r.status === 'pending').length;
 
   return (
     <div>
-      <h2 className="page-title">Tenant signup requests</h2>
+      <h2 className="page-title">Demo & signup requests</h2>
       <p className="page-sub">
-        Businesses that requested access. Approve to create an isolated shop tenant.
+        Requests from the landing page create pending items here. Approve to provision a shop tenant.
       </p>
       {message && <div className="success">{message}</div>}
       {error && <div className="error">{error}</div>}
+
       {credentials && (
         <div className="card" style={{ marginBottom: '1rem' }}>
-          <strong>New tenant login</strong>
+          <strong>New tenant login (copy once)</strong>
           <p>
             Username: <code>{credentials.username}</code>
           </p>
           <p>
             Password: <code>{credentials.password}</code>
           </p>
-          <p className="page-sub" style={{ marginBottom: 0 }}>
-            Copy these once — the password is hashed and cannot be shown again.
-          </p>
+          {credentials.loginLink && (
+            <p>
+              Link: <code>{credentials.loginLink}</code>
+            </p>
+          )}
+          <div className="row">
+            <button
+              className="btn btn-primary btn-sm"
+              type="button"
+              onClick={async () => {
+                const ok = await copyText(credentials.loginLink || '');
+                setMessage(ok ? 'Shop link copied' : 'Copy failed');
+              }}
+            >
+              Copy shop link
+            </button>
+            <button
+              className="btn btn-outline btn-sm"
+              type="button"
+              onClick={async () => {
+                const ok = await copyText(
+                  `Username: ${credentials.username}\nPassword: ${credentials.password}\nLink: ${credentials.loginLink}`
+                );
+                setMessage(ok ? 'Credentials copied' : 'Copy failed');
+              }}
+            >
+              Copy all
+            </button>
+            <button className="btn btn-outline btn-sm" type="button" onClick={() => setCredentials(null)}>
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 
+      <div className="row" style={{ marginBottom: '0.85rem' }}>
+        {['pending', 'approved', 'rejected', ''].map((f) => (
+          <button
+            key={f || 'all'}
+            type="button"
+            className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setFilter(f)}
+          >
+            {f || 'all'}
+            {f === 'pending' ? ` (${pendingCount || '…'})` : ''}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-2">
-        {requests.length === 0 && <p className="empty">No signup requests yet</p>}
+        {requests.length === 0 && <p className="empty">No requests in this filter</p>}
         {requests.map((r) => (
           <div className="card" key={r._id}>
             <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -84,10 +151,18 @@ export default function TenantRequests() {
             </p>
             {r.status === 'pending' && (
               <div className="row" style={{ marginTop: '0.75rem' }}>
-                <button className="btn btn-primary btn-sm" onClick={() => approve(r._id)}>
-                  Approve tenant
+                <button
+                  className="btn btn-primary btn-sm"
+                  disabled={busyId === r._id}
+                  onClick={() => approve(r._id)}
+                >
+                  {busyId === r._id ? 'Working...' : 'Approve tenant'}
                 </button>
-                <button className="btn btn-danger btn-sm" onClick={() => reject(r._id)}>
+                <button
+                  className="btn btn-danger btn-sm"
+                  disabled={busyId === r._id}
+                  onClick={() => reject(r._id)}
+                >
                   Reject
                 </button>
               </div>

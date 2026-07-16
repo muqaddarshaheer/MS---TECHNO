@@ -50,10 +50,10 @@ export default function Signup() {
 
       <div className="signup-wrap">
         <div className="card signup-card">
-          <h1 className="page-title">Request a shop tenant</h1>
+          <h1 className="page-title">Request a free demo</h1>
           <p className="page-sub">
-            Submit your business details. MS Techno reviews and activates your isolated
-            workspace with login credentials.
+            Submit your business details. MS Techno reviews the request in Super Admin and
+            activates your isolated shop with login credentials.
           </p>
 
           {done ? (

@@ -4,7 +4,7 @@ import DashboardShell from './DashboardShell';
 const links = [
   { to: '/super', end: true, label: 'Dashboard' },
   { to: '/super/shops', label: 'All Shops' },
-  { to: '/super/requests', label: 'Signup requests' },
+  { to: '/super/requests', label: 'Demo requests' },
   { to: '/super/announcements', label: 'Announcements' },
   { to: '/super/password', label: 'Password' },
 ];

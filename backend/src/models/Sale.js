@@ -6,6 +6,7 @@ const saleItemSchema = new mongoose.Schema(
     name: String,
     qty: { type: Number, required: true, min: 1 },
     price: { type: Number, required: true, min: 0 },
+    buyPrice: { type: Number, default: 0, min: 0 },
   },
   { _id: false }
 );
@@ -29,5 +30,7 @@ const saleSchema = new mongoose.Schema(
 );
 
 saleSchema.index({ shop: 1, invoice: 1 }, { unique: true });
+saleSchema.index({ shop: 1, date: -1 });
+saleSchema.index({ shop: 1, createdAt: -1 });
 
 export const Sale = mongoose.model('Sale', saleSchema);
