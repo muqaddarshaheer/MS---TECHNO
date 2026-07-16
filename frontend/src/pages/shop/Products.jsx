@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 const emptyForm = {
   name: '',
   brand: '',
-  category: 'Oud',
+  category: 'General',
   qty: 10,
   buyPrice: 2000,
   sellPrice: 3500,

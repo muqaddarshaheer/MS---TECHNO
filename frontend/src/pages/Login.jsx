@@ -36,7 +36,7 @@ export default function Login() {
           MS <span>TECHNO</span>
         </Link>
         <p className="page-sub" style={{ textAlign: 'center' }}>
-          Cloud Perfume ERP — enter your username and password
+          Cloud Retail ERP — enter your username and password
         </p>
 
         <form onSubmit={onSubmit}>

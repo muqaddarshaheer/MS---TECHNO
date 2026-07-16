@@ -56,7 +56,7 @@ export async function createProduct(req, res, next) {
       });
     }
 
-    const name = normalizeName(req.body.name) || 'New Perfume';
+    const name = normalizeName(req.body.name) || 'New Product';
     const barcode = normalizeBarcode(req.body.barcode) || `SKU${Date.now()}`;
 
     const dupName = await Product.findOne({

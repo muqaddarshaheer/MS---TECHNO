@@ -23,7 +23,7 @@ function validate(req, res) {
 export async function getPublicPlans(req, res) {
   res.json({
     platform: 'MS Techno',
-    product: 'Cloud Perfume ERP',
+    product: 'Cloud Retail ERP',
     multiTenant: true,
     plans: listPlans({ publicOnly: true }),
   });

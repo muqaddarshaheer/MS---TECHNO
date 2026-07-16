@@ -44,7 +44,7 @@ export default function Landing() {
 
       <section className="saas-hero hero-v2">
         <div className="hero-copy">
-          <p className="saas-eyebrow">Perfume retail ERP · Multi-tenant SaaS</p>
+          <p className="saas-eyebrow">Multi-tenant retail ERP · SaaS</p>
           <h1 className="hero-brand">MS TECHNO</h1>
           <p className="saas-lead">
             One platform. Isolated shops. Stock, sales, and reports your tenants can trust —
@@ -71,7 +71,7 @@ export default function Landing() {
       <section className="saas-section" id="features">
         <h2>Built for operators who sell software</h2>
         <p className="page-sub section-lead">
-          Onboard perfume businesses, assign packages, and keep every store&apos;s data private.
+          Onboard businesses, assign packages, and keep every store&apos;s data private.
         </p>
         <div className="grid grid-3 feature-grid">
           <article className="feature-block">
@@ -122,7 +122,7 @@ export default function Landing() {
       </section>
 
       <section className="saas-section testimonial-section">
-        <h2>Built for perfume retail</h2>
+        <h2>Built for multi-shop retail</h2>
         <blockquote className="testimonial">
           “We onboard shops in minutes — each tenant gets their own login, stock, and invoices.”
           <cite>— MS Techno platform operators</cite>
@@ -134,7 +134,7 @@ export default function Landing() {
           <strong className="brand">
             MS <span>TECHNO</span>
           </strong>
-          <p className="page-sub">Cloud Perfume Management ERP</p>
+          <p className="page-sub">Cloud Retail Management ERP</p>
         </div>
         <div className="row">
           <Link to="/login">Login</Link>

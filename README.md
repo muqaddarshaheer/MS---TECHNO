@@ -1,11 +1,11 @@
 # MS Techno ERP (Multi-tenant SaaS)
 
-Cloud perfume POS / ERP you can sell to multiple businesses. Each shop is an **isolated tenant**.
+Cloud multi-tenant POS / ERP you can sell to multiple businesses. Each shop is an **isolated tenant**.
 
 ## Structure
 
 ```
-perfume/
+ms-techno/
   backend/     Express + MongoDB API
   frontend/    React (Vite) SPA
   legacy/      Original vanilla demo
