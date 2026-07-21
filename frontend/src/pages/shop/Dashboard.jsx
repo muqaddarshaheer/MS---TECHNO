@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
+import { Link } from 'react-router-dom';
 import api, { money } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -75,13 +76,77 @@ export default function ShopDashboard() {
 
       <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
         <div className="card stat">
-          <h6>Products</h6>
-          <h2>{stats.products}</h2>
+          <h6>Today sales</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.todaySales ?? stats.todayRevenue)}</h2>
         </div>
         <div className="card stat">
-          <h6>Stock</h6>
-          <h2>{stats.stockQty}</h2>
+          <h6>Monthly sales</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.monthSales ?? 0)}</h2>
         </div>
+        <div className="card stat">
+          <h6>Yearly sales</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.yearSales ?? 0)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Total purchase</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.totalPurchase ?? 0)}</h2>
+        </div>
+      </div>
+
+      <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
+        <div className="card stat">
+          <h6>Today purchase</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.todayPurchase ?? 0)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Month purchase</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.monthPurchase ?? 0)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Expenses today</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.expensesToday ?? 0)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Gross profit</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.profit ?? 0)}</h2>
+        </div>
+      </div>
+
+      <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
+        <div className="card stat">
+          <h6>Cash balance</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.cashBalance ?? 0)}</h2>
+        </div>
+        <div className="card stat">
+          <h6>Bank balance</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.bankBalance ?? 0)}</h2>
+        </div>
+        <div className="card stat warn">
+          <h6>Customer due</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.customerDue ?? 0)}</h2>
+        </div>
+        <div className="card stat danger">
+          <h6>Supplier due</h6>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.supplierDue ?? 0)}</h2>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: '1.05rem' }}>Daily closing</h3>
+            <p className="page-sub" style={{ margin: '0.25rem 0 0' }}>
+              Today {money(stats.todaySales ?? 0)} sales · {money(stats.expensesToday ?? 0)} expenses ·
+              net {money((stats.todaySales ?? 0) - (stats.expensesToday ?? 0))}
+            </p>
+          </div>
+          <Link className="btn btn-outline btn-sm" to="/shop/accounts/daily">
+            Open daily closing
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
         <div className="card stat warn">
           <h6>Low stock</h6>
           <h2>{stats.low}</h2>
@@ -90,24 +155,13 @@ export default function ShopDashboard() {
           <h6>Out of stock</h6>
           <h2>{stats.out}</h2>
         </div>
-      </div>
-
-      <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
         <div className="card stat">
-          <h6>Revenue</h6>
-          <h2 style={{ fontSize: '1.1rem' }}>{money(stats.revenue)}</h2>
+          <h6>Products</h6>
+          <h2>{stats.products}</h2>
         </div>
         <div className="card stat">
-          <h6>Profit</h6>
+          <h6>Profit (all)</h6>
           <h2 style={{ fontSize: '1.1rem' }}>{money(stats.profit)}</h2>
-        </div>
-        <div className="card stat">
-          <h6>Customers</h6>
-          <h2>{stats.customers ?? 0}</h2>
-        </div>
-        <div className="card stat">
-          <h6>Net</h6>
-          <h2 style={{ fontSize: '1.1rem' }}>{money(stats.net)}</h2>
         </div>
       </div>
 

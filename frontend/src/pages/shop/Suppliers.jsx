@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import api, { money } from '../../api';
 
-export default function Customers() {
-  const [customers, setCustomers] = useState([]);
+export default function Suppliers() {
+  const [suppliers, setSuppliers] = useState([]);
   const [banks, setBanks] = useState([]);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [openingDue, setOpeningDue] = useState('0');
   const [payId, setPayId] = useState('');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('Cash');
@@ -15,8 +16,8 @@ export default function Customers() {
   const [message, setMessage] = useState('');
 
   async function load() {
-    const [c, b] = await Promise.all([api.get('/customers'), api.get('/accounts/banks')]);
-    setCustomers(c.data.customers || []);
+    const [s, b] = await Promise.all([api.get('/suppliers'), api.get('/accounts/banks')]);
+    setSuppliers(s.data.suppliers || []);
     const list = b.data.banks || [];
     setBanks(list);
     if (!bankAccount && list[0]) setBankAccount(list[0]._id);
@@ -30,10 +31,15 @@ export default function Customers() {
     e.preventDefault();
     setError('');
     try {
-      await api.post('/customers', { name, phone });
+      await api.post('/suppliers', {
+        name,
+        phone,
+        openingDue: Number(openingDue) || 0,
+      });
       setName('');
       setPhone('');
-      setMessage('Customer saved');
+      setOpeningDue('0');
+      setMessage('Supplier added');
       await load();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed');
@@ -45,16 +51,16 @@ export default function Customers() {
     if (!payId) return;
     setError('');
     try {
-      await api.post(`/customers/${payId}/payments`, {
+      await api.post(`/suppliers/${payId}/payments`, {
         amount: Number(amount) || 0,
         method,
         bankAccount: method === 'Cash' ? null : bankAccount,
       });
       setAmount('');
-      setMessage('Payment received');
+      setMessage('Payment recorded');
       await load();
-      if (ledger?.customer?._id === payId) {
-        const { data } = await api.get(`/customers/${payId}/ledger`);
+      if (ledger?.supplier?._id === payId) {
+        const { data } = await api.get(`/suppliers/${payId}/ledger`);
         setLedger(data);
       }
     } catch (err) {
@@ -63,20 +69,20 @@ export default function Customers() {
   }
 
   async function openLedger(id) {
-    const { data } = await api.get(`/customers/${id}/ledger`);
+    const { data } = await api.get(`/suppliers/${id}/ledger`);
     setLedger(data);
     setPayId(id);
   }
 
   return (
     <div>
-      <h2 className="page-title">Customers</h2>
+      <h2 className="page-title">Suppliers</h2>
       {error && <div className="error">{error}</div>}
       {message && <div className="success">{message}</div>}
 
       <div className="grid grid-2" style={{ marginBottom: '1rem' }}>
         <div className="card">
-          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>Add customer</h3>
+          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>Add supplier</h3>
           <form onSubmit={add}>
             <div className="field">
               <label>Name</label>
@@ -86,24 +92,31 @@ export default function Customers() {
               <label>Phone</label>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
-            <button className="btn btn-primary">Save</button>
+            <div className="field">
+              <label>Opening due</label>
+              <input
+                type="number"
+                min="0"
+                value={openingDue}
+                onChange={(e) => setOpeningDue(e.target.value)}
+              />
+            </div>
+            <button className="btn btn-primary">Add</button>
           </form>
         </div>
 
         <div className="card">
-          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>Receive payment</h3>
+          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>Pay due</h3>
           <form onSubmit={pay}>
             <div className="field">
-              <label>Customer</label>
+              <label>Supplier</label>
               <select value={payId} onChange={(e) => setPayId(e.target.value)} required>
                 <option value="">Select</option>
-                {customers
-                  .filter((c) => (c.balance || 0) > 0)
-                  .map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name} · due {money(c.balance)}
-                    </option>
-                  ))}
+                {suppliers.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.name} · due {money(s.balance)}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="field">
@@ -137,7 +150,7 @@ export default function Customers() {
                 </select>
               </div>
             )}
-            <button className="btn btn-primary">Receive</button>
+            <button className="btn btn-primary">Pay</button>
           </form>
         </div>
       </div>
@@ -148,29 +161,25 @@ export default function Customers() {
             <tr>
               <th>Name</th>
               <th>Phone</th>
-              <th>Orders</th>
-              <th>Spent</th>
               <th>Due</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {!customers.length && (
+            {!suppliers.length && (
               <tr>
-                <td colSpan={6} className="empty">
-                  No customers
+                <td colSpan={4} className="empty">
+                  No suppliers
                 </td>
               </tr>
             )}
-            {customers.map((c) => (
-              <tr key={c._id}>
-                <td>{c.name}</td>
-                <td>{c.phone || '—'}</td>
-                <td>{c.orders}</td>
-                <td>{money(c.spent)}</td>
-                <td>{money(c.balance || 0)}</td>
+            {suppliers.map((s) => (
+              <tr key={s._id}>
+                <td>{s.name}</td>
+                <td>{s.phone || '—'}</td>
+                <td>{money(s.balance)}</td>
                 <td>
-                  <button className="btn btn-outline btn-sm" type="button" onClick={() => openLedger(c._id)}>
+                  <button className="btn btn-outline btn-sm" type="button" onClick={() => openLedger(s._id)}>
                     Ledger
                   </button>
                 </td>
@@ -183,7 +192,7 @@ export default function Customers() {
       {ledger && (
         <div className="card table-wrap">
           <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>
-            Ledger · {ledger.customer?.name} · due {money(ledger.customer?.balance)}
+            Ledger · {ledger.supplier?.name} · due {money(ledger.supplier?.balance)}
           </h3>
           <table>
             <thead>

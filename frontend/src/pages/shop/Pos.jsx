@@ -8,20 +8,35 @@ import {
   setStoredPaperSize,
 } from '../../utils/thermalReceipt';
 
+const BANK_METHODS = ['Bank Transfer', 'JazzCash', 'EasyPaisa', 'Card'];
+
 export default function Pos() {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [sales, setSales] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [banks, setBanks] = useState([]);
   const [query, setQuery] = useState('');
   const [cart, setCart] = useState([]);
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(5);
+  const [payMode, setPayMode] = useState('single');
   const [payment, setPayment] = useState('Cash');
+  const [cashAmt, setCashAmt] = useState('');
+  const [bankAmt, setBankAmt] = useState('');
+  const [bankMethod, setBankMethod] = useState('JazzCash');
+  const [bankAccount, setBankAccount] = useState('');
+  const [creditAmt, setCreditAmt] = useState('');
+  const [customerId, setCustomerId] = useState('');
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [source, setSource] = useState('Walk-in');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [lastSale, setLastSale] = useState(null);
+  const [holds, setHolds] = useState([]);
+  const [activeHoldId, setActiveHoldId] = useState('');
   const [paperSize, setPaperSize] = useState(getStoredPaperSize);
   const [autoPrint, setAutoPrint] = useState(
     () => localStorage.getItem('ms_thermal_autoprint') !== '0'
@@ -52,13 +67,22 @@ export default function Pos() {
       autoPrint: opts.autoPrint ?? false,
     });
   }
+
   async function load() {
-    const [p, s] = await Promise.all([
+    const [p, s, c, b, h] = await Promise.all([
       api.get('/products', { params: { limit: 100 } }),
       api.get('/sales', { params: { limit: 50 } }),
+      api.get('/customers'),
+      api.get('/accounts/banks'),
+      api.get('/sales/holds'),
     ]);
     setProducts(p.data.products || []);
     setSales(s.data.sales || []);
+    setCustomers(c.data.customers || []);
+    const list = b.data.banks || [];
+    setBanks(list);
+    if (!bankAccount && list[0]) setBankAccount(list[0]._id);
+    setHolds(h.data.holds || []);
   }
 
   useEffect(() => {
@@ -128,7 +152,56 @@ export default function Pos() {
   const today = new Date().toISOString().split('T')[0];
   const todaySales = sales.filter((s) => s.date === today);
 
-  async function completeSale() {
+  function buildPaymentPayload() {
+    if (payMode === 'single') {
+      if (payment === 'Credit') {
+        return { payments: [], creditAmount: Number(total.toFixed(2)), payment: 'Credit' };
+      }
+      const needsBank = BANK_METHODS.includes(payment);
+      return {
+        payments: [
+          {
+            method: payment,
+            amount: Number(total.toFixed(2)),
+            bankAccount: needsBank ? bankAccount || null : null,
+          },
+        ],
+        creditAmount: 0,
+        payment,
+      };
+    }
+
+    const cash = Number(cashAmt) || 0;
+    const bank = Number(bankAmt) || 0;
+    const credit = Number(creditAmt) || 0;
+    const payments = [];
+    if (cash > 0) payments.push({ method: 'Cash', amount: cash });
+    if (bank > 0) {
+      payments.push({
+        method: bankMethod,
+        amount: bank,
+        bankAccount: bankAccount || null,
+      });
+    }
+    return {
+      payments,
+      creditAmount: credit,
+      payment: credit >= total && cash + bank === 0 ? 'Credit' : payments[0]?.method || 'Credit',
+    };
+  }
+
+  function resetCartFields() {
+    setCart([]);
+    setQuery('');
+    setDiscount(0);
+    setTax(5);
+    setCashAmt('');
+    setBankAmt('');
+    setCreditAmt('');
+    setActiveHoldId('');
+  }
+
+  async function holdSale() {
     if (!cart.length || busyLock.current) {
       if (!cart.length) setError('Cart is empty');
       return;
@@ -137,20 +210,128 @@ export default function Pos() {
     setBusy(true);
     setError('');
     try {
+      const selected = customers.find((c) => c._id === customerId);
+      await api.post('/sales/holds', {
+        label: selected?.name || newCustomerName.trim() || 'Hold',
+        customerId: customerId || null,
+        customerName: selected?.name || newCustomerName.trim() || 'Walk-in',
+        customerPhone: selected?.phone || newCustomerPhone.trim() || '',
+        items: cart,
+        discountPct: Number(discount) || 0,
+        taxPct: Number(tax) || 0,
+        source,
+        payment,
+        payMode,
+        cashAmt: Number(cashAmt) || 0,
+        bankAmt: Number(bankAmt) || 0,
+        bankMethod,
+        bankAccount: bankAccount || null,
+        creditAmt: Number(creditAmt) || 0,
+      });
+      setMessage('Invoice held — resume anytime from Held list');
+      resetCartFields();
+      await load();
+      searchRef.current?.focus();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Hold failed');
+    } finally {
+      busyLock.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function resumeHold(hold) {
+    setError('');
+    setCart(
+      (hold.items || []).map((it) => ({
+        productId: it.productId,
+        name: it.name,
+        qty: it.qty,
+        price: it.price,
+        max: it.max || it.qty,
+      }))
+    );
+    setDiscount(hold.discountPct || 0);
+    setTax(hold.taxPct ?? 5);
+    setSource(hold.source || 'Walk-in');
+    setPayment(hold.payment || 'Cash');
+    setPayMode(hold.payMode || 'single');
+    setCashAmt(hold.cashAmt ? String(hold.cashAmt) : '');
+    setBankAmt(hold.bankAmt ? String(hold.bankAmt) : '');
+    setBankMethod(hold.bankMethod || 'JazzCash');
+    setBankAccount(hold.bankAccount || bankAccount);
+    setCreditAmt(hold.creditAmt ? String(hold.creditAmt) : '');
+    setCustomerId(hold.customerId || '');
+    setNewCustomerName(hold.customerId ? '' : hold.customerName || '');
+    setNewCustomerPhone(hold.customerId ? '' : hold.customerPhone || '');
+    setActiveHoldId(hold._id);
+    setMessage(`Resumed hold: ${hold.label || hold.customerName}`);
+  }
+
+  async function discardHold(id) {
+    try {
+      await api.delete(`/sales/holds/${id}`);
+      if (activeHoldId === id) setActiveHoldId('');
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not delete hold');
+    }
+  }
+
+  async function completeSale() {
+    if (!cart.length || busyLock.current) {
+      if (!cart.length) setError('Cart is empty');
+      return;
+    }
+    const payload = buildPaymentPayload();
+    const paid = (payload.payments || []).reduce((s, p) => s + p.amount, 0);
+    const credit = Number(payload.creditAmount) || 0;
+    if (Math.abs(paid + credit - total) > 0.05) {
+      setError(`Payments + credit must equal ${money(total)}`);
+      return;
+    }
+    if (credit > 0 && !customerId && !(newCustomerName.trim() && newCustomerPhone.trim())) {
+      setError('Select or create a customer for credit / udhaar');
+      return;
+    }
+
+    busyLock.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      let resolvedCustomerId = customerId || null;
+      if (!resolvedCustomerId && newCustomerPhone.trim() && newCustomerName.trim()) {
+        const { data: created } = await api.post('/customers', {
+          name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim(),
+        });
+        resolvedCustomerId = created.customer._id;
+      }
+
+      const selected = customers.find((c) => c._id === resolvedCustomerId);
       const { data } = await api.post('/sales', {
         items: cart.map((c) => ({ productId: c.productId, qty: c.qty })),
         discountPct: Number(discount) || 0,
         taxPct: Number(tax) || 0,
-        payment,
+        payments: payload.payments,
+        creditAmount: payload.creditAmount,
+        payment: payload.payment,
+        bankAccount: bankAccount || null,
         source,
-        customerName: 'Walk-in',
+        customerId: resolvedCustomerId,
+        customerName: selected?.name || newCustomerName.trim() || 'Walk-in',
+        customerPhone: selected?.phone || newCustomerPhone.trim() || '',
       });
       setMessage(`Sale complete — ${data.invoice} · ${money(data.total)}`);
       setLastSale(data);
-      setCart([]);
-      setQuery('');
-      setDiscount(0);
-      setTax(5);
+      if (activeHoldId) {
+        try {
+          await api.delete(`/sales/holds/${activeHoldId}`);
+        } catch {
+          /* ignore */
+        }
+      }
+      resetCartFields();
       await load();
       searchRef.current?.focus();
       if (autoPrint) {
@@ -275,6 +456,48 @@ export default function Pos() {
 
           <div className="grid grid-pos" style={{ marginTop: '0.75rem' }}>
             <div className="field">
+              <label>Customer</label>
+              <select
+                value={customerId}
+                onChange={(e) => {
+                  setCustomerId(e.target.value);
+                  if (e.target.value) {
+                    setNewCustomerName('');
+                    setNewCustomerPhone('');
+                  }
+                }}
+              >
+                <option value="">Walk-in</option>
+                {customers.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                    {c.phone ? ` · ${c.phone}` : ''}
+                    {(c.balance || 0) > 0 ? ` · due ${money(c.balance)}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {!customerId && (
+              <>
+                <div className="field">
+                  <label>New name (credit)</label>
+                  <input
+                    value={newCustomerName}
+                    onChange={(e) => setNewCustomerName(e.target.value)}
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="field">
+                  <label>New phone</label>
+                  <input
+                    value={newCustomerPhone}
+                    onChange={(e) => setNewCustomerPhone(e.target.value)}
+                    placeholder="For udhaar"
+                  />
+                </div>
+              </>
+            )}
+            <div className="field">
               <label>Disc %</label>
               <input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} />
             </div>
@@ -283,13 +506,75 @@ export default function Pos() {
               <input type="number" value={tax} onChange={(e) => setTax(e.target.value)} />
             </div>
             <div className="field">
-              <label>Payment</label>
-              <select value={payment} onChange={(e) => setPayment(e.target.value)}>
-                {['Cash', 'JazzCash', 'EasyPaisa', 'Bank Transfer'].map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
+              <label>Pay mode</label>
+              <select value={payMode} onChange={(e) => setPayMode(e.target.value)}>
+                <option value="single">Single method</option>
+                <option value="split">Split (cash + bank + credit)</option>
               </select>
             </div>
+            {payMode === 'single' ? (
+              <div className="field">
+                <label>Payment</label>
+                <select value={payment} onChange={(e) => setPayment(e.target.value)}>
+                  {['Cash', 'JazzCash', 'EasyPaisa', 'Bank Transfer', 'Card', 'Credit'].map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <>
+                <div className="field">
+                  <label>Cash</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={cashAmt}
+                    onChange={(e) => setCashAmt(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label>Bank amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={bankAmt}
+                    onChange={(e) => setBankAmt(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label>Bank method</label>
+                  <select value={bankMethod} onChange={(e) => setBankMethod(e.target.value)}>
+                    {BANK_METHODS.map((m) => (
+                      <option key={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Credit / udhaar</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={creditAmt}
+                    onChange={(e) => setCreditAmt(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+            {(payMode === 'split' || BANK_METHODS.includes(payment)) && (
+              <div className="field">
+                <label>Bank account</label>
+                <select value={bankAccount} onChange={(e) => setBankAccount(e.target.value)}>
+                  {banks.map((b) => (
+                    <option key={b._id} value={b._id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="field">
               <label>Source</label>
               <select value={source} onChange={(e) => setSource(e.target.value)}>
@@ -327,9 +612,16 @@ export default function Pos() {
             </button>
             <button
               className="btn btn-outline"
+              onClick={holdSale}
+              disabled={busy || !cart.length}
+              type="button"
+            >
+              Hold invoice
+            </button>
+            <button
+              className="btn btn-outline"
               onClick={() => {
-                setCart([]);
-                setQuery('');
+                resetCartFields();
               }}
               disabled={busy}
             >
@@ -370,12 +662,33 @@ export default function Pos() {
         </div>
 
         <div className="card">
-          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>Today&apos;s sales</h3>
+          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>Held invoices</h3>
+          {!holds.length && <p className="empty">No held invoices</p>}
+          {holds.map((h) => (
+            <div key={h._id} className="cart-item">
+              <span>
+                {h.label || h.customerName} · {(h.items || []).length} items
+                {activeHoldId === h._id ? ' · active' : ''}
+              </span>
+              <div className="row">
+                <button className="btn btn-primary btn-sm" type="button" onClick={() => resumeHold(h)}>
+                  Resume
+                </button>
+                <button className="btn btn-danger btn-sm" type="button" onClick={() => discardHold(h._id)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <h3 style={{ margin: '1rem 0 0.75rem', fontFamily: 'var(--display)' }}>Today&apos;s sales</h3>
           {!todaySales.length && <p className="empty">No sales today</p>}
           {todaySales.map((s) => (
             <div key={s._id} className="cart-item">
               <span>
                 {s.invoice} · {s.payment}
+                {(s.creditAmount || 0) > 0 ? ` · credit ${money(s.creditAmount)}` : ''}
+                {s.status && s.status !== 'completed' ? ` · ${s.status}` : ''}
               </span>
               <strong>{money(s.total)}</strong>
             </div>

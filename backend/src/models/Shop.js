@@ -30,6 +30,7 @@ const shopSchema = new mongoose.Schema(
     openTime: { type: String, default: '09:00' },
     closeTime: { type: String, default: '22:00' },
     invoiceSeq: { type: Number, default: 1000 },
+    purchaseSeq: { type: Number, default: 1000 },
     /** Multi-tenant SaaS flags */
     isTenant: { type: Boolean, default: true },
     maxProductsOverride: { type: Number, default: null },

@@ -3,11 +3,71 @@ import { Sale } from '../models/Sale.js';
 import { Customer } from '../models/Customer.js';
 import { Shop } from '../models/Shop.js';
 import { Expense } from '../models/Expense.js';
+import { BankAccount } from '../models/BankAccount.js';
+import { Purchase } from '../models/Purchase.js';
 import { getShopId } from '../middleware/auth.js';
 import { planHasPos } from '../config/plans.js';
+import {
+  ensureShopAccountsDefaults,
+  postSaleEntries,
+  getCashBalance,
+  getTotalBankBalance,
+  getPartyDues,
+  todayStr,
+  isBankLikeMethod,
+} from '../services/accountService.js';
 
 function today() {
-  return new Date().toISOString().split('T')[0];
+  return todayStr();
+}
+
+function normalizePayments(body, total) {
+  let payments = Array.isArray(body.payments) ? body.payments : [];
+  let creditAmount = Number(body.creditAmount);
+  if (Number.isNaN(creditAmount)) creditAmount = 0;
+
+  if (!payments.length) {
+    const method = body.payment || 'Cash';
+    if (method === 'Credit') {
+      payments = [];
+      creditAmount = total;
+    } else {
+      payments = [{ method, amount: total, bankAccount: body.bankAccount || null }];
+      creditAmount = 0;
+    }
+  }
+
+  payments = payments
+    .map((p) => ({
+      method: p.method || 'Cash',
+      amount: Number(p.amount) || 0,
+      bankAccount: p.bankAccount || null,
+    }))
+    .filter((p) => p.amount > 0 && p.method !== 'Credit');
+
+  const paid = payments.reduce((s, p) => s + p.amount, 0);
+  const creditFromBody = Number(body.creditAmount);
+  if (!Number.isNaN(creditFromBody) && creditFromBody >= 0 && Array.isArray(body.payments)) {
+    creditAmount = creditFromBody;
+  } else if (creditAmount <= 0) {
+    creditAmount = Math.max(0, Number((total - paid).toFixed(2)));
+  }
+
+  const sum = Number((paid + creditAmount).toFixed(2));
+  if (Math.abs(sum - Number(total.toFixed(2))) > 0.05) {
+    const err = new Error(
+      `Payments (${paid}) + credit (${creditAmount}) must equal total (${total.toFixed(2)})`
+    );
+    err.status = 400;
+    throw err;
+  }
+
+  const primary =
+    creditAmount >= total && paid === 0
+      ? 'Credit'
+      : payments[0]?.method || (creditAmount > 0 ? 'Credit' : 'Cash');
+
+  return { payments, creditAmount, primary };
 }
 
 export async function listSales(req, res, next) {
@@ -31,8 +91,9 @@ export async function listSales(req, res, next) {
 }
 
 export async function createSale(req, res, next) {
+  const shopId = getShopId(req);
+  const decremented = [];
   try {
-    const shopId = getShopId(req);
     const items = req.body.items || [];
     if (!items.length) {
       return res.status(400).json({ message: 'Cart is empty' });
@@ -48,9 +109,10 @@ export async function createSale(req, res, next) {
       });
     }
 
+    await ensureShopAccountsDefaults(shopId);
+
     let subtotal = 0;
     const lineItems = [];
-    const decremented = [];
 
     for (const item of items) {
       const qty = Number(item.qty) || 0;
@@ -64,10 +126,7 @@ export async function createSale(req, res, next) {
       );
       if (!product) {
         for (const row of decremented) {
-          await Product.updateOne(
-            { _id: row.id, shop: shopId },
-            { $inc: { qty: row.qty } }
-          );
+          await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
         }
         return res.status(400).json({
           message: 'Insufficient stock or product missing',
@@ -90,48 +149,153 @@ export async function createSale(req, res, next) {
     const afterDisc = subtotal - subtotal * (discountPct / 100);
     const total = afterDisc + afterDisc * (taxPct / 100);
 
+    let payments;
+    let creditAmount;
+    let primary;
+    try {
+      ({ payments, creditAmount, primary } = normalizePayments(req.body, total));
+    } catch (e) {
+      for (const row of decremented) {
+        await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+      }
+      return res.status(e.status || 400).json({ message: e.message });
+    }
+
+    for (const p of payments) {
+      if (isBankLikeMethod(p.method)) {
+        if (!p.bankAccount) {
+          const fallback = await BankAccount.findOne({ shop: shopId, isActive: true });
+          if (!fallback) {
+            for (const row of decremented) {
+              await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+            }
+            return res.status(400).json({ message: 'Bank account required for bank payment' });
+          }
+          p.bankAccount = fallback._id;
+        } else {
+          const bank = await BankAccount.findOne({
+            _id: p.bankAccount,
+            shop: shopId,
+            isActive: true,
+          });
+          if (!bank) {
+            for (const row of decremented) {
+              await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+            }
+            return res.status(400).json({ message: 'Invalid bank account' });
+          }
+        }
+      }
+    }
+
+    let customerId = req.body.customerId || null;
+    let customerName = req.body.customerName || 'Walk-in';
+    let customerPhone = req.body.customerPhone || '';
+    const source = req.body.source || 'Walk-in';
+
+    if (customerId) {
+      const existing = await Customer.findOne({ _id: customerId, shop: shopId });
+      if (!existing) {
+        for (const row of decremented) {
+          await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+        }
+        return res.status(400).json({ message: 'Customer not found' });
+      }
+      customerName = existing.name;
+      customerPhone = existing.phone || customerPhone;
+    } else if (creditAmount > 0 || (customerPhone && customerName !== 'Walk-in')) {
+      let customer = null;
+      if (customerPhone) {
+        customer = await Customer.findOne({ shop: shopId, phone: customerPhone });
+      }
+      if (!customer && customerName && customerName !== 'Walk-in') {
+        customer = await Customer.findOne({ shop: shopId, name: customerName });
+      }
+      if (!customer) {
+        customer = await Customer.create({
+          shop: shopId,
+          name: customerName || 'Customer',
+          phone: customerPhone,
+          whatsapp: req.body.customerWhatsapp || customerPhone,
+          email: req.body.customerEmail || '',
+          source,
+          orders: 0,
+          spent: 0,
+          balance: 0,
+        });
+      }
+      customerId = customer._id;
+      customerName = customer.name;
+      customerPhone = customer.phone || customerPhone;
+    }
+
+    if (creditAmount > 0 && !customerId) {
+      for (const row of decremented) {
+        await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+      }
+      return res.status(400).json({ message: 'Customer required for credit / udhaar sale' });
+    }
+
     shop.invoiceSeq += 1;
     await shop.save();
     const invoice = `INV-${shop.invoiceSeq}`;
 
-    const customerName = req.body.customerName || 'Walk-in';
-    const source = req.body.source || 'Walk-in';
-    const payment = req.body.payment || 'Cash';
-
     const sale = await Sale.create({
       shop: shopId,
       invoice,
+      customer: customerId,
       customerName,
-      customerPhone: req.body.customerPhone || '',
+      customerPhone,
       items: lineItems,
       subtotal,
       discountPct,
       taxPct,
       total,
-      payment,
+      payment: primary,
+      payments,
+      creditAmount,
       source,
       date: today(),
     });
 
-    let customer = await Customer.findOne({ shop: shopId, name: customerName });
-    if (!customer) {
-      customer = await Customer.create({
-        shop: shopId,
-        name: customerName,
-        phone: req.body.customerPhone || '',
-        email: req.body.customerEmail || '',
-        source,
-        orders: 0,
-        spent: 0,
-      });
+    await postSaleEntries({ shopId, sale, payments, creditAmount });
+
+    if (customerId) {
+      await Customer.findOneAndUpdate(
+        { _id: customerId, shop: shopId },
+        {
+          $inc: { orders: 1, spent: total },
+          $set: { source },
+        }
+      );
+    } else if (customerName && customerName !== 'Walk-in') {
+      let customer = await Customer.findOne({ shop: shopId, name: customerName });
+      if (!customer) {
+        customer = await Customer.create({
+          shop: shopId,
+          name: customerName,
+          phone: customerPhone,
+          email: req.body.customerEmail || '',
+          source,
+          orders: 0,
+          spent: 0,
+        });
+      }
+      customer.orders += 1;
+      customer.spent += total;
+      customer.source = source;
+      await customer.save();
     }
-    customer.orders += 1;
-    customer.spent += total;
-    customer.source = source;
-    await customer.save();
 
     res.status(201).json({ sale, invoice, total, shopName: shop.name });
   } catch (err) {
+    for (const row of decremented) {
+      try {
+        await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+      } catch {
+        /* ignore rollback errors */
+      }
+    }
     next(err);
   }
 }
@@ -150,17 +314,29 @@ export async function getSale(req, res, next) {
 export async function dashboardStats(req, res, next) {
   try {
     const shopId = getShopId(req);
-    const [products, sales, expenses, shop] = await Promise.all([
+    await ensureShopAccountsDefaults(shopId);
+
+    const [products, sales, expenses, shop, purchases] = await Promise.all([
       Product.find({ shop: shopId }),
       Sale.find({ shop: shopId }).sort({ createdAt: -1 }),
       Expense.find({ shop: shopId }),
       Shop.findById(shopId),
+      Purchase.find({ shop: shopId, status: { $ne: 'cancelled' } }),
     ]);
 
     const stockQty = products.reduce((s, p) => s + p.qty, 0);
     const low = products.filter((p) => p.qty > 0 && p.qty <= 5).length;
     const out = products.filter((p) => p.qty === 0).length;
-    const todaySales = sales.filter((s) => s.date === today());
+    const t = today();
+    const todaySales = sales.filter((s) => s.date === t);
+    const monthKey = t.slice(0, 7);
+    const yearKey = t.slice(0, 4);
+    const monthSales = sales.filter((s) => s.date?.startsWith(monthKey));
+    const yearSales = sales.filter((s) => s.date?.startsWith(yearKey));
+    const expensesToday = expenses.filter((e) => e.date === t);
+    const todayPurchases = purchases.filter((p) => p.date === t);
+    const monthPurchases = purchases.filter((p) => p.date?.startsWith(monthKey));
+    const totalPurchase = purchases.reduce((s, p) => s + (p.total || 0), 0);
     const revenue = sales.reduce((s, x) => s + x.total, 0);
 
     const productMap = Object.fromEntries(products.map((p) => [p._id.toString(), p]));
@@ -175,11 +351,7 @@ export async function dashboardStats(req, res, next) {
       for (const item of sale.items) {
         const p = productMap[item.product?.toString()];
         const buy =
-          item.buyPrice != null
-            ? item.buyPrice
-            : p
-              ? p.buyPrice
-              : item.price * 0.5;
+          item.buyPrice != null ? item.buyPrice : p ? p.buyPrice : item.price * 0.5;
         profit += (item.price - buy) * item.qty;
       }
     }
@@ -221,15 +393,17 @@ export async function dashboardStats(req, res, next) {
         for (const item of sale.items) {
           const p = productMap[item.product?.toString()];
           const buy =
-            item.buyPrice != null
-              ? item.buyPrice
-              : p
-                ? p.buyPrice
-                : item.price * 0.5;
+            item.buyPrice != null ? item.buyPrice : p ? p.buyPrice : item.price * 0.5;
           bucket.profit += (item.price - buy) * item.qty;
         }
       }
     }
+
+    const [cashBalance, bankBalance, dues] = await Promise.all([
+      getCashBalance(shopId),
+      getTotalBankBalance(shopId),
+      getPartyDues(shopId),
+    ]);
 
     const limits = shop?.getPlanLimits?.() || null;
     res.json({
@@ -248,6 +422,17 @@ export async function dashboardStats(req, res, next) {
         customers: customersCount,
         todaySalesCount: todaySales.length,
         todayRevenue: Number(todaySales.reduce((s, x) => s + x.total, 0).toFixed(2)),
+        todaySales: Number(todaySales.reduce((s, x) => s + x.total, 0).toFixed(2)),
+        monthSales: Number(monthSales.reduce((s, x) => s + x.total, 0).toFixed(2)),
+        yearSales: Number(yearSales.reduce((s, x) => s + x.total, 0).toFixed(2)),
+        expensesToday: Number(expensesToday.reduce((s, x) => s + x.amount, 0).toFixed(2)),
+        totalPurchase: Number(totalPurchase.toFixed(2)),
+        todayPurchase: Number(todayPurchases.reduce((s, p) => s + (p.total || 0), 0).toFixed(2)),
+        monthPurchase: Number(monthPurchases.reduce((s, p) => s + (p.total || 0), 0).toFixed(2)),
+        cashBalance,
+        bankBalance,
+        customerDue: dues.customerDue,
+        supplierDue: dues.supplierDue,
       },
       recentOrders: sales.slice(0, 8),
       topSelling,
@@ -291,11 +476,7 @@ export async function report(req, res, next) {
       for (const item of sale.items || []) {
         const p = productMap[item.product?.toString()];
         const buy =
-          item.buyPrice != null
-            ? item.buyPrice
-            : p
-              ? p.buyPrice
-              : item.price * 0.5;
+          item.buyPrice != null ? item.buyPrice : p ? p.buyPrice : item.price * 0.5;
         profit += (item.price - buy) * item.qty;
       }
     }

@@ -44,6 +44,11 @@ export default function ShopLayout() {
         ]
       : []),
     { to: '/shop/customers', label: 'Customers' },
+    { to: '/shop/suppliers', label: 'Suppliers' },
+    { to: '/shop/purchases', label: 'Purchases' },
+    { to: '/shop/accounts/cash', label: 'Cash book' },
+    { to: '/shop/accounts/banks', label: 'Banks' },
+    { to: '/shop/accounts/daily', label: 'Daily closing' },
     ...(hasPos || shop?.package !== 'Basic' ? [{ to: '/shop/reviews', label: 'Reviews' }] : []),
     ...(shop?.package !== 'Basic' ? [{ to: '/shop/profit', label: 'Profit' }] : []),
     { to: '/shop/expenses', label: 'Expenses' },

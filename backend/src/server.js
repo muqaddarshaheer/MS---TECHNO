@@ -14,6 +14,9 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
 import announcementRoutes from './routes/announcementRoutes.js';
 import tenantRoutes from './routes/tenantRoutes.js';
+import accountRoutes from './routes/accountRoutes.js';
+import supplierRoutes from './routes/supplierRoutes.js';
+import purchaseRoutes from './routes/purchaseRoutes.js';
 import { slugify } from './config/plans.js';
 
 const app = express();
@@ -50,6 +53,9 @@ app.use('/api/sales', saleRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/accounts', accountRoutes);
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/purchases', purchaseRoutes);
 app.use('/api/announcements', announcementRoutes);
 
 app.use(errorHandler);

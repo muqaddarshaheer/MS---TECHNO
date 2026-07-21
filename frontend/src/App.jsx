@@ -13,6 +13,11 @@ const Stock = lazy(() => import('./pages/shop/Stock'));
 const Pos = lazy(() => import('./pages/shop/Pos'));
 const Invoices = lazy(() => import('./pages/shop/Invoices'));
 const Customers = lazy(() => import('./pages/shop/Customers'));
+const Suppliers = lazy(() => import('./pages/shop/Suppliers'));
+const Purchases = lazy(() => import('./pages/shop/Purchases'));
+const CashBook = lazy(() => import('./pages/shop/CashBook'));
+const Banks = lazy(() => import('./pages/shop/Banks'));
+const DailyClosing = lazy(() => import('./pages/shop/DailyClosing'));
 const Reviews = lazy(() => import('./pages/shop/Reviews'));
 const Profit = lazy(() => import('./pages/shop/Profit'));
 const Expenses = lazy(() => import('./pages/shop/Expenses'));
@@ -94,6 +99,11 @@ export default function App() {
             }
           />
           <Route path="customers" element={<Customers />} />
+          <Route path="suppliers" element={<Suppliers />} />
+          <Route path="purchases" element={<Purchases />} />
+          <Route path="accounts/cash" element={<CashBook />} />
+          <Route path="accounts/banks" element={<Banks />} />
+          <Route path="accounts/daily" element={<DailyClosing />} />
           <Route path="reviews" element={<Reviews />} />
           <Route path="profit" element={<Profit />} />
           <Route path="expenses" element={<Expenses />} />
