@@ -7,10 +7,10 @@ import {
   supplierPayment,
   supplierLedger,
 } from '../controllers/supplierController.js';
-import { requireAuth, requireShopAccess } from '../middleware/auth.js';
+import { requireAuth, requireShopAccess, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
-router.use(requireAuth, requireShopAccess);
+router.use(requireAuth, requireShopAccess, requirePermission('suppliers'));
 
 router.get('/', listSuppliers);
 router.post('/', createSupplier);

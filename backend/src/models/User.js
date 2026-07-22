@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { encryptPassword } from '../utils/passwordVault.js';
+import { normalizeShopRole, permissionsForRole } from '../config/permissions.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -9,6 +10,13 @@ const userSchema = new mongoose.Schema(
     /** AES vault of shop plaintext password for Super Admin reveal only */
     passwordVault: { type: String, default: null, select: false },
     role: { type: String, enum: ['super', 'shop'], required: true },
+    /** Within a shop: owner | manager | cashier (ignored for super) */
+    shopRole: {
+      type: String,
+      enum: ['owner', 'manager', 'cashier'],
+      default: 'owner',
+    },
+    displayName: { type: String, default: '', trim: true },
     shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null },
     isActive: { type: Boolean, default: true },
   },
@@ -22,7 +30,6 @@ userSchema.pre('save', async function hashPassword(next) {
     if (this.role === 'shop' && plain && !String(plain).startsWith('$2')) {
       this.set('passwordVault', encryptPassword(plain));
     }
-    // Avoid double-hashing if password was already hashed
     if (String(plain).startsWith('$2a$') || String(plain).startsWith('$2b$')) {
       return next();
     }
@@ -38,10 +45,14 @@ userSchema.methods.comparePassword = function comparePassword(candidate) {
 };
 
 userSchema.methods.toSafeJSON = function toSafeJSON() {
+  const shopRole = this.role === 'shop' ? normalizeShopRole(this.shopRole) : null;
   return {
     id: this._id,
     username: this.username,
     role: this.role,
+    shopRole,
+    displayName: this.displayName || '',
+    permissions: this.role === 'shop' ? permissionsForRole(shopRole) : null,
     shop: this.shop,
     isActive: this.isActive,
     createdAt: this.createdAt,
@@ -49,5 +60,6 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
 };
 
 userSchema.index({ shop: 1, role: 1 });
+userSchema.index({ shop: 1, shopRole: 1 });
 
 export const User = mongoose.model('User', userSchema);

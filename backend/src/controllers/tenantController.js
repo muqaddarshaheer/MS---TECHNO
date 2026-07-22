@@ -147,6 +147,8 @@ export async function approveSignupRequest(req, res, next) {
       username,
       password,
       role: 'shop',
+      shopRole: 'owner',
+      displayName: request.ownerName || username,
       shop: shop._id,
     });
 

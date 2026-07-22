@@ -6,10 +6,10 @@ import {
   customerPayment,
   customerLedger,
 } from '../controllers/customerController.js';
-import { requireAuth, requireShopAccess } from '../middleware/auth.js';
+import { requireAuth, requireShopAccess, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
-router.use(requireAuth, requireShopAccess);
+router.use(requireAuth, requireShopAccess, requirePermission('customers'));
 router.get('/', listCustomers);
 router.post('/', createCustomer);
 router.get('/:id', getCustomer);

@@ -9,18 +9,20 @@ import {
   updateBank,
   bankTransfer,
 } from '../controllers/accountController.js';
-import { requireAuth, requireShopAccess } from '../middleware/auth.js';
+import { requireAuth, requireShopAccess, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 router.use(requireAuth, requireShopAccess);
 
-router.get('/summary', accountsSummary);
-router.get('/daily', dailyClosing);
-router.get('/cash', listCashEntries);
-router.post('/cash', createCashMovement);
-router.get('/banks', listBanks);
-router.post('/banks', createBank);
-router.patch('/banks/:id', updateBank);
-router.post('/banks/:id/transfer', bankTransfer);
+/** Cashiers need bank list for POS / receive payment */
+router.get('/banks', requirePermission('pos'), listBanks);
+
+router.get('/summary', requirePermission('accounts'), accountsSummary);
+router.get('/daily', requirePermission('accounts'), dailyClosing);
+router.get('/cash', requirePermission('accounts'), listCashEntries);
+router.post('/cash', requirePermission('accounts'), createCashMovement);
+router.post('/banks', requirePermission('accounts'), createBank);
+router.patch('/banks/:id', requirePermission('accounts'), updateBank);
+router.post('/banks/:id/transfer', requirePermission('accounts'), bankTransfer);
 
 export default router;

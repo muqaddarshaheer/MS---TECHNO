@@ -87,6 +87,8 @@ async function seed() {
         username: s.username,
         password: s.password,
         role: 'shop',
+        shopRole: 'owner',
+        displayName: s.owner || s.username,
         shop: shop._id,
       });
       await Product.insertMany([

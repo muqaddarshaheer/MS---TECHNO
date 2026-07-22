@@ -6,15 +6,15 @@ import {
   deleteProduct,
   adjustStock,
 } from '../controllers/productController.js';
-import { requireAuth, requireShopAccess } from '../middleware/auth.js';
+import { requireAuth, requireShopAccess, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 
 router.use(requireAuth, requireShopAccess);
-router.get('/', listProducts);
-router.post('/', createProduct);
-router.put('/:id', updateProduct);
-router.post('/:id/stock', adjustStock);
-router.delete('/:id', deleteProduct);
+router.get('/', requirePermission('catalog'), listProducts);
+router.post('/', requirePermission('products'), createProduct);
+router.put('/:id', requirePermission('products'), updateProduct);
+router.post('/:id/stock', requirePermission('stock'), adjustStock);
+router.delete('/:id', requirePermission('products'), deleteProduct);
 
 export default router;

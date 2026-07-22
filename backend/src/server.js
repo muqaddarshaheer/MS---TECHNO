@@ -17,7 +17,9 @@ import tenantRoutes from './routes/tenantRoutes.js';
 import accountRoutes from './routes/accountRoutes.js';
 import supplierRoutes from './routes/supplierRoutes.js';
 import purchaseRoutes from './routes/purchaseRoutes.js';
+import staffRoutes from './routes/staffRoutes.js';
 import { slugify } from './config/plans.js';
+import { User } from './models/User.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -56,9 +58,20 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/purchases', purchaseRoutes);
+app.use('/api/staff', staffRoutes);
 app.use('/api/announcements', announcementRoutes);
 
 app.use(errorHandler);
+
+async function backfillShopOwnerRoles() {
+  const result = await User.updateMany(
+    { role: 'shop', $or: [{ shopRole: { $exists: false } }, { shopRole: null }] },
+    { $set: { shopRole: 'owner' } }
+  );
+  if (result.modifiedCount) {
+    console.log(`Backfilled shopRole=owner for ${result.modifiedCount} shop user(s)`);
+  }
+}
 
 async function backfillShopPlans() {
   const shops = await Shop.find({});
@@ -113,6 +126,7 @@ async function start() {
     throw new Error('JWT_SECRET is required');
   }
   await connectDB(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scentra');
+  await backfillShopOwnerRoles();
   await backfillShopPlans();
   app.listen(PORT, () => {
     console.log(`MS Techno API running on http://localhost:${PORT}`);

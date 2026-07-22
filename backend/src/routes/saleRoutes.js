@@ -13,24 +13,24 @@ import {
   getHold,
   deleteHold,
 } from '../controllers/holdController.js';
-import { requireAuth, requireShopAccess } from '../middleware/auth.js';
+import { requireAuth, requireShopAccess, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 
 router.use(requireAuth, requireShopAccess);
-router.get('/dashboard', dashboardStats);
-router.get('/report', report);
+router.get('/dashboard', requirePermission('dashboard'), dashboardStats);
+router.get('/report', requirePermission('reports'), report);
 
-router.get('/holds', listHolds);
-router.post('/holds', createHold);
-router.get('/holds/:id', getHold);
-router.delete('/holds/:id', deleteHold);
+router.get('/holds', requirePermission('pos'), listHolds);
+router.post('/holds', requirePermission('pos'), createHold);
+router.get('/holds/:id', requirePermission('pos'), getHold);
+router.delete('/holds/:id', requirePermission('pos'), deleteHold);
 
-router.get('/returns', listSaleReturns);
+router.get('/returns', requirePermission('invoices'), listSaleReturns);
 
-router.get('/', listSales);
-router.post('/', createSale);
-router.get('/:id', getSale);
-router.post('/:id/returns', createSaleReturn);
+router.get('/', requirePermission('invoices'), listSales);
+router.post('/', requirePermission('pos'), createSale);
+router.get('/:id', requirePermission('invoices'), getSale);
+router.post('/:id/returns', requirePermission('invoices'), createSaleReturn);
 
 export default router;

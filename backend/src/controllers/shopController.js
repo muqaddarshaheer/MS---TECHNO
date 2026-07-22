@@ -134,6 +134,8 @@ export async function createShop(req, res, next) {
       username,
       password,
       role: 'shop',
+      shopRole: 'owner',
+      displayName: req.body.owner || username,
       shop: shop._id,
     });
 

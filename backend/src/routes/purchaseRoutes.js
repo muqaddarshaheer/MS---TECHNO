@@ -6,10 +6,10 @@ import {
   cancelPurchase,
   purchaseReport,
 } from '../controllers/purchaseController.js';
-import { requireAuth, requireShopAccess } from '../middleware/auth.js';
+import { requireAuth, requireShopAccess, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
-router.use(requireAuth, requireShopAccess);
+router.use(requireAuth, requireShopAccess, requirePermission('purchases'));
 
 router.get('/report', purchaseReport);
 router.get('/', listPurchases);

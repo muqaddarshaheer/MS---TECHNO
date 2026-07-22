@@ -1,10 +1,16 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { Shop } from '../models/Shop.js';
+import { roleHasPermission, normalizeShopRole } from '../config/permissions.js';
 
 export function signToken(user) {
   return jwt.sign(
-    { sub: user._id.toString(), role: user.role, shop: user.shop?.toString() || null },
+    {
+      sub: user._id.toString(),
+      role: user.role,
+      shop: user.shop?.toString() || null,
+      shopRole: user.role === 'shop' ? normalizeShopRole(user.shopRole) : null,
+    },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
@@ -36,6 +42,25 @@ export function requireSuper(req, res, next) {
     return res.status(403).json({ message: 'Super admin access required' });
   }
   next();
+}
+
+/** Require a shop module permission (owner/manager/cashier matrix). Super bypasses. */
+export function requirePermission(permission) {
+  return (req, res, next) => {
+    if (req.user?.role === 'super') return next();
+    if (req.user?.role !== 'shop') {
+      return res.status(403).json({ message: 'Shop access required' });
+    }
+    const shopRole = normalizeShopRole(req.user.shopRole);
+    if (!roleHasPermission(shopRole, permission)) {
+      return res.status(403).json({
+        message: `Your role (${shopRole}) cannot access this`,
+        code: 'PERMISSION_DENIED',
+        permission,
+      });
+    }
+    return next();
+  };
 }
 
 export async function requireShopAccess(req, res, next) {

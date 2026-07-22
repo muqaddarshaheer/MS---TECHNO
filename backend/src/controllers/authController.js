@@ -196,7 +196,8 @@ export async function resetShopPassword(req, res, next) {
     const shop = await Shop.findById(req.body.shopId);
     if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
-    const user = await User.findOne({ shop: shop._id, role: 'shop' });
+    const user = await User.findOne({ shop: shop._id, role: 'shop', shopRole: 'owner' })
+      || (await User.findOne({ shop: shop._id, role: 'shop' }));
     if (!user) return res.status(404).json({ message: 'Shop user not found' });
 
     user.password = req.body.newPassword;

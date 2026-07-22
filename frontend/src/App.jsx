@@ -6,6 +6,7 @@ import Signup from './pages/Signup';
 import Login from './pages/Login';
 import ShopLayout from './layouts/ShopLayout';
 import SuperLayout from './layouts/SuperLayout';
+import { can } from './utils/permissions';
 
 const ShopDashboard = lazy(() => import('./pages/shop/Dashboard'));
 const Products = lazy(() => import('./pages/shop/Products'));
@@ -22,6 +23,7 @@ const Reviews = lazy(() => import('./pages/shop/Reviews'));
 const Profit = lazy(() => import('./pages/shop/Profit'));
 const Expenses = lazy(() => import('./pages/shop/Expenses'));
 const Reports = lazy(() => import('./pages/shop/Reports'));
+const Staff = lazy(() => import('./pages/shop/Staff'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const SuperHome = lazy(() => import('./pages/super/Home'));
 const AllShops = lazy(() => import('./pages/super/AllShops'));
@@ -41,6 +43,14 @@ function Protected({ children, role }) {
 function PosGate({ children }) {
   const { user } = useAuth();
   if (!user?.shop?.plan?.hasPos) {
+    return <Navigate to="/shop" replace />;
+  }
+  return children;
+}
+
+function PermGate({ permission, children }) {
+  const { user } = useAuth();
+  if (!can(user, permission)) {
     return <Navigate to="/shop" replace />;
   }
   return children;
@@ -80,13 +90,29 @@ export default function App() {
           }
         >
           <Route index element={<ShopDashboard />} />
-          <Route path="products" element={<Products />} />
-          <Route path="stock" element={<Stock />} />
+          <Route
+            path="products"
+            element={
+              <PermGate permission="products">
+                <Products />
+              </PermGate>
+            }
+          />
+          <Route
+            path="stock"
+            element={
+              <PermGate permission="stock">
+                <Stock />
+              </PermGate>
+            }
+          />
           <Route
             path="pos"
             element={
               <PosGate>
-                <Pos />
+                <PermGate permission="pos">
+                  <Pos />
+                </PermGate>
               </PosGate>
             }
           />
@@ -94,20 +120,100 @@ export default function App() {
             path="invoices"
             element={
               <PosGate>
-                <Invoices />
+                <PermGate permission="invoices">
+                  <Invoices />
+                </PermGate>
               </PosGate>
             }
           />
-          <Route path="customers" element={<Customers />} />
-          <Route path="suppliers" element={<Suppliers />} />
-          <Route path="purchases" element={<Purchases />} />
-          <Route path="accounts/cash" element={<CashBook />} />
-          <Route path="accounts/banks" element={<Banks />} />
-          <Route path="accounts/daily" element={<DailyClosing />} />
-          <Route path="reviews" element={<Reviews />} />
-          <Route path="profit" element={<Profit />} />
-          <Route path="expenses" element={<Expenses />} />
-          <Route path="reports" element={<Reports />} />
+          <Route
+            path="customers"
+            element={
+              <PermGate permission="customers">
+                <Customers />
+              </PermGate>
+            }
+          />
+          <Route
+            path="suppliers"
+            element={
+              <PermGate permission="suppliers">
+                <Suppliers />
+              </PermGate>
+            }
+          />
+          <Route
+            path="purchases"
+            element={
+              <PermGate permission="purchases">
+                <Purchases />
+              </PermGate>
+            }
+          />
+          <Route
+            path="accounts/cash"
+            element={
+              <PermGate permission="accounts">
+                <CashBook />
+              </PermGate>
+            }
+          />
+          <Route
+            path="accounts/banks"
+            element={
+              <PermGate permission="accounts">
+                <Banks />
+              </PermGate>
+            }
+          />
+          <Route
+            path="accounts/daily"
+            element={
+              <PermGate permission="accounts">
+                <DailyClosing />
+              </PermGate>
+            }
+          />
+          <Route
+            path="reviews"
+            element={
+              <PermGate permission="reviews">
+                <Reviews />
+              </PermGate>
+            }
+          />
+          <Route
+            path="profit"
+            element={
+              <PermGate permission="profit">
+                <Profit />
+              </PermGate>
+            }
+          />
+          <Route
+            path="expenses"
+            element={
+              <PermGate permission="expenses">
+                <Expenses />
+              </PermGate>
+            }
+          />
+          <Route
+            path="reports"
+            element={
+              <PermGate permission="reports">
+                <Reports />
+              </PermGate>
+            }
+          />
+          <Route
+            path="staff"
+            element={
+              <PermGate permission="staff">
+                <Staff />
+              </PermGate>
+            }
+          />
           <Route path="password" element={<ChangePassword />} />
         </Route>
 
