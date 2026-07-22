@@ -3,6 +3,7 @@ import { Shop } from '../models/Shop.js';
 import { StockMovement } from '../models/StockMovement.js';
 import { getShopId } from '../middleware/auth.js';
 import { isProductLimitReached } from '../config/plans.js';
+import { writeAudit } from '../services/auditService.js';
 
 function normalizeBarcode(value) {
   return String(value || '').trim();
@@ -237,6 +238,9 @@ export async function adjustStock(req, res, next) {
     if (!allowed.includes(reason)) {
       return res.status(400).json({ message: 'Invalid stock reason' });
     }
+    if (['damage', 'lost', 'adjustment'].includes(reason) && !String(req.body.note || '').trim()) {
+      // note optional for +receive; encourage for reductions via UI
+    }
 
     const product = await Product.findOne({ _id: req.params.id, shop: shopId });
     if (!product) return res.status(404).json({ message: 'Product not found' });
@@ -245,6 +249,7 @@ export async function adjustStock(req, res, next) {
     if (nextQty < 0) {
       return res.status(400).json({ message: 'Stock cannot go negative', code: 'NEGATIVE_STOCK' });
     }
+    const beforeQty = product.qty;
     product.qty = nextQty;
     await product.save();
 
@@ -260,7 +265,57 @@ export async function adjustStock(req, res, next) {
       date: todayStr(),
     });
 
+    await writeAudit({
+      shopId,
+      user: req.user,
+      action: 'stock_adjust',
+      entity: 'Product',
+      entityId: product._id,
+      reason: req.body.note || reason,
+      before: { qty: beforeQty },
+      after: { qty: nextQty, reason },
+    });
+
     res.json({ product });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function duplicateProduct(req, res, next) {
+  try {
+    const shopId = getShopId(req);
+    const shop = await Shop.findById(shopId);
+    if (!shop) return res.status(404).json({ message: 'Shop not found' });
+    const limits = shop.getPlanLimits();
+    const count = await Product.countDocuments({ shop: shopId });
+    if (isProductLimitReached(count, limits.maxProducts)) {
+      return res.status(403).json({ message: 'Product limit reached', code: 'PRODUCT_LIMIT' });
+    }
+
+    const source = await Product.findOne({ _id: req.params.id, shop: shopId });
+    if (!source) return res.status(404).json({ message: 'Product not found' });
+
+    const copy = source.toObject();
+    delete copy._id;
+    delete copy.createdAt;
+    delete copy.updatedAt;
+    copy.name = `${source.name} (copy)`;
+    copy.barcode = `SKU${Date.now()}`;
+    copy.sku = source.sku ? `${source.sku}-COPY` : '';
+    copy.qty = 0;
+
+    const product = await Product.create(copy);
+    await writeAudit({
+      shopId,
+      user: req.user,
+      action: 'product_duplicate',
+      entity: 'Product',
+      entityId: product._id,
+      reason: `Duplicated from ${source.name}`,
+      after: { name: product.name, barcode: product.barcode },
+    });
+    res.status(201).json({ product });
   } catch (err) {
     next(err);
   }

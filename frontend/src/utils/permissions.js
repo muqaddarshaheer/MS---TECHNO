@@ -1,22 +1,23 @@
 /** Frontend permission helpers (mirrors backend matrix) */
 
 const PERMISSIONS = {
-  dashboard: ['owner', 'manager', 'cashier'],
-  products: ['owner', 'manager'],
-  stock: ['owner', 'manager'],
-  catalog: ['owner', 'manager', 'cashier'],
-  pos: ['owner', 'manager', 'cashier'],
-  invoices: ['owner', 'manager', 'cashier'],
-  customers: ['owner', 'manager', 'cashier'],
-  suppliers: ['owner', 'manager'],
-  purchases: ['owner', 'manager'],
+  dashboard: ['owner', 'manager', 'cashier', 'salesman', 'warehouse'],
+  products: ['owner', 'manager', 'warehouse'],
+  stock: ['owner', 'manager', 'warehouse'],
+  catalog: ['owner', 'manager', 'cashier', 'salesman', 'warehouse'],
+  pos: ['owner', 'manager', 'cashier', 'salesman'],
+  invoices: ['owner', 'manager', 'cashier', 'salesman'],
+  customers: ['owner', 'manager', 'cashier', 'salesman'],
+  suppliers: ['owner', 'manager', 'warehouse'],
+  purchases: ['owner', 'manager', 'warehouse'],
   accounts: ['owner', 'manager'],
   expenses: ['owner', 'manager'],
   reports: ['owner', 'manager'],
   reviews: ['owner', 'manager'],
   profit: ['owner', 'manager'],
   staff: ['owner'],
-  settings: ['owner', 'manager'],
+  settings: ['owner'],
+  audit: ['owner', 'manager'],
 };
 
 export function can(user, permission) {

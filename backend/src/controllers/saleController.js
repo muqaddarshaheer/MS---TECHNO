@@ -5,6 +5,7 @@ import { Shop } from '../models/Shop.js';
 import { Expense } from '../models/Expense.js';
 import { BankAccount } from '../models/BankAccount.js';
 import { Purchase } from '../models/Purchase.js';
+import { HeldSale } from '../models/HeldSale.js';
 import { getShopId } from '../middleware/auth.js';
 import { planHasPos } from '../config/plans.js';
 import {
@@ -363,6 +364,7 @@ export async function dashboardStats(req, res, next) {
 
     const productMap = Object.fromEntries(products.map((p) => [p._id.toString(), p]));
     let profit = 0;
+    let todayProfit = 0;
     let customersCount = 0;
     try {
       customersCount = await Customer.countDocuments({ shop: shopId });
@@ -374,10 +376,13 @@ export async function dashboardStats(req, res, next) {
         const p = productMap[item.product?.toString()];
         const buy =
           item.buyPrice != null ? item.buyPrice : p ? p.buyPrice : item.price * 0.5;
-        profit += (item.price - buy) * item.qty;
+        const line = (item.price - buy) * item.qty;
+        profit += line;
+        if (sale.date === t) todayProfit += line;
       }
     }
-
+    const todayExpenseAmt = expensesToday.reduce((s, x) => s + x.amount, 0);
+    const todayNetProfit = todayProfit - todayExpenseAmt;
     const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0);
 
     const soldByProduct = {};
@@ -421,10 +426,11 @@ export async function dashboardStats(req, res, next) {
       }
     }
 
-    const [cashBalance, bankBalance, dues] = await Promise.all([
+    const [cashBalance, bankBalance, dues, pendingOrders] = await Promise.all([
       getCashBalance(shopId),
       getTotalBankBalance(shopId),
       getPartyDues(shopId),
+      HeldSale.countDocuments({ shop: shopId }),
     ]);
 
     const limits = shop?.getPlanLimits?.() || null;
@@ -446,9 +452,11 @@ export async function dashboardStats(req, res, next) {
         todaySalesCount: todaySales.length,
         todayRevenue: Number(todaySales.reduce((s, x) => s + x.total, 0).toFixed(2)),
         todaySales: Number(todaySales.reduce((s, x) => s + x.total, 0).toFixed(2)),
+        todayProfit: Number(todayProfit.toFixed(2)),
+        todayNetProfit: Number(todayNetProfit.toFixed(2)),
         monthSales: Number(monthSales.reduce((s, x) => s + x.total, 0).toFixed(2)),
         yearSales: Number(yearSales.reduce((s, x) => s + x.total, 0).toFixed(2)),
-        expensesToday: Number(expensesToday.reduce((s, x) => s + x.amount, 0).toFixed(2)),
+        expensesToday: Number(todayExpenseAmt.toFixed(2)),
         totalPurchase: Number(totalPurchase.toFixed(2)),
         todayPurchase: Number(todayPurchases.reduce((s, p) => s + (p.total || 0), 0).toFixed(2)),
         monthPurchase: Number(monthPurchases.reduce((s, p) => s + (p.total || 0), 0).toFixed(2)),
@@ -456,8 +464,13 @@ export async function dashboardStats(req, res, next) {
         bankBalance,
         customerDue: dues.customerDue,
         supplierDue: dues.supplierDue,
+        pendingOrders,
       },
       recentOrders: sales.slice(0, 8),
+      recentPurchases: purchases
+        .slice()
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5),
       topSelling,
       charts: {
         labels: months.map((m) => m.label),

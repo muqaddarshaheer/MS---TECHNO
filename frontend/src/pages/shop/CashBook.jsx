@@ -28,6 +28,16 @@ export default function CashBook() {
     e.preventDefault();
     setError('');
     setMessage('');
+    if (!String(note || '').trim() && openingCashSet) {
+      setError('Reason / note is required');
+      return;
+    }
+    const confirmMsg = !openingCashSet
+      ? `Set opening cash to ${amount}?`
+      : action === 'in'
+        ? `Record cash in of ${amount}?`
+        : `Record cash out of ${amount}?`;
+    if (!window.confirm(confirmMsg)) return;
     try {
       if (!openingCashSet) {
         await api.post('/accounts/cash', {
@@ -106,8 +116,13 @@ export default function CashBook() {
             </>
           )}
           <div className="field" style={{ flex: 1, minWidth: 160, marginBottom: 0 }}>
-            <label>Note</label>
-            <input value={note} onChange={(e) => setNote(e.target.value)} />
+            <label>Reason / note</label>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Required"
+              required={openingCashSet}
+            />
           </div>
           <button className="btn btn-primary">{openingCashSet ? 'Save' : 'Set opening'}</button>
         </form>

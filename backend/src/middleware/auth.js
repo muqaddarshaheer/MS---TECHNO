@@ -52,7 +52,7 @@ export function requirePermission(permission) {
       return res.status(403).json({ message: 'Shop access required' });
     }
     const shopRole = normalizeShopRole(req.user.shopRole);
-    if (!roleHasPermission(shopRole, permission)) {
+    if (!roleHasPermission(shopRole, permission, req.user.customPermissions)) {
       return res.status(403).json({
         message: `Your role (${shopRole}) cannot access this`,
         code: 'PERMISSION_DENIED',

@@ -39,10 +39,35 @@ export default function Stock() {
   ).length;
 
   async function adjust(id, delta, reason = 'adjustment') {
+    const needsNote = ['damage', 'lost', 'adjustment'].includes(reason);
+    let note = '';
+    if (needsNote) {
+      note = window.prompt(
+        reason === 'damage'
+          ? 'Damage reason (required):'
+          : reason === 'lost'
+            ? 'Lost stock reason (required):'
+            : 'Stock adjustment reason (required):'
+      );
+      if (!note || !note.trim()) {
+        setError('Reason is required for stock adjustments');
+        return;
+      }
+    }
+    const label =
+      reason === 'damage'
+        ? `Mark 1 as damaged`
+        : reason === 'lost'
+          ? `Mark 1 as lost`
+          : delta > 0
+            ? `Increase stock by ${delta}`
+            : `Decrease stock by ${Math.abs(delta)}`;
+    if (!window.confirm(`${label}? This is logged for audit.`)) return;
+
     setBusyId(id);
     setError('');
     try {
-      await api.post(`/products/${id}/stock`, { delta, reason });
+      await api.post(`/products/${id}/stock`, { delta, reason, note: note.trim() });
       setMessage(
         reason === 'damage'
           ? 'Damage recorded'

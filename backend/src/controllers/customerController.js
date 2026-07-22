@@ -1,6 +1,7 @@
 import { Customer } from '../models/Customer.js';
 import { AccountEntry } from '../models/AccountEntry.js';
 import { getShopId } from '../middleware/auth.js';
+import { writeAudit } from '../services/auditService.js';
 import {
   ensureShopAccountsDefaults,
   todayStr,
@@ -55,6 +56,108 @@ export async function getCustomer(req, res, next) {
     const shopId = getShopId(req);
     const customer = await Customer.findOne({ _id: req.params.id, shop: shopId });
     if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    res.json({ customer });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateCustomer(req, res, next) {
+  try {
+    const shopId = getShopId(req);
+    const customer = await Customer.findOne({ _id: req.params.id, shop: shopId });
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    const before = customer.toObject();
+    const fields = ['name', 'phone', 'whatsapp', 'email', 'address', 'source', 'notes'];
+    for (const key of fields) {
+      if (req.body[key] !== undefined) customer[key] = req.body[key];
+    }
+    if (req.body.group && ['retail', 'wholesale', 'dealer', 'vip'].includes(req.body.group)) {
+      customer.group = req.body.group;
+    }
+    if (req.body.creditLimit !== undefined) {
+      customer.creditLimit = Math.max(0, Number(req.body.creditLimit) || 0);
+    }
+    await customer.save();
+    await writeAudit({
+      shopId,
+      user: req.user,
+      action: 'customer_update',
+      entity: 'Customer',
+      entityId: customer._id,
+      reason: req.body.reason || 'Customer updated',
+      before: { name: before.name, phone: before.phone, balance: before.balance },
+      after: { name: customer.name, phone: customer.phone, balance: customer.balance },
+    });
+    res.json({ customer });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteCustomer(req, res, next) {
+  try {
+    const shopId = getShopId(req);
+    const customer = await Customer.findOne({ _id: req.params.id, shop: shopId });
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    if ((customer.balance || 0) > 0) {
+      return res.status(400).json({ message: 'Clear customer due before deleting' });
+    }
+    await writeAudit({
+      shopId,
+      user: req.user,
+      action: 'customer_delete',
+      entity: 'Customer',
+      entityId: customer._id,
+      reason: req.body.reason || 'Customer deleted',
+      before: { name: customer.name, phone: customer.phone },
+    });
+    await customer.deleteOne();
+    res.json({ message: 'Customer deleted' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function adjustCustomerBalance(req, res, next) {
+  try {
+    const shopId = getShopId(req);
+    const reason = String(req.body.reason || '').trim();
+    if (!reason) return res.status(400).json({ message: 'Reason is required for manual adjustment' });
+
+    const customer = await Customer.findOne({ _id: req.params.id, shop: shopId });
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+
+    const amount = Number(req.body.amount);
+    if (!Number.isFinite(amount) || amount === 0) {
+      return res.status(400).json({ message: 'Amount must be non-zero (+ due / − reduce)' });
+    }
+    const before = customer.balance;
+    const next = Math.max(0, Number((before + amount).toFixed(2)));
+    customer.balance = next;
+    await customer.save();
+
+    await AccountEntry.create({
+      shop: shopId,
+      type: amount > 0 ? 'customer_credit' : 'customer_payment',
+      amount: Math.abs(amount),
+      date: todayStr(),
+      method: 'Credit',
+      customer: customer._id,
+      note: `Manual adjust: ${reason}`,
+    });
+
+    await writeAudit({
+      shopId,
+      user: req.user,
+      action: 'customer_balance_adjust',
+      entity: 'Customer',
+      entityId: customer._id,
+      reason,
+      before: { balance: before },
+      after: { balance: next },
+    });
+
     res.json({ customer });
   } catch (err) {
     next(err);

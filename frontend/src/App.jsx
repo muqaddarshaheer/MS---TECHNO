@@ -24,6 +24,7 @@ const Profit = lazy(() => import('./pages/shop/Profit'));
 const Expenses = lazy(() => import('./pages/shop/Expenses'));
 const Reports = lazy(() => import('./pages/shop/Reports'));
 const Staff = lazy(() => import('./pages/shop/Staff'));
+const ShopSettings = lazy(() => import('./pages/shop/ShopSettings'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const SuperHome = lazy(() => import('./pages/super/Home'));
 const AllShops = lazy(() => import('./pages/super/AllShops'));
@@ -212,6 +213,14 @@ export default function App() {
             element={
               <PermGate permission="staff">
                 <Staff />
+              </PermGate>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <PermGate permission="settings">
+                <ShopSettings />
               </PermGate>
             }
           />

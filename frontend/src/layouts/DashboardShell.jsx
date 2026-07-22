@@ -68,23 +68,33 @@ export default function DashboardShell({
         </div>
 
         <nav className="sidebar-nav" aria-disabled={accountLocked}>
-          {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.end}
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              onClick={(e) => {
-                if (accountLocked) {
-                  e.preventDefault();
-                  return;
-                }
-                setOpen(false);
-              }}
-            >
-              {l.label}
-            </NavLink>
-          ))}
+          {links.map((l, idx) => {
+            if (l.type === 'group') {
+              return (
+                <div key={`g-${l.label}-${idx}`} className="nav-group-label">
+                  {l.label}
+                </div>
+              );
+            }
+            return (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                end={l.end}
+                title={l.hint || l.label}
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                onClick={(e) => {
+                  if (accountLocked) {
+                    e.preventDefault();
+                    return;
+                  }
+                  setOpen(false);
+                }}
+              >
+                {l.label}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <button

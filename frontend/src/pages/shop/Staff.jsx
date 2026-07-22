@@ -74,8 +74,8 @@ export default function Staff() {
         <div>
           <h2 className="page-title">Employees</h2>
           <p className="page-sub" style={{ marginBottom: 0 }}>
-            Owner · Manager · Cashier — {limits.used}/{limits.maxUsers} users on your plan
-            {me?.shopRole ? ` · you are ${me.shopRole}` : ''}
+            Roles: Cashier, Salesman, Warehouse, Manager — {limits.used}/{limits.maxUsers} users
+            on your plan{me?.shopRole ? ` · you are ${me.shopRole}` : ''}
           </p>
         </div>
       </div>
@@ -110,7 +110,9 @@ export default function Staff() {
             <label>Role</label>
             <select value={shopRole} onChange={(e) => setShopRole(e.target.value)}>
               <option value="cashier">Cashier — POS, invoices, customers</option>
-              <option value="manager">Manager — all except staff</option>
+              <option value="salesman">Salesman — POS & customers</option>
+              <option value="warehouse">Warehouse — stock, products, purchases</option>
+              <option value="manager">Manager — all except employees & settings</option>
             </select>
           </div>
           <button className="btn btn-primary" disabled={busy || atLimit}>

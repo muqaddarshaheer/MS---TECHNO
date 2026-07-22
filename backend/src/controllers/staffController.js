@@ -55,7 +55,7 @@ export async function createStaff(req, res, next) {
     }
     if (!SHOP_ROLES.includes(shopRole) || shopRole === 'owner') {
       return res.status(400).json({
-        message: 'Can only create manager or cashier (one owner per shop)',
+        message: 'Can create manager, cashier, salesman, or warehouse (one owner per shop)',
       });
     }
 

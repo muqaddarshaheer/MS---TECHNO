@@ -143,6 +143,20 @@ button {
   flex: 1;
 }
 
+.nav-group-label {
+  margin: 0.85rem 0.75rem 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.nav-group-label:first-child {
+  margin-top: 0.15rem;
+}
+
 .brand {
   font-family: var(--display);
   font-size: 1.35rem;

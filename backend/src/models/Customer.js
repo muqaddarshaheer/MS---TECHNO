@@ -21,6 +21,7 @@ const customerSchema = new mongoose.Schema(
     /** Positive = customer owes the shop (udhaar) */
     balance: { type: Number, default: 0, min: 0 },
     creditLimit: { type: Number, default: 0, min: 0 },
+    notes: { type: String, default: '' },
   },
   { timestamps: true }
 );

@@ -6,6 +6,7 @@ import {
   deleteProduct,
   adjustStock,
   listStockMovements,
+  duplicateProduct,
 } from '../controllers/productController.js';
 import { requireAuth, requireShopAccess, requirePermission } from '../middleware/auth.js';
 
@@ -17,6 +18,7 @@ router.get('/', requirePermission('catalog'), listProducts);
 router.post('/', requirePermission('products'), createProduct);
 router.put('/:id', requirePermission('products'), updateProduct);
 router.post('/:id/stock', requirePermission('stock'), adjustStock);
+router.post('/:id/duplicate', requirePermission('products'), duplicateProduct);
 router.delete('/:id', requirePermission('products'), deleteProduct);
 
 export default router;

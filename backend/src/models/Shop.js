@@ -29,6 +29,11 @@ const shopSchema = new mongoose.Schema(
     },
     openTime: { type: String, default: '09:00' },
     closeTime: { type: String, default: '22:00' },
+    logoUrl: { type: String, default: '' },
+    address: { type: String, default: '' },
+    invoiceFooter: { type: String, default: 'Thank you for your purchase' },
+    defaultTaxPct: { type: Number, default: 0, min: 0 },
+    currency: { type: String, default: 'PKR' },
     invoiceSeq: { type: Number, default: 1000 },
     purchaseSeq: { type: Number, default: 1000 },
     /** Multi-tenant SaaS flags */

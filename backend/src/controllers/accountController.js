@@ -12,6 +12,7 @@ import {
   todayStr,
   isCashMethod,
 } from '../services/accountService.js';
+import { writeAudit } from '../services/auditService.js';
 
 export async function accountsSummary(req, res, next) {
   try {
@@ -182,6 +183,9 @@ export async function createCashMovement(req, res, next) {
       settings.openingCash = amount;
       settings.openingCashSet = true;
       await settings.save();
+      if (!String(note || '').trim()) {
+        return res.status(400).json({ message: 'Reason / note is required' });
+      }
       await AccountEntry.create({
         shop: shopId,
         type: 'opening_cash',
@@ -190,12 +194,23 @@ export async function createCashMovement(req, res, next) {
         method: 'Cash',
         note: note || 'Opening cash',
       });
+      await writeAudit({
+        shopId,
+        user: req.user,
+        action: 'cash_opening',
+        entity: 'Cash',
+        reason: note || 'Opening cash',
+        after: { amount },
+      });
       const cashBalance = await getCashBalance(shopId);
       return res.status(201).json({ message: 'Opening cash set', cashBalance, openingCash: amount });
     }
 
     if (!['in', 'out'].includes(action) || amount <= 0) {
       return res.status(400).json({ message: 'Invalid cash movement' });
+    }
+    if (!String(note || '').trim()) {
+      return res.status(400).json({ message: 'Reason / note is required for cash entries' });
     }
 
     if (action === 'out') {
@@ -212,6 +227,16 @@ export async function createCashMovement(req, res, next) {
       date,
       method: 'Cash',
       note: note || (action === 'in' ? 'Cash in' : 'Cash out'),
+    });
+
+    await writeAudit({
+      shopId,
+      user: req.user,
+      action: action === 'in' ? 'cash_in' : 'cash_out',
+      entity: 'Cash',
+      entityId: entry._id,
+      reason: note,
+      after: { amount, action },
     });
 
     const cashBalance = await getCashBalance(shopId);

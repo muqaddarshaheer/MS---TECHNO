@@ -13,10 +13,12 @@ const userSchema = new mongoose.Schema(
     /** Within a shop: owner | manager | cashier (ignored for super) */
     shopRole: {
       type: String,
-      enum: ['owner', 'manager', 'cashier'],
+      enum: ['owner', 'manager', 'cashier', 'salesman', 'warehouse'],
       default: 'owner',
     },
     displayName: { type: String, default: '', trim: true },
+    /** Optional per-user permission overrides (booleans by module key) */
+    customPermissions: { type: mongoose.Schema.Types.Mixed, default: null },
     shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null },
     isActive: { type: Boolean, default: true },
   },
@@ -52,7 +54,10 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     role: this.role,
     shopRole,
     displayName: this.displayName || '',
-    permissions: this.role === 'shop' ? permissionsForRole(shopRole) : null,
+    permissions:
+      this.role === 'shop'
+        ? permissionsForRole(shopRole, this.customPermissions)
+        : null,
     shop: this.shop,
     isActive: this.isActive,
     createdAt: this.createdAt,

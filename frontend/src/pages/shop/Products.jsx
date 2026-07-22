@@ -101,6 +101,32 @@ export default function Products() {
     await load();
   }
 
+  async function duplicate(id) {
+    try {
+      await api.post(`/products/${id}/duplicate`);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Duplicate failed');
+    }
+  }
+
+  function exportCsv() {
+    const lines = [
+      'Name,Brand,Category,Barcode,Qty,Buy,Sell,Wholesale,Dealer,VIP',
+      ...products.map(
+        (p) =>
+          `"${p.name}","${p.brand || ''}","${p.category || ''}","${p.barcode || ''}",${p.qty},${p.buyPrice},${p.sellPrice},${p.wholesalePrice || 0},${p.dealerPrice || 0},${p.vipPrice || 0}`
+      ),
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `products-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -114,6 +140,9 @@ export default function Products() {
               : `${products.length} / ${maxProducts} products`}
           </p>
         </div>
+        <button className="btn btn-outline" onClick={exportCsv} type="button">
+          Export CSV
+        </button>
         <button className="btn btn-primary" onClick={openCreate} disabled={atLimit}>
           + Add product
         </button>
@@ -183,6 +212,9 @@ export default function Products() {
                   <td className="row">
                     <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>
                       Edit
+                    </button>
+                    <button className="btn btn-outline btn-sm" onClick={() => duplicate(p._id)}>
+                      Duplicate
                     </button>
                     <button className="btn btn-danger btn-sm" onClick={() => remove(p._id)}>
                       Delete
