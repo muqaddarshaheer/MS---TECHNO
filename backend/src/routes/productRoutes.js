@@ -5,12 +5,14 @@ import {
   updateProduct,
   deleteProduct,
   adjustStock,
+  listStockMovements,
 } from '../controllers/productController.js';
 import { requireAuth, requireShopAccess, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 
 router.use(requireAuth, requireShopAccess);
+router.get('/movements', requirePermission('stock'), listStockMovements);
 router.get('/', requirePermission('catalog'), listProducts);
 router.post('/', requirePermission('products'), createProduct);
 router.put('/:id', requirePermission('products'), updateProduct);

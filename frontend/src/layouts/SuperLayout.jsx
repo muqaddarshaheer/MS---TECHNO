@@ -6,6 +6,7 @@ const links = [
   { to: '/super/shops', label: 'All Shops' },
   { to: '/super/requests', label: 'Demo requests' },
   { to: '/super/announcements', label: 'Announcements' },
+  { to: '/super/billing', label: 'Billing' },
   { to: '/super/password', label: 'Password' },
 ];
 

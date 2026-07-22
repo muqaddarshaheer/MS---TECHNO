@@ -236,6 +236,22 @@ export async function createSale(req, res, next) {
       return res.status(400).json({ message: 'Customer required for credit / udhaar sale' });
     }
 
+    if (creditAmount > 0 && customerId) {
+      const cust = await Customer.findOne({ _id: customerId, shop: shopId });
+      if (cust && (cust.creditLimit || 0) > 0) {
+        const nextDue = Number(cust.balance || 0) + creditAmount;
+        if (nextDue > cust.creditLimit + 0.001) {
+          for (const row of decremented) {
+            await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+          }
+          return res.status(400).json({
+            message: `Credit limit exceeded (limit ${cust.creditLimit}, due would be ${nextDue.toFixed(2)})`,
+            code: 'CREDIT_LIMIT',
+          });
+        }
+      }
+    }
+
     shop.invoiceSeq += 1;
     await shop.save();
     const invoice = `INV-${shop.invoiceSeq}`;
@@ -325,9 +341,15 @@ export async function dashboardStats(req, res, next) {
     ]);
 
     const stockQty = products.reduce((s, p) => s + p.qty, 0);
-    const low = products.filter((p) => p.qty > 0 && p.qty <= 5).length;
+    const low = products.filter((p) => p.qty > 0 && p.qty <= (p.reorderLevel ?? 5)).length;
     const out = products.filter((p) => p.qty === 0).length;
     const t = today();
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 30);
+    const soonStr = soon.toISOString().split('T')[0];
+    const expiring = products.filter(
+      (p) => p.expiryDate && p.expiryDate >= t && p.expiryDate <= soonStr
+    ).length;
     const todaySales = sales.filter((s) => s.date === t);
     const monthKey = t.slice(0, 7);
     const yearKey = t.slice(0, 4);
@@ -414,6 +436,7 @@ export async function dashboardStats(req, res, next) {
         stockQty,
         low,
         out,
+        expiring,
         salesCount: sales.length,
         revenue: Number(revenue.toFixed(2)),
         profit: Number(profit.toFixed(2)),

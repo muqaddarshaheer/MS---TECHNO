@@ -3,44 +3,55 @@ import api, { money } from '../../api';
 
 export default function Stock() {
   const [products, setProducts] = useState([]);
-  const [sales, setSales] = useState([]);
+  const [movements, setMovements] = useState([]);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [busyId, setBusyId] = useState('');
+  const [filter, setFilter] = useState('all');
 
   async function load() {
-    const [p, s] = await Promise.all([
-      api.get('/products', { params: { limit: 100 } }),
-      api.get('/sales', { params: { limit: 100 } }),
+    const params = { limit: 100 };
+    if (filter === 'low') params.low = '1';
+    if (filter === 'out') params.out = '1';
+    if (filter === 'expiring') params.expiring = '1';
+    const [p, m] = await Promise.all([
+      api.get('/products', { params }),
+      api.get('/products/movements', { params: { limit: 30 } }),
     ]);
     setProducts(p.data.products || []);
-    setSales(s.data.sales || []);
+    setMovements(m.data.movements || []);
   }
 
   useEffect(() => {
     load().catch((err) => setError(err.response?.data?.message || 'Failed to load'));
-  }, []);
-
-  const soldMap = {};
-  for (const sale of sales) {
-    for (const item of sale.items || []) {
-      const id = item.product?.toString?.() || item.product;
-      soldMap[id] = (soldMap[id] || 0) + item.qty;
-    }
-  }
+  }, [filter]);
 
   const stockQty = products.reduce((s, p) => s + p.qty, 0);
-  const sold = Object.values(soldMap).reduce((s, n) => s + n, 0);
-  const low = products.filter((p) => p.qty > 0 && p.qty <= 5).length;
+  const low = products.filter((p) => p.qty > 0 && p.qty <= (p.reorderLevel ?? 5)).length;
   const out = products.filter((p) => p.qty === 0).length;
   const value = products.reduce((s, p) => s + p.buyPrice * p.qty, 0);
+  const today = new Date().toISOString().slice(0, 10);
+  const soon = new Date();
+  soon.setDate(soon.getDate() + 30);
+  const soonStr = soon.toISOString().slice(0, 10);
+  const expiring = products.filter(
+    (p) => p.expiryDate && p.expiryDate >= today && p.expiryDate <= soonStr
+  ).length;
 
-  async function adjust(id, delta) {
+  async function adjust(id, delta, reason = 'adjustment') {
     setBusyId(id);
     setError('');
     try {
-      await api.post(`/products/${id}/stock`, { delta });
-      setMessage(delta > 0 ? 'Stock increased' : 'Stock decreased');
+      await api.post(`/products/${id}/stock`, { delta, reason });
+      setMessage(
+        reason === 'damage'
+          ? 'Damage recorded'
+          : reason === 'lost'
+            ? 'Lost stock recorded'
+            : delta > 0
+              ? 'Stock increased'
+              : 'Stock decreased'
+      );
       await load();
     } catch (err) {
       setError(err.response?.data?.message || 'Stock update failed');
@@ -59,77 +70,127 @@ export default function Stock() {
           <h6>On hand</h6>
           <h2>{stockQty}</h2>
         </div>
-        <div className="card stat">
-          <h6>Units sold</h6>
-          <h2>{sold}</h2>
-        </div>
         <div className="card stat warn">
           <h6>Low / Out</h6>
           <h2>
             {low}/{out}
           </h2>
         </div>
+        <div className="card stat danger">
+          <h6>Expiring (30d)</h6>
+          <h2>{expiring}</h2>
+        </div>
         <div className="card stat">
           <h6>Stock value</h6>
           <h2 style={{ fontSize: '1.1rem' }}>{money(value)}</h2>
         </div>
       </div>
-      <div className="card table-wrap">
+
+      <div className="row" style={{ marginBottom: '0.75rem' }}>
+        {[
+          ['all', 'All'],
+          ['low', 'Low'],
+          ['out', 'Out'],
+          ['expiring', 'Expiring'],
+        ].map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            className={`btn btn-sm ${filter === k ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setFilter(k)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="card table-wrap" style={{ marginBottom: '1rem' }}>
         <table>
           <thead>
             <tr>
               <th>Product</th>
-              <th>Barcode</th>
-              <th>On hand</th>
-              <th>Sold</th>
-              <th>Status</th>
-              <th>Adjust</th>
+              <th>Qty</th>
+              <th>Reorder</th>
+              <th>Expiry</th>
+              <th>Batch</th>
+              <th>Value</th>
+              <th />
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => {
-              const status = p.qty === 0 ? 'Out of stock' : p.qty <= 5 ? 'Low' : 'In stock';
-              const badge = p.qty === 0 ? 'danger' : p.qty <= 5 ? 'warn' : '';
-              return (
-                <tr key={p._id}>
-                  <td>{p.name}</td>
-                  <td>
-                    <code>{p.barcode || '—'}</code>
-                  </td>
-                  <td>{p.qty}</td>
-                  <td>{soldMap[p._id] || 0}</td>
-                  <td>
-                    <span className={`badge ${badge}`}>{status}</span>
-                  </td>
-                  <td className="row">
-                    <button
-                      className="btn btn-outline btn-sm"
-                      disabled={busyId === p._id}
-                      onClick={() => adjust(p._id, 1)}
-                    >
-                      +1
-                    </button>
-                    <button
-                      className="btn btn-outline btn-sm"
-                      disabled={busyId === p._id || p.qty < 1}
-                      onClick={() => adjust(p._id, -1)}
-                    >
-                      −1
-                    </button>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      disabled={busyId === p._id}
-                      onClick={() => {
-                        const n = Number(prompt('Add quantity (purchase/restock)', '10'));
-                        if (Number.isFinite(n) && n !== 0) adjust(p._id, n);
-                      }}
-                    >
-                      Restock
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {products.map((p) => (
+              <tr key={p._id}>
+                <td>{p.name}</td>
+                <td>{p.qty}</td>
+                <td>{p.reorderLevel ?? 5}</td>
+                <td>{p.expiryDate || '—'}</td>
+                <td>{p.batchNumber || '—'}</td>
+                <td>{money(p.buyPrice * p.qty)}</td>
+                <td className="row" style={{ flexWrap: 'wrap' }}>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={busyId === p._id}
+                    onClick={() => adjust(p._id, 1, 'receive')}
+                  >
+                    +1
+                  </button>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={busyId === p._id || p.qty < 1}
+                    onClick={() => adjust(p._id, -1, 'adjustment')}
+                  >
+                    −1
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    disabled={busyId === p._id || p.qty < 1}
+                    onClick={() => adjust(p._id, -1, 'damage')}
+                  >
+                    Damage
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    disabled={busyId === p._id || p.qty < 1}
+                    onClick={() => adjust(p._id, -1, 'lost')}
+                  >
+                    Lost
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card table-wrap">
+        <h3 style={{ marginTop: 0, fontFamily: 'var(--display)' }}>Recent movements</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Product</th>
+              <th>Δ</th>
+              <th>After</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!movements.length && (
+              <tr>
+                <td colSpan={5} className="empty">
+                  No movements yet
+                </td>
+              </tr>
+            )}
+            {movements.map((m) => (
+              <tr key={m._id}>
+                <td>{m.date}</td>
+                <td>{m.productName}</td>
+                <td>{m.delta > 0 ? `+${m.delta}` : m.delta}</td>
+                <td>{m.qtyAfter}</td>
+                <td>{m.reason}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

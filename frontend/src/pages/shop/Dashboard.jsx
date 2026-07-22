@@ -155,13 +155,13 @@ export default function ShopDashboard() {
           <h6>Out of stock</h6>
           <h2>{stats.out}</h2>
         </div>
+        <div className="card stat warn">
+          <h6>Expiring (30d)</h6>
+          <h2>{stats.expiring ?? 0}</h2>
+        </div>
         <div className="card stat">
           <h6>Products</h6>
           <h2>{stats.products}</h2>
-        </div>
-        <div className="card stat">
-          <h6>Profit (all)</h6>
-          <h2 style={{ fontSize: '1.1rem' }}>{money(stats.profit)}</h2>
         </div>
       </div>
 

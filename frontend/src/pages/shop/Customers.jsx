@@ -6,6 +6,8 @@ export default function Customers() {
   const [banks, setBanks] = useState([]);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [group, setGroup] = useState('retail');
+  const [creditLimit, setCreditLimit] = useState('0');
   const [payId, setPayId] = useState('');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('Cash');
@@ -30,9 +32,11 @@ export default function Customers() {
     e.preventDefault();
     setError('');
     try {
-      await api.post('/customers', { name, phone });
+      await api.post('/customers', { name, phone, group, creditLimit: Number(creditLimit) || 0 });
       setName('');
       setPhone('');
+      setGroup('retail');
+      setCreditLimit('0');
       setMessage('Customer saved');
       await load();
     } catch (err) {
@@ -85,6 +89,24 @@ export default function Customers() {
             <div className="field">
               <label>Phone</label>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Group</label>
+              <select value={group} onChange={(e) => setGroup(e.target.value)}>
+                <option value="retail">Retail</option>
+                <option value="wholesale">Wholesale</option>
+                <option value="dealer">Dealer</option>
+                <option value="vip">VIP</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Credit limit</label>
+              <input
+                type="number"
+                min="0"
+                value={creditLimit}
+                onChange={(e) => setCreditLimit(e.target.value)}
+              />
             </div>
             <button className="btn btn-primary">Save</button>
           </form>
@@ -148,16 +170,18 @@ export default function Customers() {
             <tr>
               <th>Name</th>
               <th>Phone</th>
+              <th>Group</th>
               <th>Orders</th>
               <th>Spent</th>
               <th>Due</th>
+              <th>Limit</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {!customers.length && (
               <tr>
-                <td colSpan={6} className="empty">
+                <td colSpan={8} className="empty">
                   No customers
                 </td>
               </tr>
@@ -166,9 +190,11 @@ export default function Customers() {
               <tr key={c._id}>
                 <td>{c.name}</td>
                 <td>{c.phone || '—'}</td>
+                <td>{c.group || 'retail'}</td>
                 <td>{c.orders}</td>
                 <td>{money(c.spent)}</td>
                 <td>{money(c.balance || 0)}</td>
+                <td>{money(c.creditLimit || 0)}</td>
                 <td>
                   <button className="btn btn-outline btn-sm" type="button" onClick={() => openLedger(c._id)}>
                     Ledger

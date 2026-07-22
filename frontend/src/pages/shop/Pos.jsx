@@ -108,6 +108,15 @@ export default function Pos() {
       return;
     }
     setError('');
+    const selected = customers.find((c) => c._id === customerId);
+    const group = selected?.group || 'retail';
+    let price = Number(product.sellPrice) || 0;
+    if (group === 'wholesale' && product.wholesalePrice > 0) price = product.wholesalePrice;
+    else if (group === 'dealer' && product.dealerPrice > 0) price = product.dealerPrice;
+    else if (group === 'vip' && product.vipPrice > 0) price = product.vipPrice;
+    if (product.offerPrice > 0 && product.offerPrice < price) price = product.offerPrice;
+    if (product.minPrice > 0 && price < product.minPrice) price = product.minPrice;
+
     setCart((prev) => {
       const exist = prev.find((c) => c.productId === product._id);
       if (exist) {
@@ -117,15 +126,15 @@ export default function Pos() {
           return prev;
         }
         return prev.map((c) =>
-          c.productId === product._id ? { ...c, qty: nextQty } : c
+          c.productId === product._id ? { ...c, qty: nextQty, price } : c
         );
       }
       return [
         ...prev,
-        { productId: product._id, name: product.name, qty, price: product.sellPrice, max: product.qty },
+        { productId: product._id, name: product.name, qty, price, max: product.qty },
       ];
     });
-  }, []);
+  }, [customers, customerId]);
 
   function onSearchKeyDown(e) {
     if (e.key === 'Enter') {

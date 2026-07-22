@@ -29,6 +29,7 @@ const SuperHome = lazy(() => import('./pages/super/Home'));
 const AllShops = lazy(() => import('./pages/super/AllShops'));
 const Announcements = lazy(() => import('./pages/super/Announcements'));
 const TenantRequests = lazy(() => import('./pages/super/TenantRequests'));
+const Billing = lazy(() => import('./pages/super/Billing'));
 
 function Protected({ children, role }) {
   const { user, loading } = useAuth();
@@ -229,6 +230,7 @@ export default function App() {
           <Route path="shops" element={<AllShops />} />
           <Route path="requests" element={<TenantRequests />} />
           <Route path="announcements" element={<Announcements />} />
+          <Route path="billing" element={<Billing />} />
           <Route path="password" element={<ChangePassword />} />
         </Route>
 

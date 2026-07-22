@@ -38,6 +38,10 @@ export async function createCustomer(req, res, next) {
       email: req.body.email || '',
       address: req.body.address || '',
       source: req.body.source || 'Walk-in',
+      group: ['retail', 'wholesale', 'dealer', 'vip'].includes(req.body.group)
+        ? req.body.group
+        : 'retail',
+      creditLimit: Math.max(0, Number(req.body.creditLimit) || 0),
       balance: 0,
     });
     res.status(201).json({ customer });

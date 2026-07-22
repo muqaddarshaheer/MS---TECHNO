@@ -18,6 +18,7 @@ import accountRoutes from './routes/accountRoutes.js';
 import supplierRoutes from './routes/supplierRoutes.js';
 import purchaseRoutes from './routes/purchaseRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
+import billingRoutes from './routes/billingRoutes.js';
 import { slugify } from './config/plans.js';
 import { User } from './models/User.js';
 
@@ -59,6 +60,7 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/staff', staffRoutes);
+app.use('/api/billing', billingRoutes);
 app.use('/api/announcements', announcementRoutes);
 
 app.use(errorHandler);

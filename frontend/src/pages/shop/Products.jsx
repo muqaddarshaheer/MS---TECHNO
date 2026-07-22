@@ -5,11 +5,24 @@ import { useAuth } from '../../context/AuthContext';
 const emptyForm = {
   name: '',
   brand: '',
+  model: '',
   category: 'General',
+  subcategory: '',
+  sku: '',
   qty: 10,
   buyPrice: 2000,
   sellPrice: 3500,
+  wholesalePrice: 0,
+  dealerPrice: 0,
+  vipPrice: 0,
+  offerPrice: 0,
+  minPrice: 0,
+  reorderLevel: 5,
+  maxStock: 0,
+  batchNumber: '',
+  expiryDate: '',
   barcode: '',
+  imageUrl: '',
   desc: '',
 };
 
@@ -52,15 +65,10 @@ export default function Products() {
   function openEdit(p) {
     setError('');
     setForm({
-      name: p.name,
-      brand: p.brand,
-      category: p.category,
-      qty: p.qty,
-      buyPrice: p.buyPrice,
-      sellPrice: p.sellPrice,
-      barcode: p.barcode,
-      desc: p.desc,
+      ...emptyForm,
+      ...p,
       id: p._id,
+      expiryDate: p.expiryDate || '',
     });
     setModal('edit');
   }
@@ -111,23 +119,11 @@ export default function Products() {
         </button>
       </div>
 
-      {atLimit && (
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <strong>Product limit reached</strong>
-          <p className="page-sub">
-            Basic includes 100 products. Upgrade to Premium for unlimited catalog and POS.
-          </p>
-          <p className="page-sub" style={{ marginBottom: 0 }}>
-            Ask MS Techno Super Admin to upgrade your package.
-          </p>
-        </div>
-      )}
-
       <div className="field" style={{ maxWidth: 360, marginBottom: '0.75rem' }}>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search name, brand, or barcode"
+          placeholder="Search name, brand, barcode, SKU"
         />
       </div>
 
@@ -136,79 +132,136 @@ export default function Products() {
         <table>
           <thead>
             <tr>
+              <th />
               <th>Name</th>
+              <th>Category</th>
               <th>Barcode</th>
-              <th>Brand</th>
               <th>Qty</th>
-              <th>Price</th>
+              <th>Retail</th>
               <th>Status</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => (
-              <tr key={p._id}>
-                <td>
-                  <strong>{p.name}</strong>
-                </td>
-                <td>
-                  <code>{p.barcode || '—'}</code>
-                </td>
-                <td>{p.brand || '—'}</td>
-                <td>{p.qty}</td>
-                <td>{money(p.sellPrice)}</td>
-                <td>
-                  <span className={`badge ${p.qty === 0 ? 'danger' : p.qty <= 5 ? 'warn' : ''}`}>
-                    {p.qty === 0 ? 'Out of stock' : p.qty <= 5 ? 'Low' : 'In stock'}
-                  </span>
-                </td>
-                <td className="row">
-                  <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>
-                    Edit
-                  </button>
-                  <button className="btn btn-danger btn-sm" onClick={() => remove(p._id)}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {products.map((p) => {
+              const reorder = p.reorderLevel ?? 5;
+              return (
+                <tr key={p._id}>
+                  <td>
+                    {p.imageUrl ? (
+                      <img
+                        src={p.imageUrl}
+                        alt=""
+                        style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6 }}
+                      />
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    <strong>{p.name}</strong>
+                    {p.brand ? <div className="page-sub" style={{ margin: 0 }}>{p.brand}</div> : null}
+                  </td>
+                  <td>
+                    {p.category}
+                    {p.subcategory ? ` / ${p.subcategory}` : ''}
+                  </td>
+                  <td>
+                    <code>{p.barcode || '—'}</code>
+                  </td>
+                  <td>{p.qty}</td>
+                  <td>{money(p.sellPrice)}</td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        p.qty === 0 ? 'danger' : p.qty <= reorder ? 'warn' : ''
+                      }`}
+                    >
+                      {p.qty === 0 ? 'Out' : p.qty <= reorder ? 'Low' : 'OK'}
+                    </span>
+                  </td>
+                  <td className="row">
+                    <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>
+                      Edit
+                    </button>
+                    <button className="btn btn-danger btn-sm" onClick={() => remove(p._id)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       {modal && (
         <div className="modal-backdrop" onClick={() => !saving && setModal(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ width: 'min(720px, 100%)' }}>
             <h3>{modal === 'create' ? 'Add product' : 'Edit product'}</h3>
             <form onSubmit={save}>
               <div className="grid grid-2">
-                {['name', 'brand', 'category', 'barcode'].map((key) => (
-                  <div className="field" key={key}>
-                    <label>{key === 'barcode' ? 'Barcode (scanner OK)' : key}</label>
-                    <input
-                      value={form[key]}
-                      onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                      required={key === 'name'}
-                    />
-                  </div>
-                ))}
-                {['qty', 'buyPrice', 'sellPrice'].map((key) => (
+                {['name', 'brand', 'model', 'category', 'subcategory', 'sku', 'barcode', 'imageUrl'].map(
+                  (key) => (
+                    <div className="field" key={key}>
+                      <label>
+                        {key === 'imageUrl'
+                          ? 'Image URL'
+                          : key === 'barcode'
+                            ? 'Barcode'
+                            : key}
+                      </label>
+                      <input
+                        value={form[key] || ''}
+                        onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                        required={key === 'name'}
+                      />
+                    </div>
+                  )
+                )}
+                {[
+                  'qty',
+                  'buyPrice',
+                  'sellPrice',
+                  'wholesalePrice',
+                  'dealerPrice',
+                  'vipPrice',
+                  'offerPrice',
+                  'minPrice',
+                  'reorderLevel',
+                  'maxStock',
+                ].map((key) => (
                   <div className="field" key={key}>
                     <label>{key}</label>
                     <input
                       type="number"
                       min="0"
-                      value={form[key]}
+                      value={form[key] ?? 0}
                       onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                     />
                   </div>
                 ))}
+                <div className="field">
+                  <label>Batch number</label>
+                  <input
+                    value={form.batchNumber || ''}
+                    onChange={(e) => setForm({ ...form, batchNumber: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label>Expiry date</label>
+                  <input
+                    type="date"
+                    value={form.expiryDate || ''}
+                    onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="field">
                 <label>Description</label>
                 <textarea
-                  rows={3}
-                  value={form.desc}
+                  rows={2}
+                  value={form.desc || ''}
                   onChange={(e) => setForm({ ...form, desc: e.target.value })}
                 />
               </div>
