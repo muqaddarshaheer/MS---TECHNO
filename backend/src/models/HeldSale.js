@@ -2,11 +2,12 @@ import mongoose from 'mongoose';
 
 const heldItemSchema = new mongoose.Schema(
   {
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    productId: { type: mongoose.Schema.Types.Mixed, default: null },
     name: String,
     qty: { type: Number, required: true, min: 1 },
     price: { type: Number, required: true, min: 0 },
     max: { type: Number, default: 0 },
+    manual: { type: Boolean, default: false },
   },
   { _id: false }
 );

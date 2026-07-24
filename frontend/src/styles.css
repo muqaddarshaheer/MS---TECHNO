@@ -1514,3 +1514,19 @@ tbody tr:hover {
   transform: scale(0.98);
 }
 
+.manual-item-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  margin-top: 1rem;
+  padding: 0.65rem;
+  background: rgba(15, 92, 76, 0.04);
+  border: 1px dashed var(--accent);
+  border-radius: 10px;
+}
+
+.manual-item-row .field {
+  flex: 1;
+  min-width: 0;
+}
+

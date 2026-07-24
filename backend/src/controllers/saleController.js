@@ -120,6 +120,27 @@ export async function createSale(req, res, next) {
       if (qty <= 0) {
         return res.status(400).json({ message: 'Invalid quantity in cart' });
       }
+
+      if (item.manual || !item.productId) {
+        const name = item.name || 'Custom item';
+        const price = Number(item.price) || 0;
+        if (!name || price <= 0) {
+          for (const row of decremented) {
+            await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+          }
+          return res.status(400).json({ message: 'Invalid manual item: name and price required' });
+        }
+        subtotal += price * qty;
+        lineItems.push({
+          product: null,
+          name,
+          qty,
+          price,
+          buyPrice: 0,
+        });
+        continue;
+      }
+
       const product = await Product.findOneAndUpdate(
         { _id: item.productId, shop: shopId, qty: { $gte: qty } },
         { $inc: { qty: -qty } },

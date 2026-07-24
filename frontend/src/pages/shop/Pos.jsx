@@ -31,6 +31,8 @@ export default function Pos() {
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [source, setSource] = useState('Walk-in');
+  const [manualName, setManualName] = useState('');
+  const [manualPrice, setManualPrice] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -136,6 +138,21 @@ export default function Pos() {
     });
   }, [customers, customerId]);
 
+  function addManualItem() {
+    const name = manualName.trim();
+    const price = Number(manualPrice);
+    if (!name || !price || price <= 0) {
+      setError('Enter a valid item name and price');
+      return;
+    }
+    setError('');
+    const id = 'manual_' + Date.now();
+    setCart((prev) => [...prev, { productId: id, name, qty: 1, price, max: 999999, manual: true }]);
+    setManualName('');
+    setManualPrice('');
+    searchRef.current?.focus();
+  }
+
   function onSearchKeyDown(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -202,6 +219,8 @@ export default function Pos() {
   function resetCartFields() {
     setCart([]);
     setQuery('');
+    setManualName('');
+    setManualPrice('');
     setDiscount(0);
     setTax(5);
     setCashAmt('');
@@ -258,6 +277,7 @@ export default function Pos() {
         qty: it.qty,
         price: it.price,
         max: it.max || it.qty,
+        manual: !!it.manual,
       }))
     );
     setDiscount(hold.discountPct || 0);
@@ -319,7 +339,10 @@ export default function Pos() {
 
       const selected = customers.find((c) => c._id === resolvedCustomerId);
       const { data } = await api.post('/sales', {
-        items: cart.map((c) => ({ productId: c.productId, qty: c.qty })),
+        items: cart.map((c) => {
+          if (c.manual) return { productId: null, name: c.name, qty: c.qty, price: c.price, manual: true };
+          return { productId: c.productId, qty: c.qty };
+        }),
         discountPct: Number(discount) || 0,
         taxPct: Number(tax) || 0,
         payments: payload.payments,
@@ -424,12 +447,39 @@ export default function Pos() {
             ))}
           </div>
 
+          <div className="manual-item-row">
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Manual item name</label>
+              <input
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                placeholder="e.g. RAM, Service charge"
+                onKeyDown={(e) => { if (e.key === 'Enter') addManualItem(); }}
+              />
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Price</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={manualPrice}
+                onChange={(e) => setManualPrice(e.target.value)}
+                placeholder="e.g. 5000"
+                onKeyDown={(e) => { if (e.key === 'Enter') addManualItem(); }}
+              />
+            </div>
+            <button className="btn btn-primary btn-sm" type="button" onClick={addManualItem} style={{ marginTop: '1px' }}>
+              Add
+            </button>
+          </div>
+
           <h3 style={{ margin: '1rem 0 0.5rem', fontFamily: 'var(--display)' }}>Cart</h3>
           {!cart.length && <p className="empty">Cart empty</p>}
           {cart.map((c) => (
             <div className="cart-item" key={c.productId}>
               <span>
-                {c.name} ×{c.qty} — {money(c.price * c.qty)}
+                {c.name} {c.manual ? <small style={{ color: 'var(--muted)', fontStyle: 'italic' }}>(manual)</small> : ''} ×{c.qty} — {money(c.price * c.qty)}
               </span>
               <div className="row">
                 <button
@@ -447,8 +497,16 @@ export default function Pos() {
                 <button
                   className="btn btn-outline btn-sm"
                   onClick={() => {
-                    const product = products.find((p) => p._id === c.productId);
-                    if (product) addToCart(product);
+                    if (c.manual) {
+                      setCart((prev) =>
+                        prev.map((x) =>
+                          x.productId === c.productId ? { ...x, qty: x.qty + 1 } : x
+                        )
+                      );
+                    } else {
+                      const product = products.find((p) => p._id === c.productId);
+                      if (product) addToCart(product);
+                    }
                   }}
                 >
                   +
