@@ -16,6 +16,12 @@ export default function Landing() {
 
   const dashHref = user ? (user.role === 'super' ? '/super' : '/shop') : null;
 
+  const shops = [
+    { name: 'City Mart', status: 'Live', statusClass: 'live' },
+    { name: 'Green Store', status: 'Live', statusClass: 'live' },
+    { name: 'Metro Hub', status: 'Demo', statusClass: 'demo' },
+  ];
+
   return (
     <div className="saas-landing landing-v2">
       <header className="saas-nav">
@@ -58,12 +64,23 @@ export default function Landing() {
               View pricing
             </a>
           </div>
+          <div className="hero-stats">
+            <span className="hero-stat">Multi-tenant / Isolated shops</span>
+            <span className="hero-stat">POS ready / Premium plans</span>
+            <span className="hero-stat">Cloud / Always online</span>
+          </div>
         </div>
         <div className="hero-visual" aria-hidden="true">
           <div className="hero-panel">
-            <span>Live tenants</span>
-            <strong>Isolated by shop</strong>
-            <span>POS · Stock · Reports</span>
+            <strong style={{ fontFamily: 'var(--display)', fontSize: '1.1rem' }}>Live tenants</strong>
+            {shops.map((s) => (
+              <div className="hero-shop-card" key={s.name}>
+                <span className="hero-shop-name">{s.name}</span>
+                <span className={`hero-shop-status ${s.statusClass}`}>
+                  {s.status}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -75,14 +92,17 @@ export default function Landing() {
         </p>
         <div className="grid grid-3 feature-grid">
           <article className="feature-block">
+            <div className="feature-icon">◆</div>
             <h3>Tenant isolation</h3>
             <p>Each shop is scoped by shop ID — products, sales, and customers never mix.</p>
           </article>
           <article className="feature-block">
+            <div className="feature-icon">■</div>
             <h3>Package control</h3>
             <p>Basic inventory or Premium POS. Product limits and feature gates enforced in the API.</p>
           </article>
           <article className="feature-block">
+            <div className="feature-icon">◉</div>
             <h3>Super admin center</h3>
             <p>Approve demos, reset credentials, suspend shops, renew plans, and broadcast updates.</p>
           </article>
@@ -95,6 +115,7 @@ export default function Landing() {
         <div className="grid grid-2 pricing-grid">
           {plans.map((p) => (
             <div className={`card plan-card ${p.key === 'Premium' ? 'plan-featured' : ''}`} key={p.key}>
+              {p.key === 'Premium' && <span className="plan-badge">Popular</span>}
               <h3>{p.name}</h3>
               <div className="plan-price">
                 Rs. {Number(p.priceMonthlyPkr).toLocaleString()}
@@ -121,10 +142,20 @@ export default function Landing() {
         </p>
       </section>
 
+      <section className="cta-banner">
+        <div>
+          <h2>Ready to get started?</h2>
+          <p>Onboard your first tenant in minutes — no commitment required.</p>
+        </div>
+        <Link className="btn btn-lg" to="/signup">
+          Start free demo
+        </Link>
+      </section>
+
       <section className="saas-section testimonial-section">
         <h2>Built for multi-shop retail</h2>
         <blockquote className="testimonial">
-          “We onboard shops in minutes — each tenant gets their own login, stock, and invoices.”
+          &ldquo;We onboard shops in minutes — each tenant gets their own login, stock, and invoices.&rdquo;
           <cite>— MS Techno platform operators</cite>
         </blockquote>
       </section>

@@ -101,8 +101,10 @@ export function buildThermalReceiptHtml({
 
   lines.push(rule(cols));
   lines.push(twoCol('Subtotal', moneyPlain(subtotal), cols));
-  if (disc) lines.push(twoCol(`Discount ${disc}%`, '-', cols));
-  if (tax) lines.push(twoCol(`Tax ${tax}%`, '-', cols));
+  const discAmt = subtotal * disc / 100;
+  const taxAmt = (subtotal - discAmt) * tax / 100;
+  if (disc) lines.push(twoCol(`Discount ${disc}%`, moneyPlain(discAmt), cols));
+  if (tax) lines.push(twoCol(`Tax ${tax}%`, moneyPlain(taxAmt), cols));
   lines.push(rule(cols, '='));
   lines.push(twoCol('TOTAL', moneyPlain(grand), cols));
   lines.push(rule(cols, '='));
@@ -159,13 +161,13 @@ export function buildThermalReceiptHtml({
       line-height: 1.4;
     }
     .sheet {
-      width: ${printW}mm;
-      max-width: 96%;
+      display: table;
       margin: 0 auto 16px;
-      padding: 8px 6px 12px;
+      padding: 8px 0 12px;
       background: #fff;
       color: #000;
       box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      overflow: hidden;
     }
     .ticket {
       display: block;
@@ -179,7 +181,7 @@ export function buildThermalReceiptHtml({
       font-size: ${size.fontPx}px;
       line-height: 1.35;
       white-space: pre;
-      overflow: visible;
+      overflow: hidden;
       word-break: break-all;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -202,6 +204,8 @@ export function buildThermalReceiptHtml({
         padding: 1mm 0 2mm !important;
         box-shadow: none !important;
         background: #fff !important;
+        display: block !important;
+        overflow: hidden !important;
       }
       .ticket {
         font-size: ${size.fontPx}px !important;
