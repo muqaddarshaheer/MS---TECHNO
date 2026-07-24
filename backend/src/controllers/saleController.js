@@ -156,13 +156,24 @@ export async function createSale(req, res, next) {
         });
       }
       decremented.push({ id: product._id, qty });
-      subtotal += product.sellPrice * qty;
+      const price = Number(item.price) > 0 ? Number(item.price) : product.sellPrice;
+      const buyPrice = product.buyPrice || 0;
+      if (price < buyPrice * 0.5) {
+        for (const row of decremented) {
+          await Product.updateOne({ _id: row.id, shop: shopId }, { $inc: { qty: row.qty } });
+        }
+        return res.status(400).json({
+          message: `Price ${price} for "${product.name}" is unreasonably low`,
+          code: 'PRICE_TOO_LOW',
+        });
+      }
+      subtotal += price * qty;
       lineItems.push({
         product: product._id,
         name: product.name,
         qty,
-        price: product.sellPrice,
-        buyPrice: product.buyPrice,
+        price,
+        buyPrice: buyPrice > 0 ? buyPrice : price,
       });
     }
 

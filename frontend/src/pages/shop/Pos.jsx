@@ -341,7 +341,7 @@ export default function Pos() {
       const { data } = await api.post('/sales', {
         items: cart.map((c) => {
           if (c.manual) return { productId: null, name: c.name, qty: c.qty, price: c.price, manual: true };
-          return { productId: c.productId, qty: c.qty };
+          return { productId: c.productId, qty: c.qty, price: c.price };
         }),
         discountPct: Number(discount) || 0,
         taxPct: Number(tax) || 0,
