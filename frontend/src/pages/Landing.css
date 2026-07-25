@@ -1,86 +1,94 @@
-/* General page padding and centered container */
-.saas-landing {
-  padding: 2.25rem 1.5rem;
-  max-width: 1100px;
-  margin: 0 auto;
-  box-sizing: border-box;
+:root{
+  --bg:#0f1724;
+  --card:#0b1220;
+  --muted:#9aa4b2;
+  --accent:#6c8cff;
+  --accent-2:#7be4c7;
+  --surface:#0e1722;
+  --glass: rgba(255,255,255,0.04);
+  --radius:12px;
 }
 
-/* Nav spacing */
-.saas-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.5rem 0;
-  margin-bottom: 1.25rem;
+/* Container */
+.saas-landing{
+  padding:3rem 1.25rem;
+  max-width:1200px;
+  margin:0 auto;
+  color:var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
-/* Brand and nav links */
-.saas-nav .brand {
-  font-weight: 700;
-  letter-spacing: 0.4px;
-}
-.landing-nav-links {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
+/* Top nav */
+.saas-nav{ display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; }
+.saas-nav .brand{ color:#fff; font-weight:700; font-size:1.05rem; letter-spacing:0.6px; }
+.saas-nav .brand span{ color:var(--accent-2); }
+.landing-nav-links{ display:flex; gap:0.75rem; align-items:center; }
+.landing-nav-links a{ color:var(--muted); text-decoration:none; padding:0.45rem 0.6rem; border-radius:8px; transition:all .18s ease; }
+.landing-nav-links a:hover{ color:#fff; background: rgba(255,255,255,0.03); }
+
+/* Buttons */
+.btn{ display:inline-flex; align-items:center; gap:0.5rem; padding:0.6rem 0.9rem; border-radius:10px; font-weight:600; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease; }
+.btn-primary{ background:linear-gradient(90deg,var(--accent),#4f6cff); color:#fff; box-shadow:0 8px 30px rgba(79,108,255,0.14); border:none; }
+.btn-outline{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); }
+.btn-lg{ padding:0.85rem 1.05rem; border-radius:12px; }
+.btn:hover{ transform:translateY(-3px); }
+
+/* Hero */
+.saas-hero{ display:flex; gap:2.25rem; align-items:center; padding:2rem; background:linear-gradient(180deg, rgba(124,139,255,0.06), rgba(0,0,0,0)); border-radius:var(--radius); margin-bottom:2rem; position:relative; overflow:visible; }
+.hero-copy{ flex:1 1 60%; min-width:0; }
+.hero-copy-inner{ padding-right:0.5rem; }
+.saas-eyebrow{ color:var(--accent-2); font-weight:600; margin-bottom:0.45rem; }
+.hero-brand{ font-size:2.2rem; color:#fff; margin:0 0 0.6rem 0; letter-spacing:0.4px; }
+.saas-lead{ color:var(--muted); line-height:1.5; margin:0 0 1rem 0; }
+.hero-cta{ margin-top:1rem; }
+.hero-stats{ margin-top:1rem; display:flex; gap:0.6rem; flex-wrap:wrap; }
+.hero-stat{ background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color:var(--muted); padding:0.45rem 0.65rem; border-radius:8px; font-size:0.9rem; }
+
+.hero-visual{ flex:0 0 260px; display:flex; align-items:center; justify-content:center; }
+.hero-panel{ width:100%; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:10px; padding:1rem; box-shadow:0 8px 30px rgba(2,6,23,0.4); color:#fff; }
+.hero-deco{ position:absolute; right: -40px; top:-40px; width:220px; height:220px; background: radial-gradient(circle at 30% 30%, rgba(124,139,255,0.18), transparent 30%), radial-gradient(circle at 70% 70%, rgba(123,228,199,0.12), transparent 20%); border-radius:50%; filter:blur(14px); z-index:0; }
+.hero-panel strong{ display:block; color:#fff; margin-bottom:0.6rem; z-index:2; position:relative; }
+.hero-shop-card{ display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.6rem; border-radius:8px; background:rgba(255,255,255,0.02); margin-top:0.45rem; transition:transform .18s ease, background .18s ease; }
+.hero-shop-card:hover{ transform:translateY(-4px); background:rgba(255,255,255,0.03); }
+.hero-shop-name{ color:#fff; font-weight:600; }
+.hero-shop-status{ padding:0.22rem 0.5rem; border-radius:999px; font-size:0.8rem; }
+.hero-shop-status.live{ background: rgba(123,228,199,0.12); color:var(--accent-2); }
+.hero-shop-status.demo{ background: rgba(108,140,255,0.08); color:var(--accent); }
+
+/* Sections */
+.saas-section{ padding:1.25rem 0; margin-bottom:1rem; }
+.feature-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+.feature-block{ background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:1.2rem; border-radius:12px; color:var(--muted); transition:transform .18s ease, box-shadow .18s ease; }
+.feature-block:hover{ transform:translateY(-6px); box-shadow:0 10px 30px rgba(2,6,23,0.35); }
+.feature-icon{ font-size:1.05rem; margin-bottom:0.6rem; color:var(--accent); }
+
+.pricing-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; }
+.plan-card{ padding:1.2rem; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color:#fff; transition:transform .18s ease, box-shadow .18s ease; }
+.plan-card:hover{ transform:translateY(-8px); box-shadow:0 18px 50px rgba(2,6,23,0.5); }
+.plan-price{ font-size:1.4rem; color:#fff; margin:0.4rem 0; }
+.plan-badge{ background:linear-gradient(90deg,var(--accent-2), #baf6df); color:#072018; padding:0.25rem 0.5rem; border-radius:8px; font-weight:700; }
+
+.cta-banner{ display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1.2rem; border-radius:12px; background:linear-gradient(90deg, rgba(124,139,255,0.06), rgba(123,228,199,0.04)); margin:1.5rem 0; }
+.cta-banner h2{ color:#fff; margin:0 0 0.25rem 0; }
+
+.testimonial-section .testimonial{ font-style:italic; color:var(--muted); }
+
+.saas-footer{ margin-top:2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.03); display:flex; justify-content:space-between; gap:1rem; align-items:center; flex-wrap:wrap; color:var(--muted); }
+
+/* Animations */
+@keyframes fadeUp{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none; } }
+.hero-copy-inner, .hero-panel, .feature-block, .plan-card{ animation:fadeUp .6s ease both; }
+
+@media (max-width: 900px){
+  .saas-hero{ flex-direction:column; }
+  .feature-grid{ grid-template-columns:1fr; }
+  .pricing-grid{ grid-template-columns:1fr; }
+  .hero-visual{ order:-1; width:100%; }
+  .hero-deco{ display:none; }
+  .saas-landing{ padding:2rem 0.8rem; }
 }
 
-/* Buttons spacing */
-.btn {
-  margin: 0 0.25rem;
-}
-
-/* Hero layout */
-.saas-hero {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-  padding: 1.25rem;
-  background: linear-gradient(180deg, rgba(250,250,252,0.6), transparent);
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-}
-.hero-copy {
-  flex: 1 1 60%;
-  min-width: 0;
-  padding: 0.25rem 0;
-}
-.hero-visual {
-  flex: 0 0 240px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Hero stats and CTA spacing */
-.hero-cta { display:flex; gap:0.75rem; margin-top:1rem; }
-.hero-stats { display:flex; gap:0.75rem; margin-top:1rem; flex-wrap:wrap; }
-.hero-stat { background:#f5f6f8; padding:0.35rem 0.6rem; border-radius:6px; font-size:0.9rem; }
-
-/* Feature & pricing sections */
-.saas-section { padding: 1.2rem 0; margin-bottom: 1rem; }
-.feature-grid .feature-block { padding: 1rem; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(15,15,15,0.03); }
-.pricing-grid { gap: 1rem; align-items: stretch; }
-.plan-card {
-  padding: 1rem;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 6px 20px rgba(12, 17, 24, 0.04);
-  display:flex;
-  flex-direction:column;
-  gap:0.6rem;
-}
-.plan-badge { background:#ffefc7; padding:0.25rem 0.5rem; border-radius:4px; font-size:0.8rem; align-self:flex-start; }
-
-/* Footer spacing */
-.saas-footer { margin-top:2rem; padding-top:1rem; border-top:1px solid rgba(0,0,0,0.06); display:flex; justify-content:space-between; gap:1rem; align-items:center; flex-wrap:wrap; }
-
-/* Responsive tweaks */
-@media (max-width: 880px) {
-  .saas-hero { flex-direction: column; align-items: stretch; }
-  .hero-visual { order: -1; margin-bottom: 1rem; }
-  .pricing-grid, .feature-grid { grid-template-columns: 1fr; }
-  .saas-landing { padding-left: 1rem; padding-right: 1rem; }
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .hero-copy-inner, .hero-panel, .feature-block, .plan-card{ animation:none; transition:none; }
 }

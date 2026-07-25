@@ -51,6 +51,7 @@ export default function Landing() {
 
       <section className="saas-hero hero-v2">
         <div className="hero-copy">
+          <div className="hero-copy-inner">
           <p className="saas-eyebrow">Multi-tenant retail ERP · SaaS</p>
           <h1 className="hero-brand">MS TECHNO</h1>
           <p className="saas-lead">
@@ -70,9 +71,11 @@ export default function Landing() {
             <span className="hero-stat">POS ready / Premium plans</span>
             <span className="hero-stat">Cloud / Always online</span>
           </div>
+          </div>
         </div>
         <div className="hero-visual" aria-hidden="true">
           <div className="hero-panel">
+            <div className="hero-deco" aria-hidden="true" />
             <strong style={{ fontFamily: 'var(--display)', fontSize: '1.1rem' }}>Live tenants</strong>
             {shops.map((s) => (
               <div className="hero-shop-card" key={s.name}>
