@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <rect width="800" height="600" fill="#0f172a"/>
+  <rect x="100" y="80" width="600" height="440" rx="12" fill="#1e293b"/>
+  <rect x="100" y="80" width="600" height="200" fill="url(#heroGrad)"/>
+  <defs>
+    <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066ff;stop-opacity:0.4"/>
+      <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0.2"/>
+    </linearGradient>
+  </defs>
+  <rect x="130" y="300" width="160" height="100" rx="6" fill="#334155"/>
+  <rect x="310" y="300" width="160" height="100" rx="6" fill="#334155"/>
+  <rect x="490" y="300" width="160" height="100" rx="6" fill="#334155"/>
+  <text x="400" y="560" font-family="Arial" font-size="24" fill="#64748b" text-anchor="middle">Business Website</text>
+</svg>
