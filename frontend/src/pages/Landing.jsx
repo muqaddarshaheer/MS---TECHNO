@@ -1,3 +1,4 @@
+// Landing.jsx
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
@@ -7,6 +8,7 @@ import './Landing.css';
 export default function Landing() {
   const { user } = useAuth();
   const [plans, setPlans] = useState([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     api
@@ -17,6 +19,22 @@ export default function Landing() {
 
   const dashHref = user ? (user.role === 'super' ? '/super' : '/shop') : null;
 
+  const features = [
+    { icon: '🛒', title: 'POS Management', desc: 'Complete point of sale system with quick checkout and billing.' },
+    { icon: '📦', title: 'Inventory Management', desc: 'Track stock levels, manage products, and automate reordering.' },
+    { icon: '📊', title: 'Sales Reports', desc: 'Real-time sales analytics and comprehensive reporting dashboard.' },
+    { icon: '👥', title: 'Customer Management', desc: 'Manage customer relationships, history, and loyalty programs.' },
+    { icon: '☁️', title: 'Cloud Based System', desc: 'Access your business data anytime, anywhere on any device.' },
+    { icon: '🔒', title: 'Secure Data', desc: 'Enterprise-grade security with encrypted data and backups.' },
+  ];
+
+  const benefits = [
+    { icon: '⏱️', title: 'Save Time', desc: 'Automate routine tasks and streamline operations.' },
+    { icon: '📈', title: 'Increase Sales', desc: 'Boost revenue with smart tools and insights.' },
+    { icon: '🏢', title: 'Manage Business Easily', desc: 'All-in-one platform for complete business control.' },
+    { icon: '📊', title: 'Real Time Reports', desc: 'Make data-driven decisions with instant analytics.' },
+  ];
+
   const shops = [
     { name: 'City Mart', status: 'Live', statusClass: 'live' },
     { name: 'Green Store', status: 'Live', statusClass: 'live' },
@@ -25,58 +43,65 @@ export default function Landing() {
 
   return (
     <div className="landing">
-      {/* Navigation */}
-      <header className="landing-nav">
+      {/* ===== NAVBAR ===== */}
+      <header className="navbar">
         <div className="nav-container">
-          <Link to="/" className="brand">
-            <span className="brand-icon">◆</span>
+          <Link to="/" className="nav-logo">
             MS <span>TECHNO</span>
           </Link>
-          <nav className="nav-menu">
-            <a href="#features">Features</a>
-            <a href="#plans">Pricing</a>
-            <a href="#testimonials">Testimonials</a>
+
+          <button 
+            className={`nav-toggle ${isMenuOpen ? 'active' : ''}`}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <nav className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
+            <a href="#home" onClick={() => setIsMenuOpen(false)}>Home</a>
+            <a href="#features" onClick={() => setIsMenuOpen(false)}>Features</a>
+            <a href="#pricing" onClick={() => setIsMenuOpen(false)}>Pricing</a>
+            <a href="#about" onClick={() => setIsMenuOpen(false)}>About</a>
+            <a href="#contact" onClick={() => setIsMenuOpen(false)}>Contact</a>
             {dashHref ? (
-              <Link className="btn btn-primary" to={dashHref}>
+              <Link className="btn btn-primary btn-nav" to={dashHref}>
                 Dashboard
               </Link>
             ) : (
-              <>
-                <Link className="btn btn-outline" to="/login">
-                  Sign In
-                </Link>
-                <Link className="btn btn-primary" to="/signup">
-                  Get Started
-                </Link>
-              </>
+              <Link className="btn btn-primary btn-nav" to="/signup">
+                Get Started
+              </Link>
             )}
           </nav>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="hero">
+      {/* ===== HERO SECTION ===== */}
+      <section className="hero" id="home">
         <div className="hero-container">
           <div className="hero-content">
             <div className="hero-badge">
               <span className="badge-dot"></span>
-              Multi-tenant Retail ERP Platform
+              Next-Generation ERP Platform
             </div>
             <h1 className="hero-title">
-              Enterprise Retail <br />
-              <span className="hero-highlight">Management Suite</span>
+              Powerful SaaS Solutions <br />
+              <span className="hero-highlight">For Your Business</span>
             </h1>
             <p className="hero-description">
-              One powerful platform. Isolated shops. Complete control over stock, sales, 
-              and reporting — with full tenant isolation and flexible pricing plans.
+              MS TECHNO provides professional software solutions to streamline your retail operations,
+              boost sales, and grow your business with confidence.
             </p>
             <div className="hero-actions">
               <Link className="btn btn-primary btn-hero" to="/signup">
-                Start Free Trial
+                Get Started
                 <span className="btn-arrow">→</span>
               </Link>
-              <a className="btn btn-outline btn-hero" href="#plans">
-                View Pricing
+              <a className="btn btn-outline btn-hero" href="#contact">
+                Request Demo
               </a>
             </div>
             <div className="hero-stats">
@@ -95,133 +120,256 @@ export default function Landing() {
             </div>
           </div>
           <div className="hero-visual">
-            <div className="hero-panel">
-              <div className="panel-header">
-                <div className="panel-title-group">
-                  <span className="panel-dot"></span>
-                  <span className="panel-title">Live Tenants</span>
+            <div className="dashboard-card">
+              <div className="dashboard-header">
+                <div className="dashboard-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
                 </div>
-                <span className="panel-count">3 Active</span>
+                <span className="dashboard-title">Dashboard</span>
               </div>
-              {shops.map((s) => (
-                <div className="tenant-item" key={s.name}>
-                  <div className="tenant-info">
-                    <span className="tenant-avatar">🏪</span>
-                    <span className="tenant-name">{s.name}</span>
-                  </div>
-                  <span className={`tenant-status ${s.statusClass}`}>
-                    {s.status}
-                  </span>
+              <div className="dashboard-stats">
+                <div className="dash-stat">
+                  <span className="dash-stat-number">1,284</span>
+                  <span className="dash-stat-label">Total Sales</span>
                 </div>
-              ))}
-              <div className="panel-footer">
-                <span className="panel-footer-text">+2 shops in queue</span>
-                <span className="panel-footer-arrow">→</span>
+                <div className="dash-stat">
+                  <span className="dash-stat-number">₨ 45.2k</span>
+                  <span className="dash-stat-label">Revenue</span>
+                </div>
+              </div>
+              <div className="dashboard-shops">
+                <span className="dash-shops-title">Live Tenants</span>
+                {shops.map((s) => (
+                  <div className="dash-shop-item" key={s.name}>
+                    <span className="dash-shop-name">{s.name}</span>
+                    <span className={`dash-shop-status ${s.statusClass}`}>
+                      {s.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="dashboard-footer">
+                <span>+2 shops in queue</span>
               </div>
             </div>
             <div className="hero-decoration">
               <div className="deco-circle deco-1"></div>
               <div className="deco-circle deco-2"></div>
-              <div className="deco-circle deco-3"></div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* ===== FEATURES SECTION ===== */}
       <section className="section features" id="features">
         <div className="section-container">
           <div className="section-header">
             <span className="section-tag">Features</span>
-            <h2 className="section-title">Built for <span>software operators</span></h2>
+            <h2 className="section-title">Everything You Need <span>To Succeed</span></h2>
             <p className="section-subtitle">
-              Onboard businesses, assign packages, and keep every store's data completely private.
+              Comprehensive tools designed to help you manage, grow, and scale your business efficiently.
             </p>
           </div>
           <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">🔒</div>
-              <h3>Tenant Isolation</h3>
-              <p>Each shop operates in its own secure environment. Products, sales, and customer data never mix.</p>
-              <div className="feature-tag">Security First</div>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📦</div>
-              <h3>Package Control</h3>
-              <p>Flexible plans with product limits and feature gates. From basic inventory to premium POS.</p>
-              <div className="feature-tag">Scalable</div>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">⚡</div>
-              <h3>Admin Center</h3>
-              <p>Complete control: approve demos, reset credentials, suspend shops, and broadcast updates.</p>
-              <div className="feature-tag">Full Control</div>
-            </div>
+            {features.map((feature, index) => (
+              <div className="feature-card" key={index}>
+                <div className="feature-icon">{feature.icon}</div>
+                <h3>{feature.title}</h3>
+                <p>{feature.desc}</p>
+                <div className="feature-tag">Learn More →</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="section pricing" id="plans">
+      {/* ===== BENEFITS SECTION ===== */}
+      <section className="section benefits">
         <div className="section-container">
           <div className="section-header">
-            <span className="section-tag">Pricing</span>
-            <h2 className="section-title">Simple, <span>transparent</span> plans</h2>
+            <span className="section-tag">Why Choose Us</span>
+            <h2 className="section-title">The <span>Smart Choice</span> For Your Business</h2>
             <p className="section-subtitle">
-              Choose the perfect plan for your business needs. No hidden fees.
+              Experience the difference with our cutting-edge software solutions designed for growth.
             </p>
           </div>
-          <div className="pricing-grid">
-            {plans.map((p) => (
-              <div 
-                className={`pricing-card ${p.key === 'Premium' ? 'pricing-card-featured' : ''}`} 
-                key={p.key}
-              >
-                {p.key === 'Premium' && (
-                  <div className="pricing-badge">Most Popular</div>
-                )}
-                <h3 className="pricing-name">{p.name}</h3>
-                <div className="pricing-price">
-                  <span className="currency">Rs.</span>
-                  {Number(p.priceMonthlyPkr).toLocaleString()}
-                  <span className="period">/month</span>
-                </div>
-                <p className="pricing-detail">
-                  {p.unlimitedProducts || p.maxProducts == null
-                    ? '♾️ Unlimited products'
-                    : `📦 Up to ${p.maxProducts} products`}
-                </p>
-                <ul className="pricing-features">
-                  {(p.features || []).map((f) => (
-                    <li key={f}>
-                      <span className="check">✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link 
-                  className="btn btn-primary btn-pricing" 
-                  to="/signup" 
-                  state={{ package: p.key }}
-                >
-                  Choose {p.name}
-                </Link>
+          <div className="benefits-grid">
+            {benefits.map((benefit, index) => (
+              <div className="benefit-card" key={index}>
+                <div className="benefit-icon">{benefit.icon}</div>
+                <h3>{benefit.title}</h3>
+                <p>{benefit.desc}</p>
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ===== PRICING SECTION ===== */}
+      <section className="section pricing" id="pricing">
+        <div className="section-container">
+          <div className="section-header">
+            <span className="section-tag">Pricing</span>
+            <h2 className="section-title">Choose Your <span>Perfect Plan</span></h2>
+            <p className="section-subtitle">
+              Flexible pricing options to suit businesses of all sizes. No hidden fees.
+            </p>
+          </div>
+          <div className="pricing-grid">
+            {plans.length > 0 ? (
+              plans.map((p) => (
+                <div 
+                  className={`pricing-card ${p.key === 'Premium' ? 'pricing-featured' : ''}`} 
+                  key={p.key}
+                >
+                  {p.key === 'Premium' && (
+                    <div className="pricing-badge">Most Popular</div>
+                  )}
+                  <h3 className="pricing-name">{p.name}</h3>
+                  <div className="pricing-price">
+                    <span className="currency">₨</span>
+                    {Number(p.priceMonthlyPkr).toLocaleString()}
+                    <span className="period">/month</span>
+                  </div>
+                  <p className="pricing-detail">
+                    {p.unlimitedProducts || p.maxProducts == null
+                      ? '♾️ Unlimited products'
+                      : `📦 Up to ${p.maxProducts} products`}
+                  </p>
+                  <ul className="pricing-features">
+                    {(p.features || []).map((f) => (
+                      <li key={f}>
+                        <span className="check">✓</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link 
+                    className="btn btn-primary btn-pricing" 
+                    to="/signup" 
+                    state={{ package: p.key }}
+                  >
+                    Choose {p.name}
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="pricing-card">
+                  <h3 className="pricing-name">Basic</h3>
+                  <div className="pricing-price">
+                    <span className="currency">₨</span>1,999<span className="period">/month</span>
+                  </div>
+                  <p className="pricing-detail">📦 Up to 500 products</p>
+                  <ul className="pricing-features">
+                    <li><span className="check">✓</span> Inventory Management</li>
+                    <li><span className="check">✓</span> Basic POS</li>
+                    <li><span className="check">✓</span> Sales Reports</li>
+                    <li><span className="check">✓</span> Email Support</li>
+                  </ul>
+                  <Link className="btn btn-primary btn-pricing" to="/signup">
+                    Choose Basic
+                  </Link>
+                </div>
+                <div className="pricing-card pricing-featured">
+                  <div className="pricing-badge">Most Popular</div>
+                  <h3 className="pricing-name">Premium</h3>
+                  <div className="pricing-price">
+                    <span className="currency">₨</span>4,999<span className="period">/month</span>
+                  </div>
+                  <p className="pricing-detail">♾️ Unlimited products</p>
+                  <ul className="pricing-features">
+                    <li><span className="check">✓</span> All Basic Features</li>
+                    <li><span className="check">✓</span> Advanced POS</li>
+                    <li><span className="check">✓</span> Real-time Analytics</li>
+                    <li><span className="check">✓</span> Priority Support</li>
+                  </ul>
+                  <Link className="btn btn-primary btn-pricing" to="/signup">
+                    Choose Premium
+                  </Link>
+                </div>
+                <div className="pricing-card">
+                  <h3 className="pricing-name">Enterprise</h3>
+                  <div className="pricing-price">
+                    <span className="currency">₨</span>9,999<span className="period">/month</span>
+                  </div>
+                  <p className="pricing-detail">♾️ Custom solutions</p>
+                  <ul className="pricing-features">
+                    <li><span className="check">✓</span> All Premium Features</li>
+                    <li><span className="check">✓</span> Custom Development</li>
+                    <li><span className="check">✓</span> Dedicated Support</li>
+                    <li><span className="check">✓</span> API Access</li>
+                  </ul>
+                  <Link className="btn btn-primary btn-pricing" to="/signup">
+                    Contact Sales
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
           <p className="section-footnote">
-            Need a custom enterprise solution? <a href="#contact">Contact our sales team</a>
+            Need a custom solution? <a href="#contact">Contact our sales team</a> for a personalized quote.
           </p>
         </div>
       </section>
 
-      {/* CTA Banner */}
-      <section className="cta-section">
+      {/* ===== ABOUT SECTION ===== */}
+      <section className="section about" id="about">
+        <div className="section-container">
+          <div className="about-content">
+            <div className="about-text">
+              <span className="section-tag">About Us</span>
+              <h2 className="section-title">MS <span>TECHNO</span> — Your Trusted Software Partner</h2>
+              <p className="about-description">
+                MS TECHNO is a leading provider of professional software solutions for businesses. 
+                We specialize in developing powerful, user-friendly ERP systems that help retail 
+                businesses manage their operations efficiently.
+              </p>
+              <p className="about-description">
+                Our mission is to empower businesses with cutting-edge technology that drives growth, 
+                improves productivity, and delivers measurable results. With our cloud-based platform, 
+                you can access your business data anytime, anywhere.
+              </p>
+              <div className="about-stats">
+                <div className="about-stat">
+                  <span className="about-stat-number">5+</span>
+                  <span className="about-stat-label">Years Experience</span>
+                </div>
+                <div className="about-stat">
+                  <span className="about-stat-number">100+</span>
+                  <span className="about-stat-label">Businesses Served</span>
+                </div>
+                <div className="about-stat">
+                  <span className="about-stat-number">99%</span>
+                  <span className="about-stat-label">Satisfaction Rate</span>
+                </div>
+              </div>
+            </div>
+            <div className="about-image">
+              <div className="about-card">
+                <div className="about-card-icon">🏢</div>
+                <h3>MS TECHNO</h3>
+                <p>Cloud Retail Management ERP</p>
+                <div className="about-card-features">
+                  <span>✓ Secure & Reliable</span>
+                  <span>✓ 24/7 Support</span>
+                  <span>✓ Scalable Solutions</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CONTACT CTA SECTION ===== */}
+      <section className="cta-section" id="contact">
         <div className="cta-container">
           <div className="cta-content">
             <span className="cta-badge">🚀 Get Started Today</span>
-            <h2>Ready to scale your retail operations?</h2>
-            <p>Onboard your first tenant in minutes — no commitment required.</p>
+            <h2>Ready to Grow Your Business?</h2>
+            <p>Join 100+ businesses already using MS TECHNO to streamline their operations.</p>
           </div>
           <div className="cta-actions">
             <Link className="btn btn-cta-primary" to="/signup">
@@ -235,73 +383,47 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonial */}
-      <section className="section testimonial-section" id="testimonials">
-        <div className="section-container">
-          <div className="testimonial-grid">
-            <div className="testimonial-card">
-              <div className="testimonial-quote">"</div>
-              <blockquote className="testimonial-text">
-                We onboard shops in minutes — each tenant gets their own login, stock, and invoices. 
-                The isolation is perfect for our multi-brand strategy.
-              </blockquote>
-              <div className="testimonial-author">
-                <div className="author-avatar">👨‍💼</div>
-                <div className="author-info">
-                  <span className="author-name">Muqaddar Hussain</span>
-                  <span className="author-role">CEO, MS Techno</span>
-                </div>
-              </div>
-            </div>
-            <div className="testimonial-card">
-              <div className="testimonial-quote">"</div>
-              <blockquote className="testimonial-text">
-                The super admin dashboard gives us complete visibility across all shops. 
-                Managing plans and users has never been easier.
-              </blockquote>
-              <div className="testimonial-author">
-                <div className="author-avatar">👨‍💻</div>
-                <div className="author-info">
-                  <span className="author-name">Mooz Kamal</span>
-                  <span className="author-role">Co-Founder, MS Techno</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="landing-footer">
+      {/* ===== FOOTER ===== */}
+      <footer className="footer">
         <div className="footer-container">
           <div className="footer-brand">
-            <Link to="/" className="brand">
-              <span className="brand-icon">◆</span>
+            <Link to="/" className="footer-logo">
               MS <span>TECHNO</span>
             </Link>
-            <p className="footer-desc">Cloud Retail Management ERP</p>
-            <p className="footer-copy">© 2026 MS Techno. All rights reserved.</p>
+            <p className="footer-desc">
+              Cloud Retail Management ERP — Professional software solutions for modern businesses.
+            </p>
+            <div className="footer-social">
+              <span>📧</span>
+              <span>📱</span>
+              <span>💼</span>
+              <span>🐦</span>
+            </div>
           </div>
           <div className="footer-links">
             <div className="footer-column">
-              <h4>Product</h4>
+              <h4>Quick Links</h4>
+              <a href="#home">Home</a>
               <a href="#features">Features</a>
-              <a href="#plans">Pricing</a>
-              <a href="#testimonials">Testimonials</a>
-            </div>
-            <div className="footer-column">
-              <h4>Company</h4>
-              <a href="#about">About Us</a>
-              <a href="#contact">Contact</a>
-              <a href="#careers">Careers</a>
+              <a href="#pricing">Pricing</a>
+              <a href="#about">About</a>
             </div>
             <div className="footer-column">
               <h4>Support</h4>
+              <a href="#contact">Contact</a>
               <a href="#help">Help Center</a>
               <a href="#docs">Documentation</a>
               <a href="#status">System Status</a>
             </div>
+            <div className="footer-column">
+              <h4>Contact</h4>
+              <p>📞 0340-1227619</p>
+              <p>📍 Pakistan</p>
+            </div>
           </div>
+        </div>
+        <div className="footer-bottom">
+          <p>© 2026 MS TECHNO. All rights reserved.</p>
         </div>
       </footer>
     </div>
