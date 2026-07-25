@@ -398,13 +398,13 @@ button {
   width: min(720px, 100%);
 }
 
-/* ===== Landing page — visual refinements (scoped) ===== */
+/* ===== Landing page — UI repair (scoped) ===== */
 .saas-landing {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding-top: 0.35rem;
-  padding-bottom: 2.75rem;
+  padding: 0.35rem 1rem 2.75rem;
+  box-sizing: border-box;
 }
 
 .saas-landing .saas-nav {
@@ -416,6 +416,18 @@ button {
   max-width: 1100px;
   width: 100%;
   box-shadow: 0 8px 24px rgba(28, 25, 20, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.saas-landing .landing-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .saas-landing .landing-nav-links a {
@@ -431,6 +443,9 @@ button {
 }
 
 .saas-landing .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -444,7 +459,6 @@ button {
   background: var(--surface);
 }
 
-/* Hero enhancements */
 .saas-landing .saas-hero {
   display: flex;
   gap: 2rem;
@@ -458,6 +472,7 @@ button {
   border-radius: var(--radius);
   box-shadow: 0 12px 30px rgba(28, 25, 20, 0.05);
   position: relative;
+  overflow: hidden;
 }
 
 .saas-landing .hero-copy {
@@ -468,6 +483,7 @@ button {
   flex-direction: column;
   align-items: flex-start;
 }
+
 .saas-landing .hero-brand {
   color: var(--ink);
   font-size: clamp(2rem, 5vw, 3rem);
@@ -475,17 +491,21 @@ button {
   letter-spacing: -0.02em;
   margin-bottom: 0.7rem;
 }
+
 .saas-landing .saas-eyebrow {
   color: var(--accent);
   font-weight: 700;
   letter-spacing: 0.06em;
+  margin-bottom: 0.5rem;
 }
+
 .saas-landing .saas-lead {
   color: var(--muted);
   margin-top: 0.2rem;
   line-height: 1.7;
   max-width: 580px;
 }
+
 .saas-landing .hero-cta {
   margin-top: 1.1rem;
   display: flex;
@@ -493,6 +513,7 @@ button {
   align-items: center;
   flex-wrap: wrap;
 }
+
 .saas-landing .btn-primary {
   background: linear-gradient(90deg, var(--accent), var(--accent-deep));
   color: #fff;
@@ -508,6 +529,7 @@ button {
   flex-wrap: wrap;
   align-items: center;
 }
+
 .saas-landing .hero-stat {
   background: rgba(28, 25, 20, 0.03);
   padding: 0.42rem 0.68rem;
@@ -517,7 +539,13 @@ button {
   line-height: 1.4;
 }
 
-.saas-landing .hero-visual { flex: 0 0 260px; display: flex; align-items: center; justify-content: center; }
+.saas-landing .hero-visual {
+  flex: 0 0 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .saas-landing .hero-panel {
   width: 100%;
   padding: 1rem;
@@ -539,13 +567,32 @@ button {
   transition: transform 0.18s ease, background-color 0.18s ease;
 }
 
-.saas-landing .hero-shop-card:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.1); }
-.saas-landing .hero-shop-name { font-weight: 600; color: var(--surface); }
-.saas-landing .hero-shop-status { font-size: 0.78rem; padding: 0.18rem 0.45rem; border-radius: 999px; }
-.saas-landing .hero-shop-status.live { background: rgba(15, 92, 76, 0.12); color: var(--accent); }
-.saas-landing .hero-shop-status.demo { background: rgba(176, 137, 46, 0.12); color: var(--gold); }
+.saas-landing .hero-shop-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.1);
+}
 
-/* Features and pricing polish */
+.saas-landing .hero-shop-name {
+  font-weight: 600;
+  color: var(--surface);
+}
+
+.saas-landing .hero-shop-status {
+  font-size: 0.78rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+}
+
+.saas-landing .hero-shop-status.live {
+  background: rgba(15, 92, 76, 0.12);
+  color: var(--accent);
+}
+
+.saas-landing .hero-shop-status.demo {
+  background: rgba(176, 137, 46, 0.12);
+  color: var(--gold);
+}
+
 .saas-landing .feature-grid,
 .saas-landing .pricing-grid {
   gap: 1rem;
@@ -582,10 +629,19 @@ button {
   width: 100%;
 }
 
-.saas-landing .plan-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(28, 25, 20, 0.08); }
-.saas-landing .plan-badge { background: var(--gold); color: #fff; padding: 0.25rem 0.6rem; border-radius: 999px; font-weight: 700; }
+.saas-landing .plan-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(28, 25, 20, 0.08);
+}
 
-/* CTA banner */
+.saas-landing .plan-badge {
+  background: var(--gold);
+  color: #fff;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
 .saas-landing .cta-banner {
   margin: 1.25rem auto;
   width: min(100%, 1100px);
@@ -620,9 +676,17 @@ button {
   padding: 1.25rem 0 0;
 }
 
-/* subtle fade-up animation for landing blocks */
-@keyframes lpFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-.saas-landing .hero-copy, .saas-landing .hero-panel, .saas-landing .feature-block, .saas-landing .plan-card { animation: lpFadeUp 0.6s ease both; }
+@keyframes lpFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.saas-landing .hero-copy,
+.saas-landing .hero-panel,
+.saas-landing .feature-block,
+.saas-landing .plan-card {
+  animation: lpFadeUp 0.6s ease both;
+}
 
 @media (max-width: 980px) {
   .saas-landing .saas-hero {
@@ -630,13 +694,22 @@ button {
     padding: 1.25rem;
     align-items: flex-start;
   }
+
   .saas-landing .hero-visual {
     order: -1;
     width: 100%;
     max-width: 100%;
   }
-  .saas-landing .pricing-grid, .saas-landing .feature-grid { grid-template-columns: 1fr; }
-  .saas-landing .cta-banner { flex-direction: column; align-items: flex-start; }
+
+  .saas-landing .pricing-grid,
+  .saas-landing .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .saas-landing .cta-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 560px) {
@@ -644,6 +717,7 @@ button {
     border-radius: var(--radius);
     align-items: flex-start;
     flex-direction: column;
+    padding: 0.8rem 1rem;
   }
 
   .saas-landing .landing-nav-links {
@@ -667,14 +741,15 @@ button {
     padding: 1.1rem;
     align-items: flex-start;
   }
-
-  .saas-landing .saas-nav {
-    padding: 0.8rem 1rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .saas-landing .hero-copy, .saas-landing .hero-panel, .saas-landing .feature-block, .saas-landing .plan-card { animation: none; }
+  .saas-landing .hero-copy,
+  .saas-landing .hero-panel,
+  .saas-landing .feature-block,
+  .saas-landing .plan-card {
+    animation: none;
+  }
 }
 
 .tenant-pill {
