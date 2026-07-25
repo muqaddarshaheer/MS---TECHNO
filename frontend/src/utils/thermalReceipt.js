@@ -61,7 +61,7 @@ export function buildThermalReceiptHtml({
   autoPrint = false,
 }) {
   const size = THERMAL_SIZES[paper] || THERMAL_SIZES['80'];
-  const cols = size.cols;
+  const cols = size.cols; // 42 for 80mm
   const w = size.widthMm;
   const printW = size.printMm;
   const items = sale?.items || [];
@@ -85,27 +85,42 @@ export function buildThermalReceiptHtml({
   
   // ===== HEADER SECTION =====
   lines.push('');
-  lines.push(center('═'.repeat(cols > 40 ? 38 : 28), cols));
-  lines.push(center('★ ' + String(shopName || 'Shop').toUpperCase() + ' ★', cols));
-  lines.push(center('═'.repeat(cols > 40 ? 38 : 28), cols));
-  lines.push('');
-  lines.push(center('INVOICE', cols));
-  if (invoice) lines.push(center('#' + String(invoice), cols));
-  lines.push(center('─'.repeat(20), cols));
-  lines.push(center(`${when}  |  ${time}`, cols));
-  lines.push(center(`${sale?.payment || 'Cash'}  |  ${sale?.customerName || 'Walk-in'}`, cols));
-  lines.push(center('─'.repeat(cols), cols));
+  // Shop name - center it
+  const shopNameStr = String(shopName || 'Shop').toUpperCase();
+  const shopLine = center(shopNameStr, cols);
+  lines.push(shopLine);
+  
+  // Decorative line under shop name
+  const decoLen = Math.min(shopNameStr.length + 4, cols);
+  const decoLine = '─'.repeat(decoLen);
+  lines.push(center(decoLine, cols));
+  
+  // Invoice number
+  if (invoice) {
+    lines.push(center('INVOICE #' + String(invoice), cols));
+  }
+  
+  // Date and time on same line
+  lines.push(center(`${when}  ${time}`, cols));
+  
+  // Customer and payment
+  const customer = sale?.customerName || 'Walk-in';
+  const payment = sale?.payment || 'Cash';
+  lines.push(center(`${customer}  |  ${payment}`, cols));
+  
+  lines.push(rule(cols, '─'));
   lines.push('');
 
   // ===== ITEMS HEADER =====
-  const qtyW = 4;
-  const priceW = 10;
-  const discW = 9;
-  const totalW = 9;
-  const nameW = Math.max(10, cols - (qtyW + priceW + discW + totalW + 2));
+  // For 80mm (42 cols): Name=18, Qty=3, Price=6, Disc=6, Total=7
+  const qtyW = 3;
+  const priceW = 6;
+  const discW = 6;
+  const totalW = 7;
+  const nameW = cols - (qtyW + priceW + discW + totalW + 3); // 42 - 3 - 6 - 6 - 7 - 3 = 17
   
   lines.push(
-    `${pad('ITEM', nameW)} ${pad('Qty', qtyW, 'right')} ${pad('Price', priceW, 'right')} ${pad('Disc', discW, 'right')} ${pad('Total', totalW, 'right')}`
+    `${pad('Item', nameW)} ${pad('Qty', qtyW, 'right')} ${pad('Price', priceW, 'right')} ${pad('Disc', discW, 'right')} ${pad('Total', totalW, 'right')}`
   );
   lines.push(rule(cols, '─'));
 
@@ -114,7 +129,7 @@ export function buildThermalReceiptHtml({
     lines.push(center('No items', cols));
   } else {
     for (const i of items) {
-      const name = String(i.name || 'Item');
+      const name = String(i.name || 'Item').slice(0, nameW);
       const qty = Number(i.qty || 0);
       const price = Number(i.price || 0);
       const lineGross = price * qty;
@@ -122,8 +137,14 @@ export function buildThermalReceiptHtml({
       if (i.discount != null) itemDiscAmt = Number(i.discount) || 0;
       else if (i.discountPct != null) itemDiscAmt = (lineGross * Number(i.discountPct || 0)) / 100;
       const lineTotal = lineGross - itemDiscAmt;
+      
+      // Format amounts without PKR to save space
+      const priceStr = moneyPlain(price);
+      const discStr = moneyPlain(itemDiscAmt);
+      const totalStr = moneyPlain(lineTotal);
+      
       lines.push(
-        `${pad(name, nameW)} ${pad(String(qty), qtyW, 'right')} ${pad(moneyPlain(price), priceW, 'right')} ${pad(moneyPlain(itemDiscAmt), discW, 'right')} ${pad(moneyPlain(lineTotal), totalW, 'right')}`
+        `${pad(name, nameW)} ${pad(String(qty), qtyW, 'right')} ${pad(priceStr, priceW, 'right')} ${pad(discStr, discW, 'right')} ${pad(totalStr, totalW, 'right')}`
       );
     }
   }
@@ -144,51 +165,50 @@ export function buildThermalReceiptHtml({
   const taxAmt = ((subtotal - saleDiscAmt - itemLevelDisc) * taxPct) / 100;
   
   // Subtotal
-  lines.push(twoCol('  Subtotal', 'PKR ' + moneyPlain(subtotal), cols));
+  lines.push(twoCol('Subtotal', moneyPlain(subtotal), cols));
   
   // Discounts
   if (discPct > 0) {
-    lines.push(twoCol(`  Discount (${discPct}%)`, 'PKR ' + moneyPlain(saleDiscAmt), cols));
+    lines.push(twoCol(`Discount ${discPct}%`, moneyPlain(saleDiscAmt), cols));
   }
   if (itemLevelDisc > 0) {
-    lines.push(twoCol('  Item Discounts', 'PKR ' + moneyPlain(itemLevelDisc), cols));
+    lines.push(twoCol('Item Disc', moneyPlain(itemLevelDisc), cols));
   }
   
   // Tax
   if (taxPct > 0) {
-    lines.push(twoCol(`  Tax (${taxPct}%)`, 'PKR ' + moneyPlain(taxAmt), cols));
+    lines.push(twoCol(`Tax ${taxPct}%`, moneyPlain(taxAmt), cols));
   }
+  
+  lines.push(rule(cols, '═'));
+  
+  // Grand Total - bold effect with spacing
+  lines.push(twoCol('▶ GRAND TOTAL', 'PKR ' + moneyPlain(grand), cols));
   
   lines.push(rule(cols, '─'));
   
-  // Grand Total
-  lines.push(twoCol('  GRAND TOTAL', 'PKR ' + moneyPlain(grand), cols));
-  
   // Payment details
   if (paid > 0) {
-    lines.push(twoCol('  Amount Paid', 'PKR ' + moneyPlain(paid), cols));
+    lines.push(twoCol('  Paid', 'PKR ' + moneyPlain(paid), cols));
   }
   if (credit > 0) {
     lines.push(twoCol('  Credit', 'PKR ' + moneyPlain(credit), cols));
   }
   if (remaining > 0) {
-    lines.push(twoCol('  Balance Due', 'PKR ' + moneyPlain(remaining), cols));
+    lines.push(twoCol('  Balance', 'PKR ' + moneyPlain(remaining), cols));
   }
   
   lines.push(rule(cols, '─'));
   lines.push('');
 
   // ===== FOOTER SECTION =====
-  lines.push(center('════════════════════════════════════════', cols));
-  lines.push(center('✨ Thank you for Shopping ✨', cols));
-  lines.push(center('════════════════════════════════════════', cols));
+  lines.push(center('✨ Thank You ✨', cols));
   lines.push('');
-  lines.push(center('◈ Powered by MS TECHNO ◈', cols));
-  lines.push(center('📞 0340-1227619', cols));
+  lines.push(center('MS TECHNO', cols));
+  lines.push(center('0340-1227619', cols));
   lines.push('');
-  lines.push(center('Visit us again!', cols));
-  lines.push(center('═'.repeat(cols > 40 ? 38 : 28), cols));
-  lines.push('');
+  lines.push(center('Visit Again!', cols));
+  lines.push(rule(cols, '─'));
 
   const bodyText = esc(lines.join('\n'));
 
@@ -247,10 +267,10 @@ export function buildThermalReceiptHtml({
       </tbody>
     </table>
     <div class="footer">
-      <div class="thankyou">✨ Thank you for Shopping ✨</div>
-      <div class="powered">◈ Powered by MS TECHNO ◈</div>
-      <div class="contact">📞 0340-1227619</div>
-      <div class="visit">Visit us again!</div>
+      <div class="thankyou">✨ Thank You ✨</div>
+      <div class="powered">MS TECHNO</div>
+      <div class="contact">0340-1227619</div>
+      <div class="visit">Visit Again!</div>
     </div>
   </div>`;
 
