@@ -146,8 +146,7 @@ export function buildThermalReceiptHtml({
   lines.push(twoCol('Balance', moneyPlain(remaining), cols));
 
   lines.push('');
-  lines.push(center('Powered by MS TECHNO', cols));
-  lines.push(center('Thank you for Shopping', cols));
+
 
   const bodyText = esc(lines.join('\n'));
 
