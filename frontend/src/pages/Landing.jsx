@@ -66,15 +66,12 @@ export default function Landing() {
             <a href="#pricing" onClick={() => setIsMenuOpen(false)}>Pricing</a>
             <a href="#about" onClick={() => setIsMenuOpen(false)}>About</a>
             <a href="#contact" onClick={() => setIsMenuOpen(false)}>Contact</a>
-            {dashHref ? (
-              <Link className="btn btn-primary btn-nav" to={dashHref}>
-                Dashboard
-              </Link>
-            ) : (
-              <Link className="btn btn-primary btn-nav" to="/signup">
-                Get Started
-              </Link>
-            )}
+            <Link className="btn btn-outline btn-nav" to="/login" onClick={() => setIsMenuOpen(false)}>
+              Login
+            </Link>
+            <Link className="btn btn-primary btn-nav" to="/signup" onClick={() => setIsMenuOpen(false)}>
+              Get Started
+            </Link>
           </nav>
         </div>
       </header>
@@ -153,10 +150,6 @@ export default function Landing() {
               <div className="dashboard-footer">
                 <span>+2 shops in queue</span>
               </div>
-            </div>
-            <div className="hero-decoration">
-              <div className="deco-circle deco-1"></div>
-              <div className="deco-circle deco-2"></div>
             </div>
           </div>
         </div>
@@ -393,12 +386,6 @@ export default function Landing() {
             <p className="footer-desc">
               Cloud Retail Management ERP — Professional software solutions for modern businesses.
             </p>
-            <div className="footer-social">
-              <span>📧</span>
-              <span>📱</span>
-              <span>💼</span>
-              <span>🐦</span>
-            </div>
           </div>
           <div className="footer-links">
             <div className="footer-column">
@@ -418,6 +405,7 @@ export default function Landing() {
             <div className="footer-column">
               <h4>Contact</h4>
               <p>📞 0340-1227619</p>
+              <p>📧 info@mstechno.com</p>
               <p>📍 Pakistan</p>
             </div>
           </div>
