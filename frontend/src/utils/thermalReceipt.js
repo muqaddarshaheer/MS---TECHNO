@@ -25,12 +25,8 @@ function pad(text, width, align = 'left') {
   return align === 'right' ? space + s : s + space;
 }
 
-function rule(cols, char = '─') {
+function rule(cols, char = '-') {
   return char.repeat(cols);
-}
-
-function doubleRule(cols) {
-  return '═'.repeat(cols);
 }
 
 function center(text, cols) {
@@ -50,7 +46,7 @@ function twoCol(left, right, cols) {
 
 /**
  * Build thermal receipt HTML for preview + print.
- * Uses monospace &lt;pre&gt; lines — most reliable for browser → thermal printers
+ * Standard market-style receipt - clean and professional
  */
 export function buildThermalReceiptHtml({
   shopName,
@@ -84,145 +80,96 @@ export function buildThermalReceiptHtml({
   const lines = [];
   
   // ============================================================
-  // 1. HEADER - BOLD MS TECHNO
+  // STANDARD RECEIPT - Like any normal shop bill
   // ============================================================
-  lines.push('');
-  lines.push(center('══════════════════════════════════════', cols));
-  lines.push('');
-  lines.push(center('◈◈◈  M S   T E C H N O  ◈◈◈', cols));
-  lines.push(center('◈  Cloud Retail Management  ◈', cols));
-  lines.push('');
-  lines.push(center('══════════════════════════════════════', cols));
-  lines.push('');
-
-  // ============================================================
-  // 2. INVOICE - BOLD
-  // ============================================================
-  lines.push(center('◆◆◆  I N V O I C E  ◆◆◆', cols));
-  if (invoice) lines.push(center('◆  # ' + String(invoice) + '  ◆', cols));
-  lines.push('');
-  lines.push(center('──────────────────────────────', cols));
-  lines.push('');
-
-  // ============================================================
-  // 3. DATE, TIME, CUSTOMER - BOLD LABELS
-  // ============================================================
-  lines.push(center('📅  ' + when + '    ⏰  ' + time, cols));
-  lines.push('');
-  lines.push(twoCol('👤  Customer', sale?.customerName || 'Walk-in', cols));
-  lines.push(twoCol('💳  Payment', sale?.payment || 'Cash', cols));
-  lines.push('');
-  lines.push(center('──────────────────────────────', cols));
-  lines.push('');
-
-  // ============================================================
-  // 4. ITEMS HEADER - BOLD
-  // ============================================================
-  const qtyW = 4;
-  const priceW = 10;
-  const discW = 9;
-  const totalW = 9;
-  const nameW = Math.max(10, cols - (qtyW + priceW + discW + totalW + 2));
   
-  lines.push(center('┌─────────── ITEMS ───────────┐', cols));
-  lines.push(
-    `│ ${pad('ITEM', nameW)} │ ${pad('Qty', qtyW, 'right')} │ ${pad('Price', priceW, 'right')} │ ${pad('Total', totalW, 'right')} │`
-  );
-  lines.push(center('├──────────────────────────────┤', cols));
+  // Shop Name - Centered
+  lines.push(center(String(shopName || 'SHOP').toUpperCase(), cols));
+  lines.push(center('-' + '-'.repeat(cols > 40 ? 36 : 28) + '-', cols));
+  lines.push('');
+  
+  // Invoice & Date
+  if (invoice) lines.push(center('Invoice: ' + String(invoice), cols));
+  lines.push(center('Date: ' + when + '  Time: ' + time, cols));
+  lines.push(center('Customer: ' + (sale?.customerName || 'Walk-in'), cols));
+  lines.push(center('Payment: ' + (sale?.payment || 'Cash'), cols));
+  lines.push('');
+  lines.push(rule(cols, '-'));
+  lines.push('');
 
   // ============================================================
-  // 5. ITEMS LIST - ITEM NAME BOLD
+  // ITEMS - Standard format
   // ============================================================
+  // Headers - BOLD
+  const qtyW = 4;
+  const priceW = 8;
+  const totalW = 9;
+  const nameW = Math.max(8, cols - (qtyW + priceW + totalW + 2));
+  
+  lines.push(
+    `${pad('Item', nameW)} ${pad('Qty', qtyW, 'right')} ${pad('Price', priceW, 'right')} ${pad('Total', totalW, 'right')}`
+  );
+  lines.push(rule(cols, '-'));
+
   if (!items.length) {
-    lines.push(center('│        No items found        │', cols));
+    lines.push(center('No items', cols));
   } else {
     for (const i of items) {
-      const name = String(i.name || 'Item');
+      const name = String(i.name || 'Item').slice(0, nameW);
       const qty = Number(i.qty || 0);
       const price = Number(i.price || 0);
-      const lineGross = price * qty;
-      let itemDiscAmt = 0;
-      if (i.discount != null) itemDiscAmt = Number(i.discount) || 0;
-      else if (i.discountPct != null) itemDiscAmt = (lineGross * Number(i.discountPct || 0)) / 100;
-      const lineTotal = lineGross - itemDiscAmt;
+      const lineTotal = price * qty;
       
       lines.push(
-        `│ ${pad('• ' + name, nameW)} │ ${pad(String(qty), qtyW, 'right')} │ ${pad(moneyPlain(price), priceW, 'right')} │ ${pad(moneyPlain(lineTotal), totalW, 'right')} │`
+        `${pad(name, nameW)} ${pad(String(qty), qtyW, 'right')} ${pad(moneyPlain(price), priceW, 'right')} ${pad(moneyPlain(lineTotal), totalW, 'right')}`
       );
     }
   }
 
-  lines.push(center('└──────────────────────────────┘', cols));
+  lines.push(rule(cols, '-'));
   lines.push('');
 
   // ============================================================
-  // 6. TOTALS - BOLD LABELS AND AMOUNTS
+  // TOTALS - Standard
   // ============================================================
   const saleDiscAmt = (subtotal * discPct) / 100;
-  const itemLevelDisc = items.reduce((s, it) => {
-    const qty = Number(it.qty || 0);
-    const price = Number(it.price || 0);
-    const gross = qty * price;
-    if (it.discount != null) return s + Number(it.discount || 0);
-    if (it.discountPct != null) return s + (gross * Number(it.discountPct || 0)) / 100;
-    return s;
-  }, 0);
-  const taxAmt = ((subtotal - saleDiscAmt - itemLevelDisc) * taxPct) / 100;
+  const taxAmt = ((subtotal - saleDiscAmt) * taxPct) / 100;
   
-  lines.push(center('┌────────── TOTALS ──────────┐', cols));
-  
-  // Subtotal - BOLD
-  lines.push(twoCol('│ SUBTOTAL', 'PKR ' + moneyPlain(subtotal) + ' │', cols));
-  
-  // Discount - BOLD if exists
+  lines.push(twoCol('Subtotal', moneyPlain(subtotal), cols));
   if (discPct > 0) {
-    lines.push(twoCol('│ DISCOUNT (' + discPct + '%)', 'PKR ' + moneyPlain(saleDiscAmt) + ' │', cols));
+    lines.push(twoCol('Discount (' + discPct + '%)', moneyPlain(saleDiscAmt), cols));
   }
-  if (itemLevelDisc > 0) {
-    lines.push(twoCol('│ ITEM DISCOUNTS', 'PKR ' + moneyPlain(itemLevelDisc) + ' │', cols));
-  }
-  
-  // Tax - BOLD if exists
   if (taxPct > 0) {
-    lines.push(twoCol('│ TAX (' + taxPct + '%)', 'PKR ' + moneyPlain(taxAmt) + ' │', cols));
+    lines.push(twoCol('Tax (' + taxPct + '%)', moneyPlain(taxAmt), cols));
   }
   
-  lines.push(center('├──────────────────────────────┤', cols));
+  // Grand Total - BOLD
+  lines.push(rule(cols, '='));
+  lines.push(twoCol('TOTAL', moneyPlain(grand), cols));
+  lines.push(rule(cols, '='));
   
-  // ============================================================
-  // 7. GRAND TOTAL - EXTRA BOLD WITH SYMBOLS
-  // ============================================================
-  lines.push(twoCol('│ ═══ GRAND TOTAL ═══', 'PKR ' + moneyPlain(grand) + ' │', cols));
-  
-  lines.push(center('├──────────────────────────────┤', cols));
-  
-  // Payment details - BOLD
+  // Payment details
   if (paid > 0) {
-    lines.push(twoCol('│ PAID', 'PKR ' + moneyPlain(paid) + ' │', cols));
+    lines.push(twoCol('Paid', moneyPlain(paid), cols));
   }
   if (credit > 0) {
-    lines.push(twoCol('│ CREDIT', 'PKR ' + moneyPlain(credit) + ' │', cols));
+    lines.push(twoCol('Credit', moneyPlain(credit), cols));
   }
   if (remaining > 0) {
-    lines.push(twoCol('│ BALANCE', 'PKR ' + moneyPlain(remaining) + ' │', cols));
+    lines.push(twoCol('Balance', moneyPlain(remaining), cols));
   }
   
-  lines.push(center('└──────────────────────────────┘', cols));
   lines.push('');
 
   // ============================================================
-  // 8. FOOTER - BOLD WITH SYMBOLS
+  // FOOTER - Standard
   // ============================================================
-  lines.push(center('══════════════════════════════════════', cols));
+  lines.push(center('Thank you for shopping', cols));
+  lines.push(center('MS TECHNO', cols));
+  lines.push(center('Contact: 0340-1227619', cols));
   lines.push('');
-  lines.push(center('✦✦✦  T H A N K   Y O U  ✦✦✦', cols));
-  lines.push('');
-  lines.push(center('◈◈◈  M S   T E C H N O  ◈◈◈', cols));
-  lines.push(center('◈  Contact: 0340-1227619  ◈', cols));
-  lines.push('');
-  lines.push(center('✦  Visit Again!  ✦', cols));
-  lines.push(center('══════════════════════════════════════', cols));
-  lines.push('');
+  lines.push(center('Visit Again!', cols));
+  lines.push(rule(cols, '-'));
 
   const bodyText = esc(lines.join('\n'));
 
@@ -237,11 +184,7 @@ export function buildThermalReceiptHtml({
       const name = esc(String(it.name || 'Item'));
       const qty = Number(it.qty || 0);
       const price = Number(it.price || 0);
-      const gross = price * qty;
-      let itemDiscAmt = 0;
-      if (it.discount != null) itemDiscAmt = Number(it.discount || 0);
-      else if (it.discountPct != null) itemDiscAmt = (gross * Number(it.discountPct || 0)) / 100;
-      const lineTotal = gross - itemDiscAmt;
+      const lineTotal = price * qty;
       return `<tr>
         <td><strong>${name}</strong></td>
         <td class="right"><strong>${qty}</strong></td>
@@ -254,9 +197,8 @@ export function buildThermalReceiptHtml({
   const invoiceTable = `
   <div class="invoice-table">
     <div class="header">
-      <div class="shop-name"><strong>✦ M S T E C H N O ✦</strong></div>
-      <div class="shop-sub">Cloud Retail Management ERP</div>
-      <div class="invoice-title"><strong>◆ I N V O I C E ◆</strong></div>
+      <div class="shop-name"><strong>${escapedShop}</strong></div>
+      <div class="invoice-title"><strong>INVOICE</strong></div>
       <div class="invoice-number"><strong>#${escapedInvoice}</strong></div>
       <div class="invoice-meta"><strong>${esc(`${when}`)}</strong> · <strong>${esc(`${time}`)}</strong> · <strong>${customerName}</strong> · ${paymentMethod}</div>
     </div>
@@ -275,21 +217,20 @@ export function buildThermalReceiptHtml({
     </table>
     <table class="invoice-summary">
       <tbody>
-        <tr><td style="width:55%"></td><td class="right"><strong>SUBTOTAL:</strong></td><td class="right"><strong>PKR ${moneyPlain(subtotal)}</strong></td></tr>
-        ${discPct > 0 ? `<tr><td></td><td class="right"><strong>DISCOUNT (${discPct}%):</strong></td><td class="right"><strong>PKR ${moneyPlain(saleDiscAmt)}</strong></td></tr>` : ''}
-        ${itemLevelDisc > 0 ? `<tr><td></td><td class="right"><strong>ITEM DISCOUNTS:</strong></td><td class="right"><strong>PKR ${moneyPlain(itemLevelDisc)}</strong></td></tr>` : ''}
-        ${taxPct > 0 ? `<tr><td></td><td class="right"><strong>TAX (${taxPct}%):</strong></td><td class="right"><strong>PKR ${moneyPlain(taxAmt)}</strong></td></tr>` : ''}
-        <tr class="grand-total"><td></td><td class="right"><strong>═══ GRAND TOTAL ═══</strong></td><td class="right"><strong>PKR ${moneyPlain(grand)}</strong></td></tr>
-        ${paid > 0 ? `<tr><td></td><td class="right"><strong>PAID:</strong></td><td class="right"><strong>PKR ${moneyPlain(paid)}</strong></td></tr>` : ''}
-        ${credit > 0 ? `<tr><td></td><td class="right"><strong>CREDIT:</strong></td><td class="right"><strong>PKR ${moneyPlain(credit)}</strong></td></tr>` : ''}
-        ${remaining > 0 ? `<tr><td></td><td class="right"><strong>BALANCE:</strong></td><td class="right"><strong>PKR ${moneyPlain(remaining)}</strong></td></tr>` : ''}
+        <tr><td style="width:55%"></td><td class="right"><strong>Subtotal:</strong></td><td class="right"><strong>PKR ${moneyPlain(subtotal)}</strong></td></tr>
+        ${discPct > 0 ? `<tr><td></td><td class="right"><strong>Discount (${discPct}%):</strong></td><td class="right"><strong>PKR ${moneyPlain(saleDiscAmt)}</strong></td></tr>` : ''}
+        ${taxPct > 0 ? `<tr><td></td><td class="right"><strong>Tax (${taxPct}%):</strong></td><td class="right"><strong>PKR ${moneyPlain(taxAmt)}</strong></td></tr>` : ''}
+        <tr class="grand-total"><td></td><td class="right"><strong>TOTAL:</strong></td><td class="right"><strong>PKR ${moneyPlain(grand)}</strong></td></tr>
+        ${paid > 0 ? `<tr><td></td><td class="right"><strong>Paid:</strong></td><td class="right"><strong>PKR ${moneyPlain(paid)}</strong></td></tr>` : ''}
+        ${credit > 0 ? `<tr><td></td><td class="right"><strong>Credit:</strong></td><td class="right"><strong>PKR ${moneyPlain(credit)}</strong></td></tr>` : ''}
+        ${remaining > 0 ? `<tr><td></td><td class="right"><strong>Balance:</strong></td><td class="right"><strong>PKR ${moneyPlain(remaining)}</strong></td></tr>` : ''}
       </tbody>
     </table>
     <div class="footer">
-      <div class="thankyou"><strong>✦✦✦ T H A N K   Y O U ✦✦✦</strong></div>
-      <div class="powered"><strong>◈◈◈ M S   T E C H N O ◈◈◈</strong></div>
+      <div class="thankyou"><strong>Thank you for shopping</strong></div>
+      <div class="powered"><strong>MS TECHNO</strong></div>
       <div class="contact"><strong>📞 0340-1227619</strong></div>
-      <div class="visit"><strong>✦ Visit Again! ✦</strong></div>
+      <div class="visit"><strong>Visit Again!</strong></div>
     </div>
   </div>`;
 
@@ -392,40 +333,30 @@ export function buildThermalReceiptHtml({
         text-align: center;
         margin-bottom: 20px;
         padding-bottom: 16px;
-        border-bottom: 3px double #0a7e5c;
+        border-bottom: 2px solid #0a7e5c;
       }
       .invoice-table .shop-name {
-        font-size: 26px;
+        font-size: 22px;
         font-weight: 900;
         color: #0a7e5c;
-        letter-spacing: 4px;
-      }
-      .invoice-table .shop-sub {
-        font-size: 12px;
-        color: #666;
-        margin-top: 2px;
         letter-spacing: 2px;
       }
       .invoice-table .invoice-title {
-        font-size: 18px;
-        font-weight: 900;
-        margin-top: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        margin-top: 4px;
         color: #1a1a1a;
-        letter-spacing: 3px;
       }
       .invoice-table .invoice-number {
-        font-size: 14px;
-        font-weight: 700;
-        color: #1a1a1a;
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
         margin-top: 2px;
       }
       .invoice-table .invoice-meta {
-        font-size: 13px;
-        color: #555;
-        margin-top: 6px;
-      }
-      .invoice-table .invoice-meta strong {
-        color: #1a1a1a;
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
       }
       .invoice-table table {
         width: 100%;
@@ -433,13 +364,12 @@ export function buildThermalReceiptHtml({
         font-size: 13px;
       }
       .invoice-table th {
-        background: #f0f5f2;
-        font-weight: 900;
-        padding: 12px 8px;
-        border-bottom: 2px solid #0a7e5c;
+        background: #f5f5f5;
+        font-weight: 700;
+        padding: 10px 8px;
+        border-bottom: 2px solid #ddd;
         text-align: left;
         color: #1a1a1a;
-        letter-spacing: 1px;
       }
       .invoice-table td {
         padding: 8px;
@@ -448,73 +378,56 @@ export function buildThermalReceiptHtml({
         color: #1a1a1a;
       }
       .invoice-table td strong {
-        font-weight: 700;
+        font-weight: 600;
         color: #000;
       }
       .invoice-table .right { text-align: right; }
       .invoice-table .invoice-summary {
-        margin-top: 20px;
+        margin-top: 16px;
         width: 100%;
-        border-top: 3px double #0a7e5c;
-        padding-top: 12px;
-      }
-      .invoice-table .invoice-summary td {
-        padding: 5px 8px;
-        border: none;
-        font-size: 14px;
-        color: #1a1a1a;
-      }
-      .invoice-table .invoice-summary td strong {
-        font-weight: 700;
-        color: #000;
-      }
-      .invoice-table .grand-total td {
-        font-size: 18px;
-        font-weight: 900;
         border-top: 2px solid #0a7e5c;
         padding-top: 10px;
-        color: #000;
       }
-      .invoice-table .grand-total td strong {
-        font-weight: 900;
+      .invoice-table .invoice-summary td {
+        padding: 4px 8px;
+        border: none;
+        font-size: 13px;
+        color: #1a1a1a;
+      }
+      .invoice-table .grand-total td {
+        font-size: 16px;
+        font-weight: 700;
+        border-top: 2px solid #0a7e5c;
+        padding-top: 8px;
         color: #000;
       }
       .invoice-table .footer {
         text-align: center;
-        margin-top: 25px;
-        padding-top: 18px;
-        border-top: 3px double #0a7e5c;
-      }
-      .invoice-table .footer strong {
-        font-weight: 900;
-        color: #000;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 2px solid #0a7e5c;
       }
       .invoice-table .thankyou {
-        font-size: 22px;
-        font-weight: 900;
+        font-size: 16px;
+        font-weight: 600;
         color: #0a7e5c;
-        margin-bottom: 6px;
-        letter-spacing: 3px;
+        margin-bottom: 4px;
       }
       .invoice-table .powered {
-        font-size: 16px;
-        font-weight: 900;
+        font-size: 14px;
+        font-weight: 600;
         color: #1a1a1a;
         margin-bottom: 2px;
-        letter-spacing: 2px;
       }
       .invoice-table .contact {
-        font-size: 15px;
-        font-weight: 900;
+        font-size: 13px;
+        font-weight: 600;
         color: #1a1a1a;
         margin-bottom: 2px;
-        letter-spacing: 1px;
       }
       .invoice-table .visit {
-        font-size: 14px;
-        font-weight: 700;
-        color: #555;
-        letter-spacing: 2px;
+        font-size: 13px;
+        color: #666;
       }
     }
     @page {
