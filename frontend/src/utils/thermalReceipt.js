@@ -100,7 +100,7 @@ export function buildThermalReceiptHtml({
   // ============================================================
   // ITEMS - Standard format
   // ============================================================
-  // Headers - BOLD
+  // Headers
   const qtyW = 4;
   const priceW = 8;
   const totalW = 9;
@@ -162,10 +162,13 @@ export function buildThermalReceiptHtml({
   lines.push('');
 
   // ============================================================
-  // FOOTER - Standard
+  // FOOTER - POWERED BY MS TECHNO (BOLD) + Contact Number Below
   // ============================================================
   lines.push(center('Thank you for shopping', cols));
-  lines.push(center('MS TECHNO', cols));
+  lines.push('');
+  lines.push(center('====================================', cols));
+  lines.push(center('===  POWERED BY MS TECHNO  ===', cols));
+  lines.push(center('====================================', cols));
   lines.push(center('Contact: 0340-1227619', cols));
   lines.push('');
   lines.push(center('Visit Again!', cols));
@@ -228,7 +231,7 @@ export function buildThermalReceiptHtml({
     </table>
     <div class="footer">
       <div class="thankyou"><strong>Thank you for shopping</strong></div>
-      <div class="powered"><strong>MS TECHNO</strong></div>
+      <div class="powered"><strong>⚡ POWERED BY MS TECHNO ⚡</strong></div>
       <div class="contact"><strong>📞 0340-1227619</strong></div>
       <div class="visit"><strong>Visit Again!</strong></div>
     </div>
@@ -414,16 +417,17 @@ export function buildThermalReceiptHtml({
         margin-bottom: 4px;
       }
       .invoice-table .powered {
-        font-size: 14px;
-        font-weight: 600;
-        color: #1a1a1a;
+        font-size: 18px;
+        font-weight: 900;
+        color: #0a7e5c;
         margin-bottom: 2px;
+        letter-spacing: 1px;
       }
       .invoice-table .contact {
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 14px;
+        font-weight: 700;
         color: #1a1a1a;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
       }
       .invoice-table .visit {
         font-size: 13px;
