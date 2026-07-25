@@ -457,17 +457,65 @@ button {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: 0 12px 30px rgba(28, 25, 20, 0.05);
+  position: relative;
 }
 
-.saas-landing .hero-copy { flex: 1 1 60%; min-width: 0; }
-.saas-landing .hero-brand { color: var(--ink); font-size: clamp(2rem, 5vw, 3rem); }
-.saas-landing .saas-eyebrow { color: var(--accent); font-weight: 700; }
-.saas-landing .saas-lead { color: var(--muted); margin-top: 0.5rem; }
-.saas-landing .hero-cta { margin-top: 1.1rem; display: flex; gap: 0.9rem; align-items: center; }
-.saas-landing .btn-primary { background: linear-gradient(90deg, var(--accent), var(--accent-deep)); color: #fff; box-shadow: 0 10px 24px rgba(15, 92, 76, 0.14); }
+.saas-landing .hero-copy {
+  flex: 1 1 60%;
+  min-width: 0;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.saas-landing .hero-brand {
+  color: var(--ink);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.7rem;
+}
+.saas-landing .saas-eyebrow {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.saas-landing .saas-lead {
+  color: var(--muted);
+  margin-top: 0.2rem;
+  line-height: 1.7;
+  max-width: 580px;
+}
+.saas-landing .hero-cta {
+  margin-top: 1.1rem;
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.saas-landing .btn-primary {
+  background: linear-gradient(90deg, var(--accent), var(--accent-deep));
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(15, 92, 76, 0.14);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
 
-.saas-landing .hero-stats { display: flex; gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap; }
-.saas-landing .hero-stat { background: rgba(28, 25, 20, 0.03); padding: 0.42rem 0.68rem; border-radius: 999px; color: var(--muted); font-size: 0.9rem; }
+.saas-landing .hero-stats {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.saas-landing .hero-stat {
+  background: rgba(28, 25, 20, 0.03);
+  padding: 0.42rem 0.68rem;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
 
 .saas-landing .hero-visual { flex: 0 0 260px; display: flex; align-items: center; justify-content: center; }
 .saas-landing .hero-panel {
@@ -513,6 +561,7 @@ button {
   display: flex;
   flex-direction: column;
   height: 100%;
+  gap: 0.45rem;
 }
 
 .saas-landing .plan-card {
@@ -525,6 +574,7 @@ button {
   display: flex;
   flex-direction: column;
   height: 100%;
+  gap: 0.4rem;
 }
 
 .saas-landing .plan-card .btn {
@@ -548,6 +598,7 @@ button {
   border: 1px solid var(--line);
   box-shadow: 0 10px 24px rgba(28, 25, 20, 0.05);
   background: linear-gradient(90deg, rgba(15, 92, 76, 0.08), rgba(176, 137, 46, 0.06));
+  overflow: hidden;
 }
 
 .saas-landing .testimonial {
@@ -574,8 +625,16 @@ button {
 .saas-landing .hero-copy, .saas-landing .hero-panel, .saas-landing .feature-block, .saas-landing .plan-card { animation: lpFadeUp 0.6s ease both; }
 
 @media (max-width: 980px) {
-  .saas-landing .saas-hero { flex-direction: column; padding: 1.25rem; }
-  .saas-landing .hero-visual { order: -1; width: 100%; }
+  .saas-landing .saas-hero {
+    flex-direction: column;
+    padding: 1.25rem;
+    align-items: flex-start;
+  }
+  .saas-landing .hero-visual {
+    order: -1;
+    width: 100%;
+    max-width: 100%;
+  }
   .saas-landing .pricing-grid, .saas-landing .feature-grid { grid-template-columns: 1fr; }
   .saas-landing .cta-banner { flex-direction: column; align-items: flex-start; }
 }
@@ -597,6 +656,11 @@ button {
   .saas-landing .hero-cta {
     flex-direction: column;
     align-items: stretch;
+    width: 100%;
+  }
+
+  .saas-landing .hero-cta .btn {
+    justify-content: center;
   }
 
   .saas-landing .cta-banner {
