@@ -248,8 +248,8 @@ export default function Landing() {
               <div className="testimonial-author">
                 <div className="author-avatar">👨‍💼</div>
                 <div className="author-info">
-                  <span className="author-name">Ahmed Raza</span>
-                  <span className="author-role">CEO, Retail Solutions</span>
+                  <span className="author-name">Muqaddar Hussain</span>
+                  <span className="author-role">CEO, MS Techno</span>
                 </div>
               </div>
             </div>
@@ -260,10 +260,10 @@ export default function Landing() {
                 Managing plans and users has never been easier.
               </blockquote>
               <div className="testimonial-author">
-                <div className="author-avatar">👩‍💼</div>
+                <div className="author-avatar">👨‍💻</div>
                 <div className="author-info">
-                  <span className="author-name">Sana Malik</span>
-                  <span className="author-role">Operations Manager</span>
+                  <span className="author-name">Mooz Kamal</span>
+                  <span className="author-role">Co-Founder, MS Techno</span>
                 </div>
               </div>
             </div>
