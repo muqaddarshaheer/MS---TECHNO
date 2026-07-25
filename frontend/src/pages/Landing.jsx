@@ -27,181 +27,281 @@ export default function Landing() {
     <div className="landing">
       {/* Navigation */}
       <header className="landing-nav">
-        <Link to="/" className="brand">
-          MS <span>TECHNO</span>
-        </Link>
-        <nav className="nav-links">
-          <a href="#features">Features</a>
-          <a href="#plans">Pricing</a>
-          {dashHref ? (
-            <Link className="btn btn-primary" to={dashHref}>
-              Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link className="btn btn-outline" to="/login">
-                Login
+        <div className="nav-container">
+          <Link to="/" className="brand">
+            <span className="brand-icon">◆</span>
+            MS <span>TECHNO</span>
+          </Link>
+          <nav className="nav-menu">
+            <a href="#features">Features</a>
+            <a href="#plans">Pricing</a>
+            <a href="#testimonials">Testimonials</a>
+            {dashHref ? (
+              <Link className="btn btn-primary" to={dashHref}>
+                Dashboard
               </Link>
-              <Link className="btn btn-primary" to="/signup">
-                Get Started
-              </Link>
-            </>
-          )}
-        </nav>
+            ) : (
+              <>
+                <Link className="btn btn-outline" to="/login">
+                  Sign In
+                </Link>
+                <Link className="btn btn-primary" to="/signup">
+                  Get Started
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
       </header>
 
       {/* Hero Section */}
       <section className="hero">
-        <div className="hero-content">
-          <span className="hero-badge">🚀 Multi-tenant Retail ERP</span>
-          <h1 className="hero-title">
-            MS <span className="hero-highlight">TECHNO</span>
-          </h1>
-          <p className="hero-description">
-            One platform. Isolated shops. Stock, sales, and reports your tenants can trust —
-            with you in full control of plans and access.
-          </p>
-          <div className="hero-actions">
-            <Link className="btn btn-primary btn-lg" to="/signup">
-              Start Free Demo
-            </Link>
-            <a className="btn btn-outline btn-lg" href="#plans">
-              View Pricing
-            </a>
-          </div>
-          <div className="hero-features">
-            <span className="hero-feature">🏢 Multi-tenant</span>
-            <span className="hero-feature">💳 POS Ready</span>
-            <span className="hero-feature">☁️ Cloud Based</span>
-          </div>
-        </div>
-        <div className="hero-visual">
-          <div className="tenant-panel">
-            <div className="panel-header">
-              <span className="panel-title">Live Tenants</span>
-              <span className="panel-badge">3 active</span>
+        <div className="hero-container">
+          <div className="hero-content">
+            <div className="hero-badge">
+              <span className="badge-dot"></span>
+              Multi-tenant Retail ERP Platform
             </div>
-            {shops.map((s) => (
-              <div className="tenant-item" key={s.name}>
-                <span className="tenant-name">{s.name}</span>
-                <span className={`tenant-status ${s.statusClass}`}>
-                  {s.status}
-                </span>
+            <h1 className="hero-title">
+              Enterprise Retail <br />
+              <span className="hero-highlight">Management Suite</span>
+            </h1>
+            <p className="hero-description">
+              One powerful platform. Isolated shops. Complete control over stock, sales, 
+              and reporting — with full tenant isolation and flexible pricing plans.
+            </p>
+            <div className="hero-actions">
+              <Link className="btn btn-primary btn-hero" to="/signup">
+                Start Free Trial
+                <span className="btn-arrow">→</span>
+              </Link>
+              <a className="btn btn-outline btn-hero" href="#plans">
+                View Pricing
+              </a>
+            </div>
+            <div className="hero-stats">
+              <div className="stat-item">
+                <span className="stat-number">100+</span>
+                <span className="stat-label">Active Shops</span>
               </div>
-            ))}
-            <div className="panel-footer">+2 more in queue</div>
+              <div className="stat-item">
+                <span className="stat-number">99.9%</span>
+                <span className="stat-label">Uptime</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">24/7</span>
+                <span className="stat-label">Support</span>
+              </div>
+            </div>
+          </div>
+          <div className="hero-visual">
+            <div className="hero-panel">
+              <div className="panel-header">
+                <div className="panel-title-group">
+                  <span className="panel-dot"></span>
+                  <span className="panel-title">Live Tenants</span>
+                </div>
+                <span className="panel-count">3 Active</span>
+              </div>
+              {shops.map((s) => (
+                <div className="tenant-item" key={s.name}>
+                  <div className="tenant-info">
+                    <span className="tenant-avatar">🏪</span>
+                    <span className="tenant-name">{s.name}</span>
+                  </div>
+                  <span className={`tenant-status ${s.statusClass}`}>
+                    {s.status}
+                  </span>
+                </div>
+              ))}
+              <div className="panel-footer">
+                <span className="panel-footer-text">+2 shops in queue</span>
+                <span className="panel-footer-arrow">→</span>
+              </div>
+            </div>
+            <div className="hero-decoration">
+              <div className="deco-circle deco-1"></div>
+              <div className="deco-circle deco-2"></div>
+              <div className="deco-circle deco-3"></div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="section" id="features">
-        <div className="section-header">
-          <span className="section-tag">✨ Features</span>
-          <h2 className="section-title">Built for operators who sell software</h2>
-          <p className="section-subtitle">
-            Onboard businesses, assign packages, and keep every store's data private.
-          </p>
-        </div>
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon">🔒</div>
-            <h3>Tenant Isolation</h3>
-            <p>Each shop is scoped by shop ID — products, sales, and customers never mix.</p>
+      <section className="section features" id="features">
+        <div className="section-container">
+          <div className="section-header">
+            <span className="section-tag">Features</span>
+            <h2 className="section-title">Built for <span>software operators</span></h2>
+            <p className="section-subtitle">
+              Onboard businesses, assign packages, and keep every store's data completely private.
+            </p>
           </div>
-          <div className="feature-card">
-            <div className="feature-icon">📦</div>
-            <h3>Package Control</h3>
-            <p>Basic inventory or Premium POS. Product limits and feature gates enforced in the API.</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">⚡</div>
-            <h3>Super Admin Center</h3>
-            <p>Approve demos, reset credentials, suspend shops, renew plans, and broadcast updates.</p>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">🔒</div>
+              <h3>Tenant Isolation</h3>
+              <p>Each shop operates in its own secure environment. Products, sales, and customer data never mix.</p>
+              <div className="feature-tag">Security First</div>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📦</div>
+              <h3>Package Control</h3>
+              <p>Flexible plans with product limits and feature gates. From basic inventory to premium POS.</p>
+              <div className="feature-tag">Scalable</div>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">⚡</div>
+              <h3>Admin Center</h3>
+              <p>Complete control: approve demos, reset credentials, suspend shops, and broadcast updates.</p>
+              <div className="feature-tag">Full Control</div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="section section-alt" id="plans">
-        <div className="section-header">
-          <span className="section-tag">💰 Pricing</span>
-          <h2 className="section-title">Simple, transparent pricing</h2>
-          <p className="section-subtitle">
-            Choose the perfect plan for your business needs.
+      <section className="section pricing" id="plans">
+        <div className="section-container">
+          <div className="section-header">
+            <span className="section-tag">Pricing</span>
+            <h2 className="section-title">Simple, <span>transparent</span> plans</h2>
+            <p className="section-subtitle">
+              Choose the perfect plan for your business needs. No hidden fees.
+            </p>
+          </div>
+          <div className="pricing-grid">
+            {plans.map((p) => (
+              <div 
+                className={`pricing-card ${p.key === 'Premium' ? 'pricing-card-featured' : ''}`} 
+                key={p.key}
+              >
+                {p.key === 'Premium' && (
+                  <div className="pricing-badge">Most Popular</div>
+                )}
+                <h3 className="pricing-name">{p.name}</h3>
+                <div className="pricing-price">
+                  <span className="currency">Rs.</span>
+                  {Number(p.priceMonthlyPkr).toLocaleString()}
+                  <span className="period">/month</span>
+                </div>
+                <p className="pricing-detail">
+                  {p.unlimitedProducts || p.maxProducts == null
+                    ? '♾️ Unlimited products'
+                    : `📦 Up to ${p.maxProducts} products`}
+                </p>
+                <ul className="pricing-features">
+                  {(p.features || []).map((f) => (
+                    <li key={f}>
+                      <span className="check">✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link 
+                  className="btn btn-primary btn-pricing" 
+                  to="/signup" 
+                  state={{ package: p.key }}
+                >
+                  Choose {p.name}
+                </Link>
+              </div>
+            ))}
+          </div>
+          <p className="section-footnote">
+            Need a custom enterprise solution? <a href="#contact">Contact our sales team</a>
           </p>
         </div>
-        <div className="pricing-grid">
-          {plans.map((p) => (
-            <div 
-              className={`pricing-card ${p.key === 'Premium' ? 'pricing-featured' : ''}`} 
-              key={p.key}
-            >
-              {p.key === 'Premium' && (
-                <div className="pricing-badge">Most Popular</div>
-              )}
-              <h3 className="pricing-name">{p.name}</h3>
-              <div className="pricing-price">
-                Rs. {Number(p.priceMonthlyPkr).toLocaleString()}
-                <span>/month</span>
-              </div>
-              <p className="pricing-detail">
-                {p.unlimitedProducts || p.maxProducts == null
-                  ? '♾️ Unlimited products'
-                  : `📦 Up to ${p.maxProducts} products`}
-              </p>
-              <ul className="pricing-features">
-                {(p.features || []).map((f) => (
-                  <li key={f}>✓ {f}</li>
-                ))}
-              </ul>
-              <Link 
-                className="btn btn-primary" 
-                to="/signup" 
-                state={{ package: p.key }}
-              >
-                Choose {p.name}
-              </Link>
-            </div>
-          ))}
-        </div>
-        <p className="section-footnote">
-          Need Enterprise? <a href="#contact">Contact MS Techno</a> for custom solutions.
-        </p>
       </section>
 
       {/* CTA Banner */}
       <section className="cta-section">
-        <div className="cta-content">
-          <h2>Ready to get started?</h2>
-          <p>Onboard your first tenant in minutes — no commitment required.</p>
+        <div className="cta-container">
+          <div className="cta-content">
+            <span className="cta-badge">🚀 Get Started Today</span>
+            <h2>Ready to scale your retail operations?</h2>
+            <p>Onboard your first tenant in minutes — no commitment required.</p>
+          </div>
+          <div className="cta-actions">
+            <Link className="btn btn-cta-primary" to="/signup">
+              Start Free Demo
+              <span className="btn-arrow">→</span>
+            </Link>
+            <a className="btn btn-cta-outline" href="#features">
+              Learn More
+            </a>
+          </div>
         </div>
-        <Link className="btn btn-cta" to="/signup">
-          Start Free Demo →
-        </Link>
       </section>
 
       {/* Testimonial */}
-      <section className="section testimonial-section">
-        <blockquote className="testimonial">
-          "We onboard shops in minutes — each tenant gets their own login, stock, and invoices."
-          <cite>— MS Techno platform operators</cite>
-        </blockquote>
+      <section className="section testimonial-section" id="testimonials">
+        <div className="section-container">
+          <div className="testimonial-grid">
+            <div className="testimonial-card">
+              <div className="testimonial-quote">"</div>
+              <blockquote className="testimonial-text">
+                We onboard shops in minutes — each tenant gets their own login, stock, and invoices. 
+                The isolation is perfect for our multi-brand strategy.
+              </blockquote>
+              <div className="testimonial-author">
+                <div className="author-avatar">👨‍💼</div>
+                <div className="author-info">
+                  <span className="author-name">Ahmed Raza</span>
+                  <span className="author-role">CEO, Retail Solutions</span>
+                </div>
+              </div>
+            </div>
+            <div className="testimonial-card">
+              <div className="testimonial-quote">"</div>
+              <blockquote className="testimonial-text">
+                The super admin dashboard gives us complete visibility across all shops. 
+                Managing plans and users has never been easier.
+              </blockquote>
+              <div className="testimonial-author">
+                <div className="author-avatar">👩‍💼</div>
+                <div className="author-info">
+                  <span className="author-name">Sana Malik</span>
+                  <span className="author-role">Operations Manager</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Footer */}
       <footer className="landing-footer">
-        <div className="footer-brand">
-          <strong className="brand">
-            MS <span>TECHNO</span>
-          </strong>
-          <p className="footer-subtitle">Cloud Retail Management ERP</p>
-        </div>
-        <div className="footer-links">
-          <Link to="/login">Login</Link>
-          <Link to="/signup">Request Demo</Link>
-          <a href="#features">Features</a>
-          <a href="#plans">Pricing</a>
+        <div className="footer-container">
+          <div className="footer-brand">
+            <Link to="/" className="brand">
+              <span className="brand-icon">◆</span>
+              MS <span>TECHNO</span>
+            </Link>
+            <p className="footer-desc">Cloud Retail Management ERP</p>
+            <p className="footer-copy">© 2026 MS Techno. All rights reserved.</p>
+          </div>
+          <div className="footer-links">
+            <div className="footer-column">
+              <h4>Product</h4>
+              <a href="#features">Features</a>
+              <a href="#plans">Pricing</a>
+              <a href="#testimonials">Testimonials</a>
+            </div>
+            <div className="footer-column">
+              <h4>Company</h4>
+              <a href="#about">About Us</a>
+              <a href="#contact">Contact</a>
+              <a href="#careers">Careers</a>
+            </div>
+            <div className="footer-column">
+              <h4>Support</h4>
+              <a href="#help">Help Center</a>
+              <a href="#docs">Documentation</a>
+              <a href="#status">System Status</a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
