@@ -79,6 +79,8 @@ export function buildThermalReceiptHtml({
   const remaining = Math.max(0, grand - (paid + credit));
 
   const lines = [];
+  
+  // Header
   lines.push(center(String(shopName || 'Shop').toUpperCase(), cols));
   if (invoice) lines.push(center(String(invoice), cols));
   lines.push(center(`${when} ${time}`, cols));
@@ -96,6 +98,7 @@ export function buildThermalReceiptHtml({
   );
   lines.push(rule(cols));
 
+  // Items
   if (!items.length) {
     lines.push(center('No items', cols));
   } else {
@@ -104,7 +107,6 @@ export function buildThermalReceiptHtml({
       const qty = Number(i.qty || 0);
       const price = Number(i.price || 0);
       const lineGross = price * qty;
-      // item discount may be amount or percent
       let itemDiscAmt = 0;
       if (i.discount != null) itemDiscAmt = Number(i.discount) || 0;
       else if (i.discountPct != null) itemDiscAmt = (lineGross * Number(i.discountPct || 0)) / 100;
@@ -115,14 +117,13 @@ export function buildThermalReceiptHtml({
     }
   }
 
+  // Totals
   lines.push(rule(cols));
   lines.push(twoCol('Subtotal', moneyPlain(subtotal), cols));
 
-  // sale-level discount
   const saleDiscAmt = (subtotal * discPct) / 100;
   if (discPct) lines.push(twoCol(`Discount ${discPct}%`, moneyPlain(saleDiscAmt), cols));
 
-  // sum of item-level discounts (not including sale-level)
   const itemLevelDisc = items.reduce((s, it) => {
     const qty = Number(it.qty || 0);
     const price = Number(it.price || 0);
@@ -140,13 +141,19 @@ export function buildThermalReceiptHtml({
   lines.push(twoCol('GRAND TOTAL', moneyPlain(grand), cols));
   lines.push(rule(cols, '='));
 
-  // payments
+  // Payments
   if (paid > 0) lines.push(twoCol('Paid', moneyPlain(paid), cols));
   if (credit > 0) lines.push(twoCol('Credit', moneyPlain(credit), cols));
   lines.push(twoCol('Balance', moneyPlain(remaining), cols));
 
+  // Footer
   lines.push('');
-
+  lines.push(center('Thank you for Shopping', cols));
+  lines.push('');
+  lines.push(center('Powered by MS TECHNO', cols));
+  lines.push(center('Contact: 0340-1227619', cols));
+  lines.push('');
+  lines.push(rule(cols));
 
   const bodyText = esc(lines.join('\n'));
 
@@ -203,7 +210,11 @@ export function buildThermalReceiptHtml({
         <tr><td></td><td class="right">Balance:</td><td class="right">${moneyPlain(remaining)}</td></tr>
       </tbody>
     </table>
-    <div style="text-align:center; margin-top:12px; color:#666;">Powered by MS TECHNO<br/>Thank you for Shopping</div>
+    <div style="text-align:center; margin-top:12px; color:#666; font-size:12px;">
+      Thank you for Shopping<br/>
+      Powered by MS TECHNO<br/>
+      Contact: 0340-1227619
+    </div>
   </div>`;
 
   return `<!DOCTYPE html>
