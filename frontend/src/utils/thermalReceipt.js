@@ -2,6 +2,7 @@
 export const THERMAL_SIZES = {
   '58': { key: '58', label: '58mm (small)', widthMm: 58, printMm: 48, cols: 32, fontPx: 12 },
   '80': { key: '80', label: '80mm (standard)', widthMm: 80, printMm: 72, cols: 42, fontPx: 13 },
+  'A4': { key: 'A4', label: 'A4 (210mm)', widthMm: 210, printMm: 210, cols: 88, fontPx: 12 },
 };
 
 function esc(text) {
@@ -63,24 +64,35 @@ export function buildThermalReceiptHtml({
   const items = sale?.items || [];
   const subtotal =
     sale?.subtotal != null
-      ? sale.subtotal
-      : items.reduce((s, i) => s + Number(i.price) * Number(i.qty), 0);
-  const grand = total != null ? total : sale?.total ?? subtotal;
-  const disc = Number(sale?.discountPct) || 0;
-  const tax = Number(sale?.taxPct) || 0;
+      ? Number(sale.subtotal)
+      : items.reduce((s, i) => s + Number(i.price || 0) * Number(i.qty || 0), 0);
+  const grand = total != null ? Number(total) : Number(sale?.total ?? subtotal);
+  const discPct = Number(sale?.discountPct) || 0;
+  const taxPct = Number(sale?.taxPct) || 0;
   const when = sale?.date || new Date().toISOString().slice(0, 10);
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // payments and balances
+  const payments = Array.isArray(sale?.payments) ? sale.payments : [];
+  const paid = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const credit = Number(sale?.creditAmount) || 0;
+  const remaining = Math.max(0, grand - (paid + credit));
 
   const lines = [];
   lines.push(center(String(shopName || 'Shop').toUpperCase(), cols));
   if (invoice) lines.push(center(String(invoice), cols));
   lines.push(center(`${when} ${time}`, cols));
-  lines.push(
-    center(`${sale?.payment || 'Cash'} · ${sale?.customerName || 'Walk-in'}`, cols)
-  );
+  lines.push(center(`${sale?.payment || 'Cash'} · ${sale?.customerName || 'Walk-in'}`, cols));
   lines.push(rule(cols));
+
+  // Columns: Product Name | Qty | Price | Disc | Total
+  const qtyW = 4;
+  const priceW = 10;
+  const discW = 9;
+  const totalW = 9;
+  const nameW = Math.max(8, cols - (qtyW + priceW + discW + totalW));
   lines.push(
-    `${pad('Item', Math.max(8, cols - 18))}${pad('Qty', 4, 'right')}${pad('Price', 7, 'right')}${pad('Amt', 7, 'right')}`
+    `${pad('Product', nameW)}${pad('Qty', qtyW, 'right')}${pad('Price', priceW, 'right')}${pad('Disc', discW, 'right')}${pad('Total', totalW, 'right')}`
   );
   lines.push(rule(cols));
 
@@ -89,30 +101,111 @@ export function buildThermalReceiptHtml({
   } else {
     for (const i of items) {
       const name = String(i.name || 'Item');
-      const qty = String(i.qty ?? 0);
-      const price = moneyPlain(i.price);
-      const amt = moneyPlain(Number(i.price) * Number(i.qty));
-      const nameW = Math.max(8, cols - 18);
+      const qty = Number(i.qty || 0);
+      const price = Number(i.price || 0);
+      const lineGross = price * qty;
+      // item discount may be amount or percent
+      let itemDiscAmt = 0;
+      if (i.discount != null) itemDiscAmt = Number(i.discount) || 0;
+      else if (i.discountPct != null) itemDiscAmt = (lineGross * Number(i.discountPct || 0)) / 100;
+      const lineTotal = lineGross - itemDiscAmt;
       lines.push(
-        `${pad(name, nameW)}${pad(qty, 4, 'right')}${pad(price, 7, 'right')}${pad(amt, 7, 'right')}`
+        `${pad(name, nameW)}${pad(String(qty), qtyW, 'right')}${pad(moneyPlain(price), priceW, 'right')}${pad(moneyPlain(itemDiscAmt), discW, 'right')}${pad(moneyPlain(lineTotal), totalW, 'right')}`
       );
     }
   }
 
   lines.push(rule(cols));
   lines.push(twoCol('Subtotal', moneyPlain(subtotal), cols));
-  const discAmt = subtotal * disc / 100;
-  const taxAmt = (subtotal - discAmt) * tax / 100;
-  if (disc) lines.push(twoCol(`Discount ${disc}%`, moneyPlain(discAmt), cols));
-  if (tax) lines.push(twoCol(`Tax ${tax}%`, moneyPlain(taxAmt), cols));
+
+  // sale-level discount
+  const saleDiscAmt = (subtotal * discPct) / 100;
+  if (discPct) lines.push(twoCol(`Discount ${discPct}%`, moneyPlain(saleDiscAmt), cols));
+
+  // sum of item-level discounts (not including sale-level)
+  const itemLevelDisc = items.reduce((s, it) => {
+    const qty = Number(it.qty || 0);
+    const price = Number(it.price || 0);
+    const gross = qty * price;
+    if (it.discount != null) return s + Number(it.discount || 0);
+    if (it.discountPct != null) return s + (gross * Number(it.discountPct || 0)) / 100;
+    return s;
+  }, 0);
+  if (itemLevelDisc) lines.push(twoCol('Item discounts', moneyPlain(itemLevelDisc), cols));
+
+  const taxAmt = ((subtotal - saleDiscAmt - itemLevelDisc) * taxPct) / 100;
+  if (taxPct) lines.push(twoCol(`Tax ${taxPct}%`, moneyPlain(taxAmt), cols));
+
   lines.push(rule(cols, '='));
-  lines.push(twoCol('TOTAL', moneyPlain(grand), cols));
+  lines.push(twoCol('GRAND TOTAL', moneyPlain(grand), cols));
   lines.push(rule(cols, '='));
+
+  // payments
+  if (paid > 0) lines.push(twoCol('Paid', moneyPlain(paid), cols));
+  if (credit > 0) lines.push(twoCol('Credit', moneyPlain(credit), cols));
+  lines.push(twoCol('Balance', moneyPlain(remaining), cols));
+
   lines.push('');
-  lines.push(center('Thank you!', cols));
-  lines.push(center('Powered by MS Techno', cols));
+  lines.push(center('Thank you for your business!', cols));
+  lines.push(center('MS Techno · www.mstechno.example', cols));
 
   const bodyText = esc(lines.join('\n'));
+
+  // Build optional A4/table HTML for wider prints
+  const escapedShop = esc(String(shopName || 'Shop'));
+  const escapedInvoice = esc(String(invoice || ''));
+  const customerName = esc(String(sale?.customerName || 'Walk-in'));
+  const paymentMethod = esc(String(sale?.payment || 'Cash'));
+
+  const rowsHtml = (items || [])
+    .map((it) => {
+      const name = esc(String(it.name || 'Item'));
+      const qty = Number(it.qty || 0);
+      const price = Number(it.price || 0);
+      const gross = price * qty;
+      let itemDiscAmt = 0;
+      if (it.discount != null) itemDiscAmt = Number(it.discount || 0);
+      else if (it.discountPct != null) itemDiscAmt = (gross * Number(it.discountPct || 0)) / 100;
+      const lineTotal = gross - itemDiscAmt;
+      return `<tr><td>${name}</td><td class="right">${qty}</td><td class="right">${moneyPlain(price)}</td><td class="right">${moneyPlain(itemDiscAmt)}</td><td class="right">${moneyPlain(lineTotal)}</td></tr>`;
+    })
+    .join('');
+
+  const invoiceTable = `
+  <div class="invoice-table">
+    <div class="header">
+      <h2 style="margin:0">${escapedShop}</h2>
+      <div style="margin-top:6px">Invoice: <strong>${escapedInvoice}</strong></div>
+      <div style="margin-top:4px">${esc(`${when} ${time}`)} · ${customerName} · ${paymentMethod}</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="right">Qty</th>
+          <th class="right">Price</th>
+          <th class="right">Discount</th>
+          <th class="right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+    <table class="invoice-summary" style="width:100%; margin-top:12px;">
+      <tbody>
+        <tr><td style="width:70%"></td><td class="right">Subtotal:</td><td class="right">${moneyPlain(subtotal)}</td></tr>
+        ${discPct ? `<tr><td></td><td class="right">Discount ${discPct}%:</td><td class="right">${moneyPlain(saleDiscAmt)}</td></tr>` : ''}
+        ${itemLevelDisc ? `<tr><td></td><td class="right">Item discounts:</td><td class="right">${moneyPlain(itemLevelDisc)}</td></tr>` : ''}
+        ${taxPct ? `<tr><td></td><td class="right">Tax ${taxPct}%:</td><td class="right">${moneyPlain(taxAmt)}</td></tr>` : ''}
+        <tr><td></td><td class="right"><strong>Grand total:</strong></td><td class="right"><strong>${moneyPlain(grand)}</strong></td></tr>
+        ${paid > 0 ? `<tr><td></td><td class="right">Paid:</td><td class="right">${moneyPlain(paid)}</td></tr>` : ''}
+        ${credit > 0 ? `<tr><td></td><td class="right">Credit:</td><td class="right">${moneyPlain(credit)}</td></tr>` : ''}
+        <tr><td></td><td class="right">Balance:</td><td class="right">${moneyPlain(remaining)}</td></tr>
+      </tbody>
+    </table>
+    <div style="text-align:center; margin-top:12px; color:#666;">Thank you for your business!</div>
+  </div>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -186,6 +279,20 @@ export function buildThermalReceiptHtml({
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
+
+    /* A4/table layout: when printing wide paper, prefer a nicer table */
+    .invoice-table { display: none; }
+    @media (min-width: 200mm) {
+      .ticket { display: none; }
+      .invoice-table { display: block; width: ${Math.min(printW, 210)}mm; margin: 0 auto; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color: #000; }
+      .invoice-table .header { text-align: center; margin-bottom: 8px; }
+      .invoice-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .invoice-table th, .invoice-table td { padding: 8px 6px; border-bottom: 1px solid #e6e6e6; text-align: left; }
+      .invoice-table th { background: #fafafa; font-weight:700; }
+      .invoice-table .right { text-align: right; }
+      .invoice-summary { margin-top: 12px; width: 100%; }
+      .invoice-summary td { padding: 6px 8px; }
+    }
     @page {
       margin: 0;
     }
@@ -226,6 +333,7 @@ export function buildThermalReceiptHtml({
   <div class="sheet">
     <pre class="ticket">${bodyText}</pre>
   </div>
+  ${invoiceTable}
   <script>
     function doPrint() {
       try { window.focus(); } catch (e) {}
