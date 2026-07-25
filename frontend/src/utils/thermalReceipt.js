@@ -46,7 +46,7 @@ function twoCol(left, right, cols) {
 
 /**
  * Build thermal receipt HTML for preview + print.
- * Optimized for 80mm thermal printer
+ * Optimized for 80mm thermal printer - Fixed positions
  */
 export function buildThermalReceiptHtml({
   shopName,
@@ -80,7 +80,7 @@ export function buildThermalReceiptHtml({
   const lines = [];
   
   // ============================================================
-  // HEADER - 80mm ke hisaab se center
+  // HEADER - Fixed Center
   // ============================================================
   lines.push('');
   lines.push(center(String(shopName || 'SHOP').toUpperCase(), cols));
@@ -88,24 +88,23 @@ export function buildThermalReceiptHtml({
   lines.push('');
 
   // ============================================================
-  // INVOICE DETAILS - Proper spacing
+  // INVOICE DETAILS - Fixed positions
   // ============================================================
   if (invoice) lines.push(center('INV: ' + String(invoice), cols));
-  lines.push(center(when + '  ' + time, cols));
-  lines.push(center('Cust: ' + (sale?.customerName || 'Walk-in'), cols));
-  lines.push(center('Pay: ' + (sale?.payment || 'Cash'), cols));
+  lines.push(center('Date: ' + when + '  Time: ' + time, cols));
+  lines.push(center('Customer: ' + (sale?.customerName || 'Walk-in'), cols));
+  lines.push(center('Payment: ' + (sale?.payment || 'Cash'), cols));
   lines.push('');
   lines.push(rule(cols, '─'));
   lines.push('');
 
   // ============================================================
-  // ITEMS - 80mm ke liye optimized columns
+  // ITEMS - Fixed columns for 80mm
   // ============================================================
-  // For 80mm (42 cols): Item=18, Qty=3, Price=6, Total=7
   const qtyW = 3;
-  const priceW = 6;
-  const totalW = 7;
-  const nameW = cols - (qtyW + priceW + totalW + 3); // 42 - 3 - 6 - 7 - 3 = 23
+  const priceW = 7;
+  const totalW = 8;
+  const nameW = cols - (qtyW + priceW + totalW + 3); // 42 - 3 - 7 - 8 - 3 = 21
   
   lines.push(
     `${pad('Item', nameW)} ${pad('Qty', qtyW, 'right')} ${pad('Price', priceW, 'right')} ${pad('Total', totalW, 'right')}`
@@ -131,25 +130,30 @@ export function buildThermalReceiptHtml({
   lines.push('');
 
   // ============================================================
-  // TOTALS - 80mm ke hisaab se
+  // TOTALS - Fixed right alignment
   // ============================================================
   const saleDiscAmt = (subtotal * discPct) / 100;
   const taxAmt = ((subtotal - saleDiscAmt) * taxPct) / 100;
   
+  // Subtotal - Fixed position
   lines.push(twoCol('Subtotal', moneyPlain(subtotal), cols));
+  
+  // Discount - if exists
   if (discPct > 0) {
-    lines.push(twoCol('Disc ' + discPct + '%', moneyPlain(saleDiscAmt), cols));
-  }
-  if (taxPct > 0) {
-    lines.push(twoCol('Tax ' + taxPct + '%', moneyPlain(taxAmt), cols));
+    lines.push(twoCol('Discount (' + discPct + '%)', moneyPlain(saleDiscAmt), cols));
   }
   
-  // Grand Total
+  // Tax - if exists
+  if (taxPct > 0) {
+    lines.push(twoCol('Tax (' + taxPct + '%)', moneyPlain(taxAmt), cols));
+  }
+  
+  // Grand Total - Bold with double line
   lines.push(rule(cols, '═'));
   lines.push(twoCol('TOTAL', moneyPlain(grand), cols));
   lines.push(rule(cols, '═'));
   
-  // Payment details
+  // Payment details - Fixed positions
   if (paid > 0) {
     lines.push(twoCol('Paid', moneyPlain(paid), cols));
   }
@@ -163,14 +167,14 @@ export function buildThermalReceiptHtml({
   lines.push('');
 
   // ============================================================
-  // FOOTER
+  // FOOTER - Fixed center
   // ============================================================
+  lines.push(center('─'.repeat(cols), cols));
   lines.push(center('Thank you for shopping', cols));
-  lines.push('');
   lines.push(center('─'.repeat(cols), cols));
   lines.push(center('Powered by MS TECHNO', cols));
   lines.push(center('─'.repeat(cols), cols));
-  lines.push(center('0340-1227619', cols));
+  lines.push(center('Contact: 0340-1227619', cols));
   lines.push('');
   lines.push(center('Visit Again!', cols));
   lines.push(rule(cols, '─'));
