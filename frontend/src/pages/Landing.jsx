@@ -72,7 +72,7 @@ export default function Landing() {
         </div>
         <div className="hero-visual" aria-hidden="true">
           <div className="hero-panel">
-            <strong>Live tenants</strong>
+            <strong style={{ fontFamily: 'var(--display)', fontSize: '1.1rem' }}>Live tenants</strong>
             {shops.map((s) => (
               <div className="hero-shop-card" key={s.name}>
                 <span className="hero-shop-name">{s.name}</span>
