@@ -146,8 +146,8 @@ export function buildThermalReceiptHtml({
   lines.push(twoCol('Balance', moneyPlain(remaining), cols));
 
   lines.push('');
-  lines.push(center('Thank you for your business!', cols));
-  lines.push(center('MS Techno · www.mstechno.example', cols));
+  lines.push(center('Powered by MS TECHNO', cols));
+  lines.push(center('Thank you for Shopping', cols));
 
   const bodyText = esc(lines.join('\n'));
 
@@ -204,7 +204,7 @@ export function buildThermalReceiptHtml({
         <tr><td></td><td class="right">Balance:</td><td class="right">${moneyPlain(remaining)}</td></tr>
       </tbody>
     </table>
-    <div style="text-align:center; margin-top:12px; color:#666;">Thank you for your business!</div>
+    <div style="text-align:center; margin-top:12px; color:#666;">Powered by MS TECHNO<br/>Thank you for Shopping</div>
   </div>`;
 
   return `<!DOCTYPE html>
