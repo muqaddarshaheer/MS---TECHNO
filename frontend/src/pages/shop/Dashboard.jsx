@@ -80,11 +80,11 @@ export default function ShopDashboard() {
     teal: '#14b8a6',
   };
 
-  const monthLabels = charts.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const salesData = charts.sales || [12000, 19000, 15000, 25000, 22000, 30000, 28000, 35000, 40000, 38000, 42000, 45000];
-  const profitData = charts.profit || [7000, 11000, 9000, 15000, 13000, 18000, 17000, 21000, 24000, 23000, 25000, 27000];
-  const expensesData = charts.expenses || [5000, 8000, 6000, 10000, 9000, 12000, 11000, 14000, 16000, 15000, 17000, 18000];
-  const lastYearSales = charts.lastYearSales || [10000, 16000, 12000, 20000, 18000, 25000, 23000, 28000, 32000, 30000, 35000, 38000];
+  // ===== USE ORIGINAL DATA FROM API =====
+  const monthLabels = charts?.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const salesData = charts?.sales || [];
+  const profitData = charts?.profit || [];
+  const expensesData = charts?.expenses || [];
 
   // ===== GRAPH 1: AREA CHART - Revenue & Profit Trend =====
   const areaChartData = {
@@ -106,8 +106,8 @@ export default function ShopDashboard() {
         pointBackgroundColor: colors.primary,
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 9,
+        pointRadius: 4,
+        pointHoverRadius: 8,
         borderWidth: 3,
       },
       {
@@ -126,8 +126,8 @@ export default function ShopDashboard() {
         pointBackgroundColor: colors.secondary,
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 9,
+        pointRadius: 4,
+        pointHoverRadius: 8,
         borderWidth: 3,
       },
     ],
@@ -163,19 +163,21 @@ export default function ShopDashboard() {
 
   // ===== GRAPH 3: DOUGHNUT - Top Products =====
   const doughnutData = {
-    labels: topSelling?.map(t => t.name) || ['Product A', 'Product B', 'Product C', 'Product D', 'Product E'],
+    labels: topSelling?.map(t => t.name) || ['No Data'],
     datasets: [
       {
-        data: topSelling?.map(t => t.qty) || [30, 25, 20, 15, 10],
-        backgroundColor: [
-          colors.primary,
-          colors.secondary,
-          colors.blue,
-          colors.purple,
-          colors.pink,
-          colors.orange,
-          colors.teal,
-        ],
+        data: topSelling?.map(t => t.qty) || [1],
+        backgroundColor: topSelling?.length > 0 
+          ? [
+              colors.primary,
+              colors.secondary,
+              colors.blue,
+              colors.purple,
+              colors.pink,
+              colors.orange,
+              colors.teal,
+            ]
+          : [colors.primary],
         borderColor: '#fff',
         borderWidth: 3,
         hoverOffset: 15,
@@ -189,11 +191,11 @@ export default function ShopDashboard() {
     datasets: [
       {
         data: [
-          stats.monthSales || 45000,
-          stats.profit || 27000,
-          stats.expensesTotal || 18000,
-          stats.monthPurchase || 15000,
-          stats.otherIncome || 5000,
+          stats?.monthSales || 0,
+          stats?.profit || 0,
+          stats?.expensesTotal || 0,
+          stats?.monthPurchase || 0,
+          stats?.otherIncome || 0,
         ],
         backgroundColor: [
           colors.primary,
@@ -219,7 +221,7 @@ export default function ShopDashboard() {
         labels: {
           usePointStyle: true,
           padding: 20,
-          font: { size: 13, weight: '600' },
+          font: { size: 12, weight: '600' },
           color: '#1a1a1a',
         },
       },
@@ -268,7 +270,7 @@ export default function ShopDashboard() {
         labels: {
           usePointStyle: true,
           padding: 20,
-          font: { size: 13, weight: '600' },
+          font: { size: 12, weight: '600' },
           color: '#1a1a1a',
         },
       },
@@ -315,7 +317,7 @@ export default function ShopDashboard() {
         labels: {
           usePointStyle: true,
           padding: 15,
-          font: { size: 12, weight: '500' },
+          font: { size: 11, weight: '500' },
           color: '#1a1a1a',
         },
       },
@@ -328,6 +330,7 @@ export default function ShopDashboard() {
         callbacks: {
           label: function(context) {
             const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            if (total === 0) return context.label + ': 0';
             const percentage = ((context.parsed / total) * 100).toFixed(1);
             return context.label + ': ' + context.parsed + ' units (' + percentage + '%)';
           }
@@ -346,7 +349,7 @@ export default function ShopDashboard() {
         labels: {
           usePointStyle: true,
           padding: 15,
-          font: { size: 12, weight: '500' },
+          font: { size: 11, weight: '500' },
           color: '#1a1a1a',
         },
       },
@@ -359,6 +362,7 @@ export default function ShopDashboard() {
         callbacks: {
           label: function(context) {
             const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            if (total === 0) return context.label + ': 0';
             const percentage = ((context.parsed / total) * 100).toFixed(1);
             return context.label + ': PKR ' + context.parsed.toLocaleString() + ' (' + percentage + '%)';
           }
@@ -374,14 +378,6 @@ export default function ShopDashboard() {
       grid: { color: 'rgba(0, 0, 0, 0.05)' },
     },
   };
-
-  // ===== Quick Stats =====
-  const quickStats = [
-    { label: 'Growth Rate', value: '+23.5%', color: colors.primary },
-    { label: 'Avg. Order', value: money(stats.avgOrderValue || 3500), color: colors.blue },
-    { label: 'Conversion', value: '68.4%', color: colors.secondary },
-    { label: 'Net Margin', value: '32.7%', color: colors.purple },
-  ];
 
   return (
     <div>
@@ -436,19 +432,19 @@ export default function ShopDashboard() {
       <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
         <div className="card stat">
           <h6>Today sales</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.todaySales ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.todaySales ?? 0)}</h2>
         </div>
         <div className="card stat">
           <h6>Today purchases</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.todayPurchase ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.todayPurchase ?? 0)}</h2>
         </div>
         <div className="card stat">
           <h6>Today profit</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.todayNetProfit ?? stats.todayProfit ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.todayNetProfit ?? stats?.todayProfit ?? 0)}</h2>
         </div>
         <div className="card stat">
           <h6>Expenses today</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.expensesToday ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.expensesToday ?? 0)}</h2>
         </div>
       </div>
 
@@ -458,37 +454,37 @@ export default function ShopDashboard() {
       <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
         <div className="card stat">
           <h6>Cash in hand</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.cashBalance ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.cashBalance ?? 0)}</h2>
         </div>
         <div className="card stat">
           <h6>Bank balance</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.bankBalance ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.bankBalance ?? 0)}</h2>
         </div>
         <div className="card stat warn">
           <h6>Customer due</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.customerDue ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.customerDue ?? 0)}</h2>
         </div>
         <div className="card stat danger">
           <h6>Supplier due</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.supplierDue ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.supplierDue ?? 0)}</h2>
         </div>
       </div>
 
       <div className="grid grid-4" style={{ marginBottom: '1rem' }}>
         <div className="card stat">
           <h6>Monthly sales</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.monthSales ?? 0)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.monthSales ?? 0)}</h2>
         </div>
         <div className="card stat">
           <h6>Pending holds</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{stats.pendingOrders ?? 0}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{stats?.pendingOrders ?? 0}</h2>
         </div>
         <div className="card stat warn">
           <h6>Low / Out / Expiring</h6>
           <h2 style={{ fontSize: '1.05rem' }}>
-            {stats.low}/{stats.out}/{stats.expiring ?? 0}
+            {stats?.low ?? 0}/{stats?.out ?? 0}/{stats?.expiring ?? 0}
           </h2>
-          {can(user, 'stock') && (stats.low > 0 || stats.out > 0) && (
+          {can(user, 'stock') && (stats?.low > 0 || stats?.out > 0) && (
             <Link className="btn btn-outline btn-sm" to="/shop/stock" style={{ marginTop: '0.5rem' }}>
               Review stock
             </Link>
@@ -496,7 +492,7 @@ export default function ShopDashboard() {
         </div>
         <div className="card stat">
           <h6>Gross profit (all)</h6>
-          <h2 style={{ fontSize: '1.15rem' }}>{money(stats.profit)}</h2>
+          <h2 style={{ fontSize: '1.15rem' }}>{money(stats?.profit ?? 0)}</h2>
         </div>
       </div>
 
@@ -505,7 +501,7 @@ export default function ShopDashboard() {
           <div>
             <h3 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: '1.05rem' }}>Daily closing</h3>
             <p className="page-sub" style={{ margin: '0.25rem 0 0' }}>
-              Net today {money((stats.todaySales ?? 0) - (stats.expensesToday ?? 0))}
+              Net today {money((stats?.todaySales ?? 0) - (stats?.expensesToday ?? 0))}
             </p>
           </div>
           {can(user, 'accounts') && (
@@ -516,7 +512,7 @@ export default function ShopDashboard() {
         </div>
       </div>
 
-      {/* ===== 4 BEAUTIFUL GRAPHS ===== */}
+      {/* ===== 4 BEAUTIFUL GRAPHS - ORIGINAL DATA ===== */}
 
       {/* Row 1: Area Chart + Stacked Bar */}
       <div className="grid grid-2" style={{ marginBottom: '1.5rem' }}>
@@ -528,7 +524,11 @@ export default function ShopDashboard() {
             Monthly revenue and profit with area visualization
           </p>
           <div style={{ height: '290px', position: 'relative' }}>
-            <Line data={areaChartData} options={areaOptions} />
+            {salesData.length > 0 ? (
+              <Line data={areaChartData} options={areaOptions} />
+            ) : (
+              <p className="empty" style={{ textAlign: 'center', paddingTop: '100px' }}>No data available</p>
+            )}
           </div>
         </div>
 
@@ -540,7 +540,11 @@ export default function ShopDashboard() {
             Revenue, expenses, and profit distribution
           </p>
           <div style={{ height: '290px', position: 'relative' }}>
-            <Bar data={stackedBarData} options={stackedOptions} />
+            {salesData.length > 0 ? (
+              <Bar data={stackedBarData} options={stackedOptions} />
+            ) : (
+              <p className="empty" style={{ textAlign: 'center', paddingTop: '100px' }}>No data available</p>
+            )}
           </div>
         </div>
       </div>
@@ -558,9 +562,7 @@ export default function ShopDashboard() {
             {topSelling?.length > 0 ? (
               <Doughnut data={doughnutData} options={doughnutOptions} />
             ) : (
-              <p className="empty" style={{ textAlign: 'center', paddingTop: '80px' }}>
-                No product data available yet
-              </p>
+              <p className="empty" style={{ textAlign: 'center', paddingTop: '100px' }}>No product data available</p>
             )}
           </div>
         </div>
@@ -573,23 +575,13 @@ export default function ShopDashboard() {
             Overall financial breakdown by category
           </p>
           <div style={{ height: '290px', position: 'relative' }}>
-            <PolarArea data={polarData} options={polarOptions} />
+            {stats?.monthSales > 0 ? (
+              <PolarArea data={polarData} options={polarOptions} />
+            ) : (
+              <p className="empty" style={{ textAlign: 'center', paddingTop: '100px' }}>No financial data available</p>
+            )}
           </div>
         </div>
-      </div>
-
-      {/* Quick Stats Cards */}
-      <div className="grid grid-4" style={{ marginBottom: '1.5rem' }}>
-        {quickStats.map((stat, index) => (
-          <div key={index} className="card" style={{ padding: '0.85rem', textAlign: 'center' }}>
-            <h6 style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              {stat.label}
-            </h6>
-            <h2 style={{ fontSize: '1.4rem', color: stat.color, marginTop: '0.15rem' }}>
-              {stat.value}
-            </h2>
-          </div>
-        ))}
       </div>
 
       {/* ===== RECENT ACTIVITIES ===== */}
