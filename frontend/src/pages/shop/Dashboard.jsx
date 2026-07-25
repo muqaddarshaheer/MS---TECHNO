@@ -11,10 +11,8 @@ import {
   Filler,
   ArcElement,
   RadialLinearScale,
-  PolarAreaController,
-  RadarController,
 } from 'chart.js';
-import { Line, Bar, Doughnut, PolarArea, Radar } from 'react-chartjs-2';
+import { Line, Bar, Doughnut, PolarArea } from 'react-chartjs-2';
 import { Link } from 'react-router-dom';
 import api, { money } from '../../api';
 import { useAuth } from '../../context/AuthContext';
@@ -30,9 +28,7 @@ ChartJS.register(
   Legend,
   Filler,
   ArcElement,
-  RadialLinearScale,
-  PolarAreaController,
-  RadarController
+  RadialLinearScale
 );
 
 export default function ShopDashboard() {
@@ -73,25 +69,15 @@ export default function ShopDashboard() {
   const colors = {
     primary: '#0a7e5c',
     primaryLight: 'rgba(10, 126, 92, 0.15)',
-    primaryDark: '#066349',
     secondary: '#b0892e',
     secondaryLight: 'rgba(176, 137, 46, 0.15)',
     blue: '#3b82f6',
-    blueLight: 'rgba(59, 130, 246, 0.15)',
     purple: '#8b5cf6',
-    purpleLight: 'rgba(139, 92, 246, 0.15)',
     red: '#ef4444',
-    redLight: 'rgba(239, 68, 68, 0.15)',
     green: '#22c55e',
-    greenLight: 'rgba(34, 197, 94, 0.15)',
     orange: '#f59e0b',
-    orangeLight: 'rgba(245, 158, 11, 0.15)',
     pink: '#ec4899',
-    pinkLight: 'rgba(236, 72, 153, 0.15)',
     teal: '#14b8a6',
-    tealLight: 'rgba(20, 184, 166, 0.15)',
-    indigo: '#6366f1',
-    indigoLight: 'rgba(99, 102, 241, 0.15)',
   };
 
   const monthLabels = charts.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -100,7 +86,7 @@ export default function ShopDashboard() {
   const expensesData = charts.expenses || [5000, 8000, 6000, 10000, 9000, 12000, 11000, 14000, 16000, 15000, 17000, 18000];
   const lastYearSales = charts.lastYearSales || [10000, 16000, 12000, 20000, 18000, 25000, 23000, 28000, 32000, 30000, 35000, 38000];
 
-  // ===== 1. SMOOTH AREA CHART - Revenue & Profit =====
+  // ===== GRAPH 1: AREA CHART - Revenue & Profit Trend =====
   const areaChartData = {
     labels: monthLabels,
     datasets: [
@@ -109,8 +95,9 @@ export default function ShopDashboard() {
         data: salesData,
         borderColor: colors.primary,
         backgroundColor: (context) => {
-          const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 300);
+          const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 280);
           gradient.addColorStop(0, 'rgba(10, 126, 92, 0.35)');
+          gradient.addColorStop(0.5, 'rgba(10, 126, 92, 0.12)');
           gradient.addColorStop(1, 'rgba(10, 126, 92, 0.01)');
           return gradient;
         },
@@ -119,8 +106,8 @@ export default function ShopDashboard() {
         pointBackgroundColor: colors.primary,
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 8,
+        pointRadius: 5,
+        pointHoverRadius: 9,
         borderWidth: 3,
       },
       {
@@ -128,8 +115,9 @@ export default function ShopDashboard() {
         data: profitData,
         borderColor: colors.secondary,
         backgroundColor: (context) => {
-          const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 300);
+          const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 280);
           gradient.addColorStop(0, 'rgba(176, 137, 46, 0.25)');
+          gradient.addColorStop(0.5, 'rgba(176, 137, 46, 0.08)');
           gradient.addColorStop(1, 'rgba(176, 137, 46, 0.01)');
           return gradient;
         },
@@ -138,14 +126,14 @@ export default function ShopDashboard() {
         pointBackgroundColor: colors.secondary,
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 8,
+        pointRadius: 5,
+        pointHoverRadius: 9,
         borderWidth: 3,
       },
     ],
   };
 
-  // ===== 2. STACKED BAR - Monthly Breakdown =====
+  // ===== GRAPH 2: STACKED BAR - Monthly Breakdown =====
   const stackedBarData = {
     labels: monthLabels,
     datasets: [
@@ -173,38 +161,7 @@ export default function ShopDashboard() {
     ],
   };
 
-  // ===== 3. RADAR CHART - Performance Metrics =====
-  const radarData = {
-    labels: ['Sales', 'Profit', 'Growth', 'Efficiency', 'Customer', 'Quality'],
-    datasets: [
-      {
-        label: 'Current Period',
-        data: [85, 72, 90, 68, 78, 82],
-        backgroundColor: 'rgba(10, 126, 92, 0.2)',
-        borderColor: colors.primary,
-        borderWidth: 3,
-        pointBackgroundColor: colors.primary,
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 8,
-      },
-      {
-        label: 'Previous Period',
-        data: [70, 55, 75, 50, 65, 70],
-        backgroundColor: 'rgba(176, 137, 46, 0.15)',
-        borderColor: colors.secondary,
-        borderWidth: 2,
-        pointBackgroundColor: colors.secondary,
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 8,
-      },
-    ],
-  };
-
-  // ===== 4. DOUGHNUT - Top Products =====
+  // ===== GRAPH 3: DOUGHNUT - Top Products =====
   const doughnutData = {
     labels: topSelling?.map(t => t.name) || ['Product A', 'Product B', 'Product C', 'Product D', 'Product E'],
     datasets: [
@@ -226,9 +183,9 @@ export default function ShopDashboard() {
     ],
   };
 
-  // ===== 5. POLAR AREA - Category Distribution =====
+  // ===== GRAPH 4: POLAR AREA - Financial Distribution =====
   const polarData = {
-    labels: ['Revenue', 'Profit', 'Expenses', 'Purchases', 'Other Income'],
+    labels: ['Revenue', 'Profit', 'Expenses', 'Purchases', 'Other'],
     datasets: [
       {
         data: [
@@ -252,49 +209,6 @@ export default function ShopDashboard() {
     ],
   };
 
-  // ===== 6. HORIZONTAL BAR - Year Comparison =====
-  const horizontalBarData = {
-    labels: ['Revenue', 'Profit', 'Sales', 'Growth', 'Efficiency'],
-    datasets: [
-      {
-        label: 'This Year',
-        data: [85, 72, 90, 68, 78],
-        backgroundColor: colors.primary,
-        borderRadius: 6,
-        borderSkipped: false,
-      },
-      {
-        label: 'Last Year',
-        data: [70, 55, 75, 50, 65],
-        backgroundColor: colors.secondary,
-        borderRadius: 6,
-        borderSkipped: false,
-      },
-    ],
-  };
-
-  // ===== 7. BUBBLE CHART - Sales Performance =====
-  const bubbleData = {
-    datasets: [
-      {
-        label: 'Products Performance',
-        data: [
-          { x: 12000, y: 30, r: 20 },
-          { x: 19000, y: 45, r: 25 },
-          { x: 15000, y: 25, r: 18 },
-          { x: 25000, y: 60, r: 30 },
-          { x: 22000, y: 50, r: 22 },
-          { x: 30000, y: 70, r: 35 },
-          { x: 28000, y: 55, r: 28 },
-          { x: 35000, y: 80, r: 40 },
-        ],
-        backgroundColor: 'rgba(10, 126, 92, 0.6)',
-        borderColor: colors.primary,
-        borderWidth: 2,
-      },
-    ],
-  };
-
   // ===== CHART OPTIONS =====
   const areaOptions = {
     responsive: true,
@@ -305,7 +219,7 @@ export default function ShopDashboard() {
         labels: {
           usePointStyle: true,
           padding: 20,
-          font: { size: 12, weight: '500' },
+          font: { size: 13, weight: '600' },
           color: '#1a1a1a',
         },
       },
@@ -331,11 +245,12 @@ export default function ShopDashboard() {
             return 'PKR ' + (value / 1000).toFixed(0) + 'k';
           },
           color: '#4a4a4a',
+          font: { size: 11 },
         },
       },
       x: {
         grid: { display: false },
-        ticks: { color: '#4a4a4a' },
+        ticks: { color: '#4a4a4a', font: { size: 11 } },
       },
     },
     interaction: {
@@ -353,7 +268,7 @@ export default function ShopDashboard() {
         labels: {
           usePointStyle: true,
           padding: 20,
-          font: { size: 12, weight: '500' },
+          font: { size: 13, weight: '600' },
           color: '#1a1a1a',
         },
       },
@@ -380,54 +295,13 @@ export default function ShopDashboard() {
             return 'PKR ' + (value / 1000).toFixed(0) + 'k';
           },
           color: '#4a4a4a',
+          font: { size: 11 },
         },
       },
       x: {
         stacked: true,
         grid: { display: false },
-        ticks: { color: '#4a4a4a' },
-      },
-    },
-  };
-
-  const radarOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: { size: 12, weight: '500' },
-          color: '#1a1a1a',
-        },
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        padding: 14,
-        cornerRadius: 10,
-        callbacks: {
-          label: function(context) {
-            return context.dataset.label + ': ' + context.parsed.r + '%';
-          }
-        }
-      },
-    },
-    scales: {
-      r: {
-        min: 0,
-        max: 100,
-        ticks: {
-          stepSize: 20,
-          color: '#4a4a4a',
-          backdropColor: 'transparent',
-        },
-        grid: { color: 'rgba(0, 0, 0, 0.05)' },
-        angleLines: { color: 'rgba(0, 0, 0, 0.05)' },
-        pointLabels: { color: '#1a1a1a', font: { size: 11, weight: '600' } },
+        ticks: { color: '#4a4a4a', font: { size: 11 } },
       },
     },
   };
@@ -441,7 +315,7 @@ export default function ShopDashboard() {
         labels: {
           usePointStyle: true,
           padding: 15,
-          font: { size: 11, weight: '500' },
+          font: { size: 12, weight: '500' },
           color: '#1a1a1a',
         },
       },
@@ -460,7 +334,7 @@ export default function ShopDashboard() {
         }
       },
     },
-    cutout: '72%',
+    cutout: '70%',
   };
 
   const polarOptions = {
@@ -472,7 +346,7 @@ export default function ShopDashboard() {
         labels: {
           usePointStyle: true,
           padding: 15,
-          font: { size: 11, weight: '500' },
+          font: { size: 12, weight: '500' },
           color: '#1a1a1a',
         },
       },
@@ -495,58 +369,13 @@ export default function ShopDashboard() {
       ticks: {
         backdropColor: 'transparent',
         color: '#4a4a4a',
+        font: { size: 10 },
       },
       grid: { color: 'rgba(0, 0, 0, 0.05)' },
     },
   };
 
-  const horizontalOptions = {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: { size: 12, weight: '500' },
-          color: '#1a1a1a',
-        },
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        padding: 14,
-        cornerRadius: 10,
-        callbacks: {
-          label: function(context) {
-            return context.dataset.label + ': ' + context.parsed.x + '%';
-          }
-        }
-      },
-    },
-    scales: {
-      x: {
-        beginAtZero: true,
-        max: 100,
-        grid: { color: 'rgba(0, 0, 0, 0.05)' },
-        ticks: {
-          callback: function(value) {
-            return value + '%';
-          },
-          color: '#4a4a4a',
-        },
-      },
-      y: {
-        grid: { display: false },
-        ticks: { color: '#4a4a4a' },
-      },
-    },
-  };
-
-  // ===== Quick Stats Data =====
+  // ===== Quick Stats =====
   const quickStats = [
     { label: 'Growth Rate', value: '+23.5%', color: colors.primary },
     { label: 'Avg. Order', value: money(stats.avgOrderValue || 3500), color: colors.blue },
@@ -671,7 +500,7 @@ export default function ShopDashboard() {
         </div>
       </div>
 
-      <div className="card" style={{ marginBottom: '1rem' }}>
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
         <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <h3 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: '1.05rem' }}>Daily closing</h3>
@@ -687,57 +516,45 @@ export default function ShopDashboard() {
         </div>
       </div>
 
-      {/* ===== GRAPHS SECTION - 6 UNIQUE CHARTS ===== */}
+      {/* ===== 4 BEAUTIFUL GRAPHS ===== */}
 
       {/* Row 1: Area Chart + Stacked Bar */}
       <div className="grid grid-2" style={{ marginBottom: '1.5rem' }}>
         <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.05rem' }}>
+          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.1rem', color: '#1a1a1a' }}>
             📈 Revenue & Profit Trend
           </h3>
           <p className="page-sub" style={{ marginBottom: '0.75rem', fontSize: '0.8rem' }}>
             Monthly revenue and profit with area visualization
           </p>
-          <div style={{ height: '280px', position: 'relative' }}>
+          <div style={{ height: '290px', position: 'relative' }}>
             <Line data={areaChartData} options={areaOptions} />
           </div>
         </div>
 
         <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.05rem' }}>
+          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.1rem', color: '#1a1a1a' }}>
             📊 Financial Breakdown
           </h3>
           <p className="page-sub" style={{ marginBottom: '0.75rem', fontSize: '0.8rem' }}>
             Revenue, expenses, and profit distribution
           </p>
-          <div style={{ height: '280px', position: 'relative' }}>
+          <div style={{ height: '290px', position: 'relative' }}>
             <Bar data={stackedBarData} options={stackedOptions} />
           </div>
         </div>
       </div>
 
-      {/* Row 2: Radar Chart + Doughnut Chart */}
+      {/* Row 2: Doughnut + Polar Area */}
       <div className="grid grid-2" style={{ marginBottom: '1.5rem' }}>
         <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.05rem' }}>
-            🎯 Performance Radar
-          </h3>
-          <p className="page-sub" style={{ marginBottom: '0.75rem', fontSize: '0.8rem' }}>
-            Multi-metric performance comparison
-          </p>
-          <div style={{ height: '280px', position: 'relative' }}>
-            <Radar data={radarData} options={radarOptions} />
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.05rem' }}>
+          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.1rem', color: '#1a1a1a' }}>
             🍩 Top Selling Products
           </h3>
           <p className="page-sub" style={{ marginBottom: '0.75rem', fontSize: '0.8rem' }}>
             Best performing products by quantity
           </p>
-          <div style={{ height: '280px', position: 'relative' }}>
+          <div style={{ height: '290px', position: 'relative' }}>
             {topSelling?.length > 0 ? (
               <Doughnut data={doughnutData} options={doughnutOptions} />
             ) : (
@@ -747,31 +564,16 @@ export default function ShopDashboard() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Row 3: Polar Area + Horizontal Bar */}
-      <div className="grid grid-2" style={{ marginBottom: '1.5rem' }}>
         <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.05rem' }}>
+          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.1rem', color: '#1a1a1a' }}>
             🔄 Financial Distribution
           </h3>
           <p className="page-sub" style={{ marginBottom: '0.75rem', fontSize: '0.8rem' }}>
             Overall financial breakdown by category
           </p>
-          <div style={{ height: '280px', position: 'relative' }}>
+          <div style={{ height: '290px', position: 'relative' }}>
             <PolarArea data={polarData} options={polarOptions} />
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--display)', fontSize: '1.05rem' }}>
-            📉 Year-over-Year Comparison
-          </h3>
-          <p className="page-sub" style={{ marginBottom: '0.75rem', fontSize: '0.8rem' }}>
-            This year vs last year performance (%)
-          </p>
-          <div style={{ height: '280px', position: 'relative' }}>
-            <Bar data={horizontalBarData} options={horizontalOptions} />
           </div>
         </div>
       </div>
@@ -783,7 +585,7 @@ export default function ShopDashboard() {
             <h6 style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {stat.label}
             </h6>
-            <h2 style={{ fontSize: '1.3rem', color: stat.color, marginTop: '0.15rem' }}>
+            <h2 style={{ fontSize: '1.4rem', color: stat.color, marginTop: '0.15rem' }}>
               {stat.value}
             </h2>
           </div>
@@ -793,7 +595,9 @@ export default function ShopDashboard() {
       {/* ===== RECENT ACTIVITIES ===== */}
       <div className="grid grid-2">
         <div className="card">
-          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>Recent invoices</h3>
+          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)', fontSize: '1.05rem', color: '#1a1a1a' }}>
+            Recent invoices
+          </h3>
           <div className="table-wrap">
             <table>
               <thead>
@@ -823,7 +627,9 @@ export default function ShopDashboard() {
           </div>
         </div>
         <div className="card">
-          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)' }}>Top selling</h3>
+          <h3 style={{ marginBottom: '0.75rem', fontFamily: 'var(--display)', fontSize: '1.05rem', color: '#1a1a1a' }}>
+            Top selling
+          </h3>
           {!topSelling?.length && <p className="empty">No data yet</p>}
           <ul style={{ listStyle: 'none' }}>
             {topSelling?.map((t) => (
@@ -836,14 +642,14 @@ export default function ShopDashboard() {
                   borderBottom: '1px solid var(--border-color)',
                 }}
               >
-                <span>{t.name}</span>
-                <strong>{t.qty}</strong>
+                <span style={{ color: '#1a1a1a' }}>{t.name}</span>
+                <strong style={{ color: '#1a1a1a' }}>{t.qty}</strong>
               </li>
             ))}
           </ul>
           {recentPurchases?.length > 0 && (
             <>
-              <h3 style={{ margin: '1rem 0 0.5rem', fontFamily: 'var(--display)' }}>
+              <h3 style={{ margin: '1rem 0 0.5rem', fontFamily: 'var(--display)', fontSize: '1.05rem', color: '#1a1a1a' }}>
                 Recent purchases
               </h3>
               {recentPurchases.map((p) => (
