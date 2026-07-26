@@ -1,410 +1,418 @@
 // Landing.jsx
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../api';
+import { useAuth } from '../context/AuthContext';
 import './Landing.css';
 
-const Landing = () => {
+export default function Landing() {
+  const { user } = useAuth();
+  const [plans, setPlans] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    api
+      .get('/tenants/plans')
+      .then((res) => setPlans(res.data.plans || []))
+      .catch(() => setPlans([]));
   }, []);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const dashHref = user ? (user.role === 'super' ? '/super' : '/shop') : null;
 
-  const smoothScroll = (e, targetId) => {
-    e.preventDefault();
-    const target = document.querySelector(targetId);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setIsMenuOpen(false);
-    }
-  };
+  const features = [
+    { icon: '🛒', title: 'POS Management', desc: 'Complete point of sale system with quick checkout and billing.' },
+    { icon: '📦', title: 'Inventory Management', desc: 'Track stock levels, manage products, and automate reordering.' },
+    { icon: '📊', title: 'Sales Reports', desc: 'Real-time sales analytics and comprehensive reporting dashboard.' },
+    { icon: '👥', title: 'Customer Management', desc: 'Manage customer relationships, history, and loyalty programs.' },
+    { icon: '☁️', title: 'Cloud Based System', desc: 'Access your business data anytime, anywhere on any device.' },
+    { icon: '🔒', title: 'Secure Data', desc: 'Enterprise-grade security with encrypted data and backups.' },
+  ];
+
+  const benefits = [
+    { icon: '⏱️', title: 'Save Time', desc: 'Automate routine tasks and streamline operations.' },
+    { icon: '📈', title: 'Increase Sales', desc: 'Boost revenue with smart tools and insights.' },
+    { icon: '🏢', title: 'Manage Business Easily', desc: 'All-in-one platform for complete business control.' },
+    { icon: '📊', title: 'Real Time Reports', desc: 'Make data-driven decisions with instant analytics.' },
+  ];
+
+  const shops = [
+    { name: 'City Mart', status: 'Live', statusClass: 'live' },
+    { name: 'Green Store', status: 'Live', statusClass: 'live' },
+    { name: 'Metro Hub', status: 'Demo', statusClass: 'demo' },
+  ];
 
   return (
     <div className="landing">
-      {/* Navbar */}
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      {/* ===== NAVBAR ===== */}
+      <header className="navbar">
         <div className="nav-container">
-          <a href="#home" className="nav-logo" onClick={(e) => smoothScroll(e, '#home')}>
-            <span className="logo-icon">◆</span>
-            <span className="logo-text">MS TECHNO</span>
-          </a>
-          <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
-            <a href="#home" className="nav-link" onClick={(e) => smoothScroll(e, '#home')}>Home</a>
-            <a href="#features" className="nav-link" onClick={(e) => smoothScroll(e, '#features')}>Features</a>
-            <a href="#pricing" className="nav-link" onClick={(e) => smoothScroll(e, '#pricing')}>Pricing</a>
-            <a href="#about" className="nav-link" onClick={(e) => smoothScroll(e, '#about')}>About</a>
-            <a href="#contact" className="nav-link" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
-            <button className="nav-cta">Get Started</button>
-          </div>
-          <div className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
-            <span className="bar"></span>
-            <span className="bar"></span>
-            <span className="bar"></span>
-          </div>
-        </div>
-      </nav>
+          <Link to="/" className="nav-logo">
+            MS <span>TECHNO</span>
+          </Link>
 
-      {/* Hero Section */}
-      <section id="home" className="hero">
+          <button 
+            className={`nav-toggle ${isMenuOpen ? 'active' : ''}`}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <nav className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
+            <a href="#home" onClick={() => setIsMenuOpen(false)}>Home</a>
+            <a href="#features" onClick={() => setIsMenuOpen(false)}>Features</a>
+            <a href="#pricing" onClick={() => setIsMenuOpen(false)}>Pricing</a>
+            <a href="#about" onClick={() => setIsMenuOpen(false)}>About</a>
+            <a href="#contact" onClick={() => setIsMenuOpen(false)}>Contact</a>
+            <Link className="btn btn-outline btn-nav" to="/login" onClick={() => setIsMenuOpen(false)}>
+              Login
+            </Link>
+            <Link className="btn btn-primary btn-nav" to="/signup" onClick={() => setIsMenuOpen(false)}>
+              Get Started
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* ===== HERO SECTION ===== */}
+      <section className="hero" id="home">
         <div className="hero-container">
           <div className="hero-content">
-            <div className="hero-badge">🚀 Next-Gen ERP Solution</div>
+            <div className="hero-badge">
+              <span className="badge-dot"></span>
+              Next-Generation ERP Platform
+            </div>
             <h1 className="hero-title">
-              Transform Your<br />
-              <span className="highlight">Business Operations</span>
+              Powerful SaaS Solutions <br />
+              <span className="hero-highlight">For Your Business</span>
             </h1>
             <p className="hero-description">
-              Empower your enterprise with intelligent automation, real-time insights, 
-              and seamless integration. The complete SaaS platform designed for growth.
+              MS TECHNO provides professional software solutions to streamline your retail operations,
+              boost sales, and grow your business with confidence.
             </p>
-            <div className="hero-buttons">
-              <button className="btn-primary">
-                Start Free Trial
+            <div className="hero-actions">
+              <Link className="btn btn-primary btn-hero" to="/signup">
+                Get Started
                 <span className="btn-arrow">→</span>
-              </button>
-              <button className="btn-secondary">
-                <span className="btn-play">▶</span>
-                Watch Demo
-              </button>
+              </Link>
+              <a className="btn btn-outline btn-hero" href="#contact">
+                Request Demo
+              </a>
             </div>
             <div className="hero-stats">
               <div className="stat-item">
-                <span className="stat-number">10,000+</span>
-                <span className="stat-label">Active Users</span>
+                <span className="stat-number">100+</span>
+                <span className="stat-label">Active Shops</span>
               </div>
-              <div className="stat-divider"></div>
               <div className="stat-item">
                 <span className="stat-number">99.9%</span>
                 <span className="stat-label">Uptime</span>
               </div>
-              <div className="stat-divider"></div>
               <div className="stat-item">
-                <span className="stat-number">4.8</span>
-                <span className="stat-label">User Rating</span>
+                <span className="stat-number">24/7</span>
+                <span className="stat-label">Support</span>
               </div>
             </div>
           </div>
-          <div className="hero-image">
-            <div className="dashboard-mockup">
-              <div className="mockup-header">
-                <div className="mockup-controls">
-                  <span className="control-dot red"></span>
-                  <span className="control-dot yellow"></span>
-                  <span className="control-dot green"></span>
+          <div className="hero-visual">
+            <div className="dashboard-card">
+              <div className="dashboard-header">
+                <div className="dashboard-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
                 </div>
-                <div className="mockup-title">Dashboard Overview</div>
-                <div className="mockup-actions">
-                  <span className="action-icon">⟳</span>
-                  <span className="action-icon">⋯</span>
+                <span className="dashboard-title">Dashboard</span>
+              </div>
+              <div className="dashboard-stats">
+                <div className="dash-stat">
+                  <span className="dash-stat-number">1,284</span>
+                  <span className="dash-stat-label">Total Sales</span>
+                </div>
+                <div className="dash-stat">
+                  <span className="dash-stat-number">₨ 45.2k</span>
+                  <span className="dash-stat-label">Revenue</span>
                 </div>
               </div>
-              <div className="mockup-content">
-                <div className="mockup-stats">
-                  <div className="mockup-stat">
-                    <span className="stat-value">$124.5K</span>
-                    <span className="stat-label">Revenue</span>
-                    <div className="stat-bar">
-                      <div className="stat-fill" style={{ width: '85%' }}></div>
-                    </div>
+              <div className="dashboard-shops">
+                <span className="dash-shops-title">Live Tenants</span>
+                {shops.map((s) => (
+                  <div className="dash-shop-item" key={s.name}>
+                    <span className="dash-shop-name">{s.name}</span>
+                    <span className={`dash-shop-status ${s.statusClass}`}>
+                      {s.status}
+                    </span>
                   </div>
-                  <div className="mockup-stat">
-                    <span className="stat-value">2,847</span>
-                    <span className="stat-label">Orders</span>
-                    <div className="stat-bar">
-                      <div className="stat-fill" style={{ width: '72%' }}></div>
-                    </div>
-                  </div>
-                  <div className="mockup-stat">
-                    <span className="stat-value">94%</span>
-                    <span className="stat-label">Satisfaction</span>
-                    <div className="stat-bar">
-                      <div className="stat-fill" style={{ width: '94%' }}></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="mockup-chart">
-                  <div className="chart-bar" style={{ height: '60%' }}></div>
-                  <div className="chart-bar" style={{ height: '40%' }}></div>
-                  <div className="chart-bar" style={{ height: '80%' }}></div>
-                  <div className="chart-bar" style={{ height: '55%' }}></div>
-                  <div className="chart-bar" style={{ height: '90%' }}></div>
-                  <div className="chart-bar" style={{ height: '65%' }}></div>
-                  <div className="chart-bar" style={{ height: '75%' }}></div>
-                </div>
+                ))}
+              </div>
+              <div className="dashboard-footer">
+                <span>+2 shops in queue</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="features">
-        <div className="section-header">
-          <span className="section-tag">Features</span>
-          <h2>Everything You Need to Succeed</h2>
-          <p>Powerful tools designed to streamline your business operations and drive growth</p>
-        </div>
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon-wrapper">
-              <span className="feature-icon">📊</span>
-            </div>
-            <h3>POS Management</h3>
-            <p>Streamline point-of-sale operations with integrated payment processing and inventory sync.</p>
-            <a href="#" className="feature-link">Learn More →</a>
+      {/* ===== FEATURES SECTION ===== */}
+      <section className="section features" id="features">
+        <div className="section-container">
+          <div className="section-header">
+            <span className="section-tag">Features</span>
+            <h2 className="section-title">Everything You Need <span>To Succeed</span></h2>
+            <p className="section-subtitle">
+              Comprehensive tools designed to help you manage, grow, and scale your business efficiently.
+            </p>
           </div>
-          <div className="feature-card">
-            <div className="feature-icon-wrapper">
-              <span className="feature-icon">📦</span>
-            </div>
-            <h3>Inventory Management</h3>
-            <p>Track stock levels, manage suppliers, and automate reordering with real-time updates.</p>
-            <a href="#" className="feature-link">Learn More →</a>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon-wrapper">
-              <span className="feature-icon">📈</span>
-            </div>
-            <h3>Sales & Analytics</h3>
-            <p>Generate detailed analytics and reports to make data-driven business decisions.</p>
-            <a href="#" className="feature-link">Learn More →</a>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon-wrapper">
-              <span className="feature-icon">👥</span>
-            </div>
-            <h3>Customer Management</h3>
-            <p>Build lasting relationships with comprehensive CRM tools and customer insights.</p>
-            <a href="#" className="feature-link">Learn More →</a>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon-wrapper">
-              <span className="feature-icon">☁️</span>
-            </div>
-            <h3>Cloud Based System</h3>
-            <p>Access your business data anywhere, anytime with our secure cloud infrastructure.</p>
-            <a href="#" className="feature-link">Learn More →</a>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon-wrapper">
-              <span className="feature-icon">🔒</span>
-            </div>
-            <h3>Enterprise Security</h3>
-            <p>Enterprise-grade security with end-to-end encryption and regular data backups.</p>
-            <a href="#" className="feature-link">Learn More →</a>
+          <div className="features-grid">
+            {features.map((feature, index) => (
+              <div className="feature-card" key={index}>
+                <div className="feature-icon">{feature.icon}</div>
+                <h3>{feature.title}</h3>
+                <p>{feature.desc}</p>
+                <div className="feature-tag">Learn More →</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="about" className="how-it-works">
-        <div className="section-header">
-          <span className="section-tag">Process</span>
-          <h2>How It Works</h2>
-          <p>Get started in four simple steps and transform your business</p>
-        </div>
-        <div className="steps-container">
-          <div className="step">
-            <div className="step-number">01</div>
-            <div className="step-icon">📝</div>
-            <h3>Sign Up</h3>
-            <p>Create your account and choose the perfect plan for your needs</p>
+      {/* ===== BENEFITS SECTION ===== */}
+      <section className="section benefits">
+        <div className="section-container">
+          <div className="section-header">
+            <span className="section-tag">Why Choose Us</span>
+            <h2 className="section-title">The <span>Smart Choice</span> For Your Business</h2>
+            <p className="section-subtitle">
+              Experience the difference with our cutting-edge software solutions designed for growth.
+            </p>
           </div>
-          <div className="step-arrow">→</div>
-          <div className="step">
-            <div className="step-number">02</div>
-            <div className="step-icon">⚙️</div>
-            <h3>Configure</h3>
-            <p>Set up your business profile, team, and operational preferences</p>
-          </div>
-          <div className="step-arrow">→</div>
-          <div className="step">
-            <div className="step-number">03</div>
-            <div className="step-icon">🔗</div>
-            <h3>Integrate</h3>
-            <p>Connect your existing tools, data, and payment systems seamlessly</p>
-          </div>
-          <div className="step-arrow">→</div>
-          <div className="step">
-            <div className="step-number">04</div>
-            <div className="step-icon">🚀</div>
-            <h3>Launch</h3>
-            <p>Go live and start managing your business with confidence</p>
+          <div className="benefits-grid">
+            {benefits.map((benefit, index) => (
+              <div className="benefit-card" key={index}>
+                <div className="benefit-icon">{benefit.icon}</div>
+                <h3>{benefit.title}</h3>
+                <p>{benefit.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="pricing">
-        <div className="section-header">
-          <span className="section-tag">Pricing</span>
-          <h2>Choose Your Plan</h2>
-          <p>Select the perfect plan for your business size and needs</p>
+      {/* ===== PRICING SECTION ===== */}
+      <section className="section pricing" id="pricing">
+        <div className="section-container">
+          <div className="section-header">
+            <span className="section-tag">Pricing</span>
+            <h2 className="section-title">Choose Your <span>Perfect Plan</span></h2>
+            <p className="section-subtitle">
+              Flexible pricing options to suit businesses of all sizes. No hidden fees.
+            </p>
+          </div>
+          <div className="pricing-grid">
+            {plans.length > 0 ? (
+              plans.map((p) => (
+                <div 
+                  className={`pricing-card ${p.key === 'Premium' ? 'pricing-featured' : ''}`} 
+                  key={p.key}
+                >
+                  {p.key === 'Premium' && (
+                    <div className="pricing-badge">Most Popular</div>
+                  )}
+                  <h3 className="pricing-name">{p.name}</h3>
+                  <div className="pricing-price">
+                    <span className="currency">₨</span>
+                    {Number(p.priceMonthlyPkr).toLocaleString()}
+                    <span className="period">/month</span>
+                  </div>
+                  <p className="pricing-detail">
+                    {p.unlimitedProducts || p.maxProducts == null
+                      ? '♾️ Unlimited products'
+                      : `📦 Up to ${p.maxProducts} products`}
+                  </p>
+                  <ul className="pricing-features">
+                    {(p.features || []).map((f) => (
+                      <li key={f}>
+                        <span className="check">✓</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link 
+                    className="btn btn-primary btn-pricing" 
+                    to="/signup" 
+                    state={{ package: p.key }}
+                  >
+                    Choose {p.name}
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="pricing-card">
+                  <h3 className="pricing-name">Basic</h3>
+                  <div className="pricing-price">
+                    <span className="currency">₨</span>1,999<span className="period">/month</span>
+                  </div>
+                  <p className="pricing-detail">📦 Up to 500 products</p>
+                  <ul className="pricing-features">
+                    <li><span className="check">✓</span> Inventory Management</li>
+                    <li><span className="check">✓</span> Basic POS</li>
+                    <li><span className="check">✓</span> Sales Reports</li>
+                    <li><span className="check">✓</span> Email Support</li>
+                  </ul>
+                  <Link className="btn btn-primary btn-pricing" to="/signup">
+                    Choose Basic
+                  </Link>
+                </div>
+                <div className="pricing-card pricing-featured">
+                  <div className="pricing-badge">Most Popular</div>
+                  <h3 className="pricing-name">Premium</h3>
+                  <div className="pricing-price">
+                    <span className="currency">₨</span>4,999<span className="period">/month</span>
+                  </div>
+                  <p className="pricing-detail">♾️ Unlimited products</p>
+                  <ul className="pricing-features">
+                    <li><span className="check">✓</span> All Basic Features</li>
+                    <li><span className="check">✓</span> Advanced POS</li>
+                    <li><span className="check">✓</span> Real-time Analytics</li>
+                    <li><span className="check">✓</span> Priority Support</li>
+                  </ul>
+                  <Link className="btn btn-primary btn-pricing" to="/signup">
+                    Choose Premium
+                  </Link>
+                </div>
+                <div className="pricing-card">
+                  <h3 className="pricing-name">Enterprise</h3>
+                  <div className="pricing-price">
+                    <span className="currency">₨</span>9,999<span className="period">/month</span>
+                  </div>
+                  <p className="pricing-detail">♾️ Custom solutions</p>
+                  <ul className="pricing-features">
+                    <li><span className="check">✓</span> All Premium Features</li>
+                    <li><span className="check">✓</span> Custom Development</li>
+                    <li><span className="check">✓</span> Dedicated Support</li>
+                    <li><span className="check">✓</span> API Access</li>
+                  </ul>
+                  <Link className="btn btn-primary btn-pricing" to="/signup">
+                    Contact Sales
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
+          <p className="section-footnote">
+            Need a custom solution? <a href="#contact">Contact our sales team</a> for a personalized quote.
+          </p>
         </div>
-        <div className="pricing-grid">
-          <div className="pricing-card">
-            <div className="pricing-header">
-              <h3>Basic</h3>
-              <div className="price">$29<span>/month</span></div>
-              <p>Perfect for small businesses</p>
+      </section>
+
+      {/* ===== ABOUT SECTION ===== */}
+      <section className="section about" id="about">
+        <div className="section-container">
+          <div className="about-content">
+            <div className="about-text">
+              <span className="section-tag">About Us</span>
+              <h2 className="section-title">MS <span>TECHNO</span> — Your Trusted Software Partner</h2>
+              <p className="about-description">
+                MS TECHNO is a leading provider of professional software solutions for businesses. 
+                We specialize in developing powerful, user-friendly ERP systems that help retail 
+                businesses manage their operations efficiently.
+              </p>
+              <p className="about-description">
+                Our mission is to empower businesses with cutting-edge technology that drives growth, 
+                improves productivity, and delivers measurable results. With our cloud-based platform, 
+                you can access your business data anytime, anywhere.
+              </p>
+              <div className="about-stats">
+                <div className="about-stat">
+                  <span className="about-stat-number">5+</span>
+                  <span className="about-stat-label">Years Experience</span>
+                </div>
+                <div className="about-stat">
+                  <span className="about-stat-number">100+</span>
+                  <span className="about-stat-label">Businesses Served</span>
+                </div>
+                <div className="about-stat">
+                  <span className="about-stat-number">99%</span>
+                  <span className="about-stat-label">Satisfaction Rate</span>
+                </div>
+              </div>
             </div>
-            <ul className="pricing-features">
-              <li>✓ Up to 5 users</li>
-              <li>✓ Basic reporting</li>
-              <li>✓ Inventory management</li>
-              <li>✓ Email support</li>
-              <li>✓ 10GB storage</li>
-            </ul>
-            <button className="btn-pricing">Get Started</button>
-          </div>
-          <div className="pricing-card premium">
-            <div className="pricing-badge">Most Popular</div>
-            <div className="pricing-header">
-              <h3>Premium</h3>
-              <div className="price">$79<span>/month</span></div>
-              <p>Ideal for growing businesses</p>
+            <div className="about-image">
+              <div className="about-card">
+                <div className="about-card-icon">🏢</div>
+                <h3>MS TECHNO</h3>
+                <p>Cloud Retail Management ERP</p>
+                <div className="about-card-features">
+                  <span>✓ Secure & Reliable</span>
+                  <span>✓ 24/7 Support</span>
+                  <span>✓ Scalable Solutions</span>
+                </div>
+              </div>
             </div>
-            <ul className="pricing-features">
-              <li>✓ Up to 25 users</li>
-              <li>✓ Advanced analytics</li>
-              <li>✓ Full inventory control</li>
-              <li>✓ Priority support</li>
-              <li>✓ Custom reports</li>
-              <li>✓ 50GB storage</li>
-            </ul>
-            <button className="btn-pricing primary">Get Started</button>
-          </div>
-          <div className="pricing-card">
-            <div className="pricing-header">
-              <h3>Enterprise</h3>
-              <div className="price">Custom</div>
-              <p>For large organizations</p>
-            </div>
-            <ul className="pricing-features">
-              <li>✓ Unlimited users</li>
-              <li>✓ Enterprise analytics</li>
-              <li>✓ Dedicated support</li>
-              <li>✓ Custom integration</li>
-              <li>✓ Advanced security</li>
-              <li>✓ Unlimited storage</li>
-            </ul>
-            <button className="btn-pricing">Contact Sales</button>
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="benefits">
-        <div className="section-header">
-          <span className="section-tag">Benefits</span>
-          <h2>Why Choose MS TECHNO</h2>
-          <p>Discover the advantages that set us apart from the competition</p>
-        </div>
-        <div className="benefits-grid">
-          <div className="benefit-item">
-            <div className="benefit-icon-wrapper">
-              <span className="benefit-icon">⚡</span>
-            </div>
-            <h3>Save Time</h3>
-            <p>Automate repetitive tasks and focus on strategic initiatives that matter most</p>
-          </div>
-          <div className="benefit-item">
-            <div className="benefit-icon-wrapper">
-              <span className="benefit-icon">🚀</span>
-            </div>
-            <h3>Boost Productivity</h3>
-            <p>Streamlined workflows and intelligent tools that enhance team efficiency</p>
-          </div>
-          <div className="benefit-item">
-            <div className="benefit-icon-wrapper">
-              <span className="benefit-icon">🎯</span>
-            </div>
-            <h3>Simplify Management</h3>
-            <p>Intuitive tools and dashboards that make complex operations simple</p>
-          </div>
-          <div className="benefit-item">
-            <div className="benefit-icon-wrapper">
-              <span className="benefit-icon">📊</span>
-            </div>
-            <h3>Real-Time Insights</h3>
-            <p>Make informed decisions with live data and actionable analytics</p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section id="contact" className="cta-section">
+      {/* ===== CONTACT CTA SECTION ===== */}
+      <section className="cta-section" id="contact">
         <div className="cta-container">
           <div className="cta-content">
-            <span className="cta-tag">Get Started</span>
-            <h2>Ready to Transform Your Business?</h2>
-            <p>Join thousands of businesses already using MS TECHNO to grow and succeed</p>
-            <div className="cta-buttons">
-              <button className="btn-primary">
-                Start Free Trial
-                <span className="btn-arrow">→</span>
-              </button>
-              <button className="btn-secondary">Contact Sales</button>
-            </div>
+            <span className="cta-badge">🚀 Get Started Today</span>
+            <h2>Ready to Grow Your Business?</h2>
+            <p>Join 100+ businesses already using MS TECHNO to streamline their operations.</p>
+          </div>
+          <div className="cta-actions">
+            <Link className="btn btn-cta-primary" to="/signup">
+              Start Free Demo
+              <span className="btn-arrow">→</span>
+            </Link>
+            <a className="btn btn-cta-outline" href="#features">
+              Learn More
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ===== FOOTER ===== */}
       <footer className="footer">
         <div className="footer-container">
-          <div className="footer-section">
-            <div className="footer-logo">
-              <span className="logo-icon">◆</span>
-              <span>MS TECHNO</span>
+          <div className="footer-brand">
+            <Link to="/" className="footer-logo">
+              MS <span>TECHNO</span>
+            </Link>
+            <p className="footer-desc">
+              Cloud Retail Management ERP — Professional software solutions for modern businesses.
+            </p>
+          </div>
+          <div className="footer-links">
+            <div className="footer-column">
+              <h4>Quick Links</h4>
+              <a href="#home">Home</a>
+              <a href="#features">Features</a>
+              <a href="#pricing">Pricing</a>
+              <a href="#about">About</a>
             </div>
-            <p className="footer-description">Empowering businesses with next-generation ERP solutions for the modern enterprise.</p>
-            <div className="footer-social">
-              <a href="#" className="social-link">📱</a>
-              <a href="#" className="social-link">🐦</a>
-              <a href="#" className="social-link">💼</a>
-              <a href="#" className="social-link">📺</a>
+            <div className="footer-column">
+              <h4>Support</h4>
+              <a href="#contact">Contact</a>
+              <a href="#help">Help Center</a>
+              <a href="#docs">Documentation</a>
+              <a href="#status">System Status</a>
+            </div>
+            <div className="footer-column">
+              <h4>Contact us</h4>
+              <p>📞 0340-1227619</p>
+              <p>📍 Pakistan</p>
             </div>
           </div>
-          <div className="footer-section">
-            <h4>Product</h4>
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#about">About</a>
-            <a href="#">Integrations</a>
-            <a href="#">Changelog</a>
-          </div>
-          <div className="footer-section">
-            <h4>Support</h4>
-            <a href="#">Help Center</a>
-            <a href="#">Documentation</a>
-            <a href="#">API Reference</a>
-            <a href="#">Community</a>
-            <a href="#">Contact</a>
-          </div>
-          <div className="footer-section">
-            <h4>Contact</h4>
-            <p className="contact-item">📞 03401227619</p>          </div>
         </div>
         <div className="footer-bottom">
           <p>© 2026 MS TECHNO. All rights reserved.</p>
-          <div className="footer-bottom-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Cookie Policy</a>
-          </div>
         </div>
       </footer>
     </div>
   );
-};
-
-export default Landing;
+}
