@@ -46,7 +46,7 @@ function twoCol(left, right, cols) {
 
 /**
  * Build thermal receipt HTML for preview + print.
- * Optimized for 80mm thermal printer - Fixed positions
+ * Optimized for 80mm thermal printer - Proper alignment
  */
 export function buildThermalReceiptHtml({
   shopName,
@@ -80,7 +80,7 @@ export function buildThermalReceiptHtml({
   const lines = [];
   
   // ============================================================
-  // HEADER - Fixed Center
+  // HEADER - Centered
   // ============================================================
   lines.push('');
   lines.push(center(String(shopName || 'SHOP').toUpperCase(), cols));
@@ -88,7 +88,7 @@ export function buildThermalReceiptHtml({
   lines.push('');
 
   // ============================================================
-  // INVOICE DETAILS - Fixed positions
+  // INVOICE DETAILS - Centered
   // ============================================================
   if (invoice) lines.push(center('INV: ' + String(invoice), cols));
   lines.push(center('Date: ' + when + '  Time: ' + time, cols));
@@ -99,18 +99,23 @@ export function buildThermalReceiptHtml({
   lines.push('');
 
   // ============================================================
-  // ITEMS - Fixed columns for 80mm
+  // ITEMS - Item Name Left | Price Right | Qty & Total in Middle
   // ============================================================
+  // For 80mm (42 cols): 
+  // Item Name = 20 chars (left), Qty = 3 (right), Price = 7 (right), Total = 8 (right)
+  // Total = 20 + 1 + 3 + 1 + 7 + 1 + 8 = 41
   const qtyW = 3;
   const priceW = 7;
   const totalW = 8;
   const nameW = cols - (qtyW + priceW + totalW + 3); // 42 - 3 - 7 - 8 - 3 = 21
   
+  // Header with bold style
   lines.push(
     `${pad('Item', nameW)} ${pad('Qty', qtyW, 'right')} ${pad('Price', priceW, 'right')} ${pad('Total', totalW, 'right')}`
   );
   lines.push(rule(cols, '─'));
 
+  // Items
   if (!items.length) {
     lines.push(center('No items', cols));
   } else {
@@ -130,30 +135,30 @@ export function buildThermalReceiptHtml({
   lines.push('');
 
   // ============================================================
-  // TOTALS - Fixed right alignment
+  // TOTALS - Right aligned
   // ============================================================
   const saleDiscAmt = (subtotal * discPct) / 100;
   const taxAmt = ((subtotal - saleDiscAmt) * taxPct) / 100;
   
-  // Subtotal - Fixed position
+  // Subtotal - Bold
   lines.push(twoCol('Subtotal', moneyPlain(subtotal), cols));
   
-  // Discount - if exists
+  // Discount - Bold if exists
   if (discPct > 0) {
     lines.push(twoCol('Discount (' + discPct + '%)', moneyPlain(saleDiscAmt), cols));
   }
   
-  // Tax - if exists
+  // Tax - Bold if exists
   if (taxPct > 0) {
     lines.push(twoCol('Tax (' + taxPct + '%)', moneyPlain(taxAmt), cols));
   }
   
-  // Grand Total - Bold with double line
+  // Grand Total - Extra Bold with double line
   lines.push(rule(cols, '═'));
   lines.push(twoCol('TOTAL', moneyPlain(grand), cols));
   lines.push(rule(cols, '═'));
   
-  // Payment details - Fixed positions
+  // Payment details - Bold
   if (paid > 0) {
     lines.push(twoCol('Paid', moneyPlain(paid), cols));
   }
@@ -167,14 +172,14 @@ export function buildThermalReceiptHtml({
   lines.push('');
 
   // ============================================================
-  // FOOTER - Fixed center
+  // FOOTER - Centered with bold
   // ============================================================
   lines.push(center('─'.repeat(cols), cols));
   lines.push(center('Thank you for shopping', cols));
   lines.push(center('─'.repeat(cols), cols));
   lines.push(center('Powered by MS TECHNO', cols));
   lines.push(center('─'.repeat(cols), cols));
-  lines.push(center('Contact: 0340-1227619', cols));
+  lines.push(center('0340-1227619', cols));
   lines.push('');
   lines.push(center('Visit Again!', cols));
   lines.push(rule(cols, '─'));
@@ -194,10 +199,10 @@ export function buildThermalReceiptHtml({
       const price = Number(it.price || 0);
       const lineTotal = price * qty;
       return `<tr>
-        <td>${name}</td>
-        <td class="right">${qty}</td>
-        <td class="right">PKR ${moneyPlain(price)}</td>
-        <td class="right">PKR ${moneyPlain(lineTotal)}</td>
+        <td><strong>${name}</strong></td>
+        <td class="right"><strong>${qty}</strong></td>
+        <td class="right"><strong>PKR ${moneyPlain(price)}</strong></td>
+        <td class="right"><strong>PKR ${moneyPlain(lineTotal)}</strong></td>
       </tr>`;
     })
     .join('');
@@ -208,15 +213,15 @@ export function buildThermalReceiptHtml({
       <div class="shop-name"><strong>${escapedShop}</strong></div>
       <div class="invoice-title"><strong>INVOICE</strong></div>
       <div class="invoice-number"><strong>#${escapedInvoice}</strong></div>
-      <div class="invoice-meta">${esc(`${when}`)} · ${esc(`${time}`)} · ${customerName} · ${paymentMethod}</div>
+      <div class="invoice-meta"><strong>${esc(`${when}`)}</strong> · <strong>${esc(`${time}`)}</strong> · <strong>${customerName}</strong> · ${paymentMethod}</div>
     </div>
     <table>
       <thead>
         <tr>
-          <th>Product</th>
-          <th class="right">Qty</th>
-          <th class="right">Price</th>
-          <th class="right">Total</th>
+          <th><strong>Product</strong></th>
+          <th class="right"><strong>Qty</strong></th>
+          <th class="right"><strong>Price</strong></th>
+          <th class="right"><strong>Total</strong></th>
         </tr>
       </thead>
       <tbody>
@@ -235,10 +240,10 @@ export function buildThermalReceiptHtml({
       </tbody>
     </table>
     <div class="footer">
-      <div class="thankyou">Thank you for shopping</div>
+      <div class="thankyou"><strong>Thank you for shopping</strong></div>
       <div class="powered"><strong>Powered by MS TECHNO</strong></div>
-      <div class="contact">📞 0340-1227619</div>
-      <div class="visit">Visit Again!</div>
+      <div class="contact"><strong>📞 0340-1227619</strong></div>
+      <div class="visit"><strong>Visit Again!</strong></div>
     </div>
   </div>`;
 
@@ -321,6 +326,11 @@ export function buildThermalReceiptHtml({
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
+    /* Bold text - Extra dark and clear */
+    .ticket b, .ticket strong {
+      font-weight: 900 !important;
+      color: #000000 !important;
+    }
 
     /* A4/table layout for wider prints */
     .invoice-table { display: none; }
@@ -345,7 +355,7 @@ export function buildThermalReceiptHtml({
       }
       .invoice-table .shop-name {
         font-size: 22px;
-        font-weight: 700;
+        font-weight: 900;
         color: #0a7e5c;
         letter-spacing: 2px;
       }
@@ -357,6 +367,7 @@ export function buildThermalReceiptHtml({
       }
       .invoice-table .invoice-number {
         font-size: 13px;
+        font-weight: 700;
         color: #555;
         margin-top: 2px;
       }
@@ -364,6 +375,10 @@ export function buildThermalReceiptHtml({
         font-size: 12px;
         color: #666;
         margin-top: 4px;
+      }
+      .invoice-table .invoice-meta strong {
+        font-weight: 700;
+        color: #1a1a1a;
       }
       .invoice-table table {
         width: 100%;
@@ -384,6 +399,10 @@ export function buildThermalReceiptHtml({
         text-align: left;
         color: #1a1a1a;
       }
+      .invoice-table td strong {
+        font-weight: 700;
+        color: #000;
+      }
       .invoice-table .right { text-align: right; }
       .invoice-table .invoice-summary {
         margin-top: 16px;
@@ -397,11 +416,19 @@ export function buildThermalReceiptHtml({
         font-size: 13px;
         color: #1a1a1a;
       }
+      .invoice-table .invoice-summary td strong {
+        font-weight: 700;
+        color: #000;
+      }
       .invoice-table .grand-total td {
         font-size: 16px;
-        font-weight: 700;
+        font-weight: 900;
         border-top: 2px solid #0a7e5c;
         padding-top: 8px;
+        color: #000;
+      }
+      .invoice-table .grand-total td strong {
+        font-weight: 900;
         color: #000;
       }
       .invoice-table .footer {
@@ -410,25 +437,32 @@ export function buildThermalReceiptHtml({
         padding-top: 16px;
         border-top: 2px solid #0a7e5c;
       }
+      .invoice-table .footer strong {
+        font-weight: 900;
+        color: #000;
+      }
       .invoice-table .thankyou {
-        font-size: 15px;
+        font-size: 16px;
+        font-weight: 700;
         color: #0a7e5c;
         margin-bottom: 4px;
       }
       .invoice-table .powered {
         font-size: 15px;
-        font-weight: 700;
+        font-weight: 900;
         color: #1a1a1a;
         margin-bottom: 2px;
       }
       .invoice-table .contact {
-        font-size: 13px;
+        font-size: 14px;
+        font-weight: 700;
         color: #1a1a1a;
         margin-bottom: 2px;
       }
       .invoice-table .visit {
         font-size: 13px;
-        color: #666;
+        font-weight: 600;
+        color: #555;
       }
     }
     @page {
@@ -455,6 +489,10 @@ export function buildThermalReceiptHtml({
       .ticket {
         font-size: ${size.fontPx}px !important;
         color: #000 !important;
+      }
+      .ticket b, .ticket strong {
+        font-weight: 900 !important;
+        color: #000000 !important;
       }
     }
   </style>
