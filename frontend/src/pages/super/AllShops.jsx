@@ -1,749 +1,659 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import api from '../../api';
+// AllShops.jsx
+import React, { useState, useEffect } from 'react';
 
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function plusMonths(dateStr, months) {
-  const d = new Date(dateStr || todayStr());
-  d.setMonth(d.getMonth() + Number(months || 12));
-  return d.toISOString().slice(0, 10);
-}
-
-function blankForm() {
-  const start = todayStr();
-  return {
-    name: '',
-    owner: '',
-    username: '',
-    password: '',
-    phone: '',
-    email: '',
-    package: 'Basic',
-    payment: 'pending',
-    planStart: start,
-    durationMonths: 12,
-    expiry: plusMonths(start, 12),
-    paymentDueDate: start,
-    restrictOnPaymentOverdue: true,
-    openTime: '09:00',
-    closeTime: '22:00',
-    status: 'active',
-  };
-}
-
-function statusBadge(status) {
-  if (status === 'active') return '';
-  if (status === 'expired' || status === 'payment_overdue') return 'danger';
-  return 'warn';
-}
-
-function statusLabel(status) {
-  if (status === 'payment_overdue') return 'Payment overdue';
-  return status;
-}
-
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export default function AllShops() {
+const AllShops = () => {
   const [shops, setShops] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [q, setQ] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [packageFilter, setPackageFilter] = useState('');
-  const [modal, setModal] = useState(null);
-  const [form, setForm] = useState(blankForm);
-  const [editId, setEditId] = useState(null);
-  const [resetPw, setResetPw] = useState({ shopId: '', newPassword: '' });
-  const [showResetPw, setShowResetPw] = useState(false);
-  const [credentials, setCredentials] = useState(null);
-  const [viewCreds, setViewCreds] = useState(null);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [revealingId, setRevealingId] = useState('');
-  const limit = 12;
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPlan, setFilterPlan] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    fetchShops();
+  }, []);
+
+  const fetchShops = async () => {
     try {
-      const { data } = await api.get('/shops', {
-        params: {
-          page,
-          limit,
-          q: q || undefined,
-          shopStatus: statusFilter || undefined,
-          package: packageFilter || undefined,
-        },
-      });
-      setShops(data.shops || []);
-      setTotal(data.total || 0);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load');
+      const response = await fetch('/api/admin/shops');
+      const data = await response.json();
+      setShops(data);
+    } catch (error) {
+      console.error('Error fetching shops:', error);
     } finally {
       setLoading(false);
     }
-  }, [page, q, statusFilter, packageFilter]);
+  };
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      load();
-    }, 200);
-    return () => clearTimeout(t);
-  }, [load]);
-
-  const pages = Math.max(1, Math.ceil(total / limit));
-
-  const createPreviewDuration = useMemo(() => {
-    const start = new Date(form.planStart);
-    const end = new Date(form.expiry);
-    const days = Math.max(0, Math.round((end - start) / 86400000));
-    return `${form.durationMonths} month(s) · ${days} days`;
-  }, [form.planStart, form.expiry, form.durationMonths]);
-
-  function openCreate() {
-    setError('');
-    setEditId(null);
-    setForm(blankForm());
-    setModal('create');
-  }
-
-  function openEdit(shop) {
-    setError('');
-    setEditId(shop._id);
-    setForm({
-      name: shop.name || '',
-      owner: shop.owner || '',
-      username: shop.username || '',
-      password: '',
-      phone: shop.phone || '',
-      email: shop.email || '',
-      package: shop.package || 'Basic',
-      payment: shop.payment || 'pending',
-      planStart: String(shop.planStart || shop.createdAt).slice(0, 10),
-      durationMonths: shop.durationMonths || 12,
-      expiry: String(shop.expiry).slice(0, 10),
-      paymentDueDate: shop.paymentDueDate ? String(shop.paymentDueDate).slice(0, 10) : '',
-      restrictOnPaymentOverdue: shop.restrictOnPaymentOverdue !== false,
-      openTime: shop.openTime || '09:00',
-      closeTime: shop.closeTime || '22:00',
-      status: shop.status || 'active',
-    });
-    setModal('edit');
-  }
-
-  function onPlanStartChange(value) {
-    setForm((f) => ({
-      ...f,
-      planStart: value,
-      expiry: plusMonths(value, f.durationMonths),
-      paymentDueDate: f.paymentDueDate || value,
-    }));
-  }
-
-  function onDurationChange(value) {
-    const months = Number(value) || 12;
-    setForm((f) => ({
-      ...f,
-      durationMonths: months,
-      expiry: plusMonths(f.planStart, months),
-    }));
-  }
-
-  async function createShop(e) {
-    e.preventDefault();
-    setError('');
-    try {
-      const { data } = await api.post('/shops', form);
-      setCredentials(data.credentials || null);
-      setMessage('Shop created — copy login link and password once');
-      setModal(null);
-      setForm(blankForm());
-      await load();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+  const handleRenew = async (shopId) => {
+    if (window.confirm('Are you sure you want to renew this shop?')) {
+      try {
+        const response = await fetch(`/api/admin/shops/${shopId}/renew`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert('Shop renewed successfully!');
+          fetchShops();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
     }
-  }
+  };
 
-  async function saveEdit(e) {
-    e.preventDefault();
-    setError('');
-    try {
-      await api.put(`/shops/${editId}`, {
-        name: form.name,
-        owner: form.owner,
-        phone: form.phone,
-        email: form.email,
-        package: form.package,
-        payment: form.payment,
-        planStart: form.planStart,
-        durationMonths: form.durationMonths,
-        expiry: form.expiry,
-        paymentDueDate: form.paymentDueDate || null,
-        restrictOnPaymentOverdue: form.restrictOnPaymentOverdue,
-        status: form.status,
-        openTime: form.openTime,
-        closeTime: form.closeTime,
-      });
-      setMessage('Shop plan updated');
-      setModal(null);
-      await load();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+  const handleDelete = async (shopId) => {
+    if (window.confirm('Are you sure you want to delete this shop?')) {
+      try {
+        const response = await fetch(`/api/admin/shops/${shopId}`, {
+          method: 'DELETE'
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert('Shop deleted successfully!');
+          fetchShops();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
     }
-  }
+  };
 
-  async function updateShopStatus(id, nextStatus) {
-    setError('');
-    try {
-      await api.patch(`/shops/${id}/status`, { status: nextStatus });
-      setMessage(`Shop marked as ${nextStatus}`);
-      // Always show full list after a status change (don't keep a narrow status filter)
-      setStatusFilter('');
-      setPage(1);
-      const { data } = await api.get('/shops', {
-        params: {
-          page: 1,
-          limit,
-          q: q || undefined,
-          package: packageFilter || undefined,
-        },
-      });
-      setShops(data.shops || []);
-      setTotal(data.total || 0);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Status update failed');
-    }
-  }
+  const handleView = (shopId) => {
+    window.location.href = `/admin/shops/${shopId}`;
+  };
 
-  async function renew(id, payload) {
-    await api.post(`/shops/${id}/renew`, payload);
-    await load();
-  }
+  const filteredShops = shops.filter(shop => {
+    const matchSearch = shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        shop.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        shop.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchPlan = filterPlan === 'all' || shop.plan === filterPlan;
+    const matchStatus = filterStatus === 'all' || shop.status === filterStatus;
+    return matchSearch && matchPlan && matchStatus;
+  });
 
-  async function toggleRestrict(shop, enabled) {
-    await api.patch(`/shops/${shop._id}/payment-restriction`, {
-      restrictOnPaymentOverdue: enabled,
-    });
-    setMessage(
-      enabled ? `Auto-restrict enabled for ${shop.name}` : `Auto-restrict disabled for ${shop.name}`
-    );
-    await load();
-  }
+  const totalShops = shops.length;
+  const activeShops = shops.filter(s => s.status === 'active').length;
+  const expiredShops = shops.filter(s => s.status === 'expired').length;
+  const suspendedShops = shops.filter(s => s.status === 'suspended').length;
 
-  async function restrictIfOverdue(shop) {
-    const { data } = await api.patch(`/shops/${shop._id}/payment-restriction`, {
-      restrictOnPaymentOverdue: true,
-      applyRestrictionNow: true,
-    });
-    setMessage(data.message || 'Restriction applied');
-    await load();
+  if (loading) {
+    return <div className="loading-spinner">Loading...</div>;
   }
-
-  async function markPaid(shop) {
-    await api.patch(`/shops/${shop._id}/payment-restriction`, { payment: 'paid' });
-    if (shop.status === 'blocked' && shop.paymentOverdue) {
-      await api.patch(`/shops/${shop._id}/status`, { status: 'active' });
-    }
-    setMessage(`${shop.name} marked as paid`);
-    await load();
-  }
-
-  async function remove(id) {
-    if (!confirm('Delete shop and all related data?')) return;
-    await api.delete(`/shops/${id}`);
-    await load();
-  }
-
-  async function viewPassword(shop) {
-    setRevealingId(shop._id);
-    setError('');
-    try {
-      const { data } = await api.get(`/shops/${shop._id}/credentials`);
-      setViewCreds(data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Could not load password');
-    } finally {
-      setRevealingId('');
-    }
-  }
-
-  async function resetPassword(e) {
-    e.preventDefault();
-    setError('');
-    try {
-      const { data } = await api.post('/auth/reset-shop-password', resetPw);
-      setCredentials({
-        username: data.username,
-        password: resetPw.newPassword,
-        loginLink: data.loginLink,
-        note: 'New password — share once.',
-      });
-      setMessage(`Password reset for ${data.username}`);
-      setResetPw({ shopId: '', newPassword: '' });
-      setModal(null);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Reset failed');
-    }
-  }
-
-  const planForm = (
-    <div className="grid grid-2">
-      {!editId &&
-        [
-          ['name', 'Shop name'],
-          ['owner', 'Owner'],
-          ['username', 'Login username'],
-          ['password', 'Password'],
-          ['phone', 'Phone'],
-          ['email', 'Email'],
-        ].map(([key, label]) => (
-          <div className="field" key={key}>
-            <label>{label}</label>
-            <input
-              type={key === 'password' ? 'password' : 'text'}
-              value={form[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-              required={['name', 'owner', 'username', 'password'].includes(key)}
-            />
-          </div>
-        ))}
-      {editId && (
-        <>
-          <div className="field">
-            <label>Shop name</label>
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-          </div>
-          <div className="field">
-            <label>Owner</label>
-            <input
-              value={form.owner}
-              onChange={(e) => setForm({ ...form, owner: e.target.value })}
-              required
-            />
-          </div>
-        </>
-      )}
-      <div className="field">
-        <label>Package</label>
-        <select value={form.package} onChange={(e) => setForm({ ...form, package: e.target.value })}>
-          {['Basic', 'Premium', 'Enterprise'].map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </select>
-      </div>
-      <div className="field">
-        <label>Payment status</label>
-        <select value={form.payment} onChange={(e) => setForm({ ...form, payment: e.target.value })}>
-          <option value="paid">Paid</option>
-          <option value="pending">Pending</option>
-        </select>
-      </div>
-      <div className="field">
-        <label>Plan start date</label>
-        <input
-          type="date"
-          value={form.planStart}
-          onChange={(e) => onPlanStartChange(e.target.value)}
-          required
-        />
-      </div>
-      <div className="field">
-        <label>Duration (months)</label>
-        <select value={form.durationMonths} onChange={(e) => onDurationChange(e.target.value)}>
-          {[1, 3, 6, 12, 24].map((m) => (
-            <option key={m} value={m}>
-              {m} month{m > 1 ? 's' : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="field">
-        <label>Package end date</label>
-        <input
-          type="date"
-          value={form.expiry}
-          onChange={(e) => setForm({ ...form, expiry: e.target.value })}
-          required
-        />
-      </div>
-      <div className="field">
-        <label>Payment due date</label>
-        <input
-          type="date"
-          value={form.paymentDueDate}
-          onChange={(e) => setForm({ ...form, paymentDueDate: e.target.value })}
-        />
-      </div>
-      <div className="field" style={{ gridColumn: '1 / -1' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <input
-            type="checkbox"
-            checked={form.restrictOnPaymentOverdue}
-            onChange={(e) => setForm({ ...form, restrictOnPaymentOverdue: e.target.checked })}
-          />
-          Restrict shop access if payment is past due date
-        </label>
-        <small style={{ color: 'var(--muted)' }}>Duration preview: {createPreviewDuration}</small>
-      </div>
-    </div>
-  );
 
   return (
-    <div>
+    <div className="all-shops-container">
+      <style>{`
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        .all-shops-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 2rem;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          background: #f8faf8;
+          min-height: 100vh;
+        }
+
+        .loading-spinner {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 400px;
+          font-size: 1.2rem;
+          color: #16A34A;
+        }
+
+        .page-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+
+        .page-header h1 {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #111111;
+        }
+
+        .btn-add-shop {
+          background: #16A34A;
+          color: #ffffff;
+          border: none;
+          padding: 0.7rem 1.5rem;
+          border-radius: 50px;
+          font-weight: 600;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-family: inherit;
+        }
+
+        .btn-add-shop:hover {
+          background: #15803d;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 20px rgba(22, 163, 74, 0.25);
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .stat-card {
+          background: #ffffff;
+          padding: 1.5rem;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+          border: 1px solid #e8f0e8;
+          transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+        }
+
+        .stat-icon {
+          font-size: 2.5rem;
+        }
+
+        .stat-info {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .stat-number {
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: #111111;
+        }
+
+        .stat-label {
+          font-size: 0.85rem;
+          color: #111111;
+          opacity: 0.6;
+        }
+
+        .stat-card.total .stat-number { color: #16A34A; }
+        .stat-card.active .stat-number { color: #16A34A; }
+        .stat-card.expired .stat-number { color: #dc3545; }
+        .stat-card.suspended .stat-number { color: #ffc107; }
+
+        .filters-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          flex-wrap: wrap;
+          background: #ffffff;
+          padding: 1rem 1.5rem;
+          border-radius: 12px;
+          border: 1px solid #e8f0e8;
+        }
+
+        .search-box {
+          position: relative;
+          flex: 1;
+          min-width: 200px;
+        }
+
+        .search-box input {
+          width: 100%;
+          padding: 0.6rem 1rem 0.6rem 2.5rem;
+          border: 2px solid #e8f0e8;
+          border-radius: 50px;
+          font-size: 0.95rem;
+          font-family: inherit;
+          transition: all 0.3s ease;
+          background: #f9fcf9;
+          color: #111111;
+        }
+
+        .search-box input:focus {
+          outline: none;
+          border-color: #16A34A;
+          box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.08);
+          background: #ffffff;
+        }
+
+        .search-icon {
+          position: absolute;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          opacity: 0.4;
+        }
+
+        .filter-group {
+          display: flex;
+          gap: 0.8rem;
+          flex-wrap: wrap;
+        }
+
+        .filter-group select {
+          padding: 0.6rem 1.5rem;
+          border: 2px solid #e8f0e8;
+          border-radius: 50px;
+          font-size: 0.9rem;
+          font-family: inherit;
+          background: #f9fcf9;
+          color: #111111;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .filter-group select:focus {
+          outline: none;
+          border-color: #16A34A;
+        }
+
+        .table-container {
+          background: #ffffff;
+          border-radius: 16px;
+          border: 1px solid #e8f0e8;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .shops-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.95rem;
+        }
+
+        .shops-table thead {
+          background: #f9fcf9;
+        }
+
+        .shops-table th {
+          padding: 1rem 1.2rem;
+          text-align: left;
+          font-weight: 600;
+          color: #111111;
+          border-bottom: 2px solid #e8f0e8;
+          white-space: nowrap;
+        }
+
+        .shops-table td {
+          padding: 1rem 1.2rem;
+          border-bottom: 1px solid #e8f0e8;
+          color: #111111;
+        }
+
+        .shops-table tbody tr:hover {
+          background: #f9fcf9;
+        }
+
+        .shops-table .expired-row {
+          background: #fff5f5;
+        }
+
+        .shops-table .expired-row:hover {
+          background: #ffebeb;
+        }
+
+        .plan-badge {
+          display: inline-block;
+          padding: 0.2rem 0.8rem;
+          border-radius: 50px;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+
+        .plan-badge.basic {
+          background: #e8f0e8;
+          color: #111111;
+        }
+
+        .plan-badge.premium {
+          background: #DCFCE7;
+          color: #16A34A;
+        }
+
+        .plan-badge.enterprise {
+          background: #cce5ff;
+          color: #004085;
+        }
+
+        .status-badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          border-radius: 50px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-transform: capitalize;
+        }
+
+        .status-badge.active {
+          background: #DCFCE7;
+          color: #16A34A;
+        }
+
+        .status-badge.expired {
+          background: #fcc;
+          color: #dc3545;
+        }
+
+        .status-badge.suspended {
+          background: #fff3cd;
+          color: #856404;
+        }
+
+        .expired-date {
+          color: #dc3545 !important;
+          font-weight: 600;
+        }
+
+        .actions-cell {
+          display: flex;
+          gap: 0.4rem;
+          flex-wrap: wrap;
+        }
+
+        .actions-cell button {
+          width: 32px;
+          height: 32px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-size: 0.9rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .btn-view {
+          background: #e8f0e8;
+          color: #111111;
+        }
+
+        .btn-view:hover {
+          background: #16A34A;
+          color: #ffffff;
+          transform: scale(1.05);
+        }
+
+        .btn-renew {
+          background: #DCFCE7;
+          color: #16A34A;
+        }
+
+        .btn-renew:hover {
+          background: #16A34A;
+          color: #ffffff;
+          transform: scale(1.05);
+        }
+
+        .btn-delete {
+          background: #fcc;
+          color: #dc3545;
+        }
+
+        .btn-delete:hover {
+          background: #dc3545;
+          color: #ffffff;
+          transform: scale(1.05);
+        }
+
+        .no-shops {
+          padding: 3rem;
+          text-align: center;
+          color: #111111;
+          opacity: 0.6;
+        }
+
+        .table-footer {
+          padding: 1rem 1.5rem;
+          background: #f9fcf9;
+          border-top: 1px solid #e8f0e8;
+          color: #111111;
+          opacity: 0.6;
+          font-size: 0.9rem;
+        }
+
+        @media (max-width: 1024px) {
+          .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .all-shops-container {
+            padding: 1rem;
+          }
+
+          .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          .stats-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+          }
+
+          .stat-card {
+            padding: 1rem;
+          }
+
+          .stat-number {
+            font-size: 1.4rem;
+          }
+
+          .filters-section {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 1rem;
+          }
+
+          .filter-group {
+            flex-direction: column;
+          }
+
+          .filter-group select {
+            width: 100%;
+          }
+
+          .shops-table {
+            font-size: 0.8rem;
+          }
+
+          .shops-table th,
+          .shops-table td {
+            padding: 0.6rem 0.8rem;
+          }
+
+          .actions-cell {
+            flex-direction: column;
+          }
+
+          .actions-cell button {
+            width: 28px;
+            height: 28px;
+            font-size: 0.8rem;
+          }
+
+          .plan-badge,
+          .status-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .stats-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .shops-table {
+            font-size: 0.7rem;
+          }
+
+          .shops-table th,
+          .shops-table td {
+            padding: 0.4rem 0.5rem;
+          }
+
+          .page-header h1 {
+            font-size: 1.5rem;
+          }
+
+          .btn-add-shop {
+            width: 100%;
+            text-align: center;
+          }
+        }
+      `}</style>
+
       <div className="page-header">
-        <h2 className="page-title" style={{ marginBottom: 0 }}>
-          All Shops
-        </h2>
-        <button className="btn btn-gold" onClick={openCreate}>
-          + Create shop
-        </button>
-      </div>
-      {message && <div className="success">{message}</div>}
-      {error && !modal && <div className="error">{error}</div>}
-
-      {credentials && (
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <strong>Share once — credentials</strong>
-          <p>
-            Username: <code>{credentials.username}</code>
-          </p>
-          {credentials.password && (
-            <p>
-              Password: <code>{credentials.password}</code>
-            </p>
-          )}
-          {credentials.loginLink && (
-            <p>
-              Login link: <code>{credentials.loginLink}</code>
-            </p>
-          )}
-          <div className="row">
-            <button
-              className="btn btn-primary btn-sm"
-              type="button"
-              onClick={async () => {
-                const ok = await copyText(credentials.loginLink || '');
-                setMessage(ok ? 'Login link copied' : 'Could not copy');
-              }}
-            >
-              Copy shop link
-            </button>
-            {credentials.password && (
-              <button
-                className="btn btn-outline btn-sm"
-                type="button"
-                onClick={async () => {
-                  const ok = await copyText(
-                    `Username: ${credentials.username}\nPassword: ${credentials.password}\nLink: ${credentials.loginLink}`
-                  );
-                  setMessage(ok ? 'Credentials copied' : 'Could not copy');
-                }}
-              >
-                Copy all
-              </button>
-            )}
-            <button className="btn btn-outline btn-sm" type="button" onClick={() => setCredentials(null)}>
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="row" style={{ marginBottom: '0.85rem', flexWrap: 'wrap' }}>
-        <input
-          style={{ minWidth: 200, flex: 1 }}
-          value={q}
-          onChange={(e) => {
-            setPage(1);
-            setQ(e.target.value);
-          }}
-          placeholder="Search shops..."
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setPage(1);
-            setStatusFilter(e.target.value);
-          }}
-        >
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="blocked">Blocked</option>
-          <option value="expired">Expired</option>
-        </select>
-        <select
-          value={packageFilter}
-          onChange={(e) => {
-            setPage(1);
-            setPackageFilter(e.target.value);
-          }}
-        >
-          <option value="">All packages</option>
-          <option value="Basic">Basic</option>
-          <option value="Premium">Premium</option>
-          <option value="Enterprise">Enterprise</option>
-        </select>
-      </div>
-
-      {loading && <p className="empty">Loading...</p>}
-
-      <div className="grid grid-2">
-        {shops.map((s) => (
-          <div className="card" key={s._id}>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <div>
-                <h3 style={{ fontFamily: 'var(--display)' }}>{s.name}</h3>
-                <p className="page-sub" style={{ marginBottom: 0 }}>
-                  {s.owner} · @{s.username} · {s.package}
-                  {s.slug ? ` · ${s.slug}` : ''}
-                </p>
-              </div>
-              <span className={`badge ${statusBadge(s.computedStatus)}`}>
-                {statusLabel(s.computedStatus)}
-              </span>
-            </div>
-
-            <div style={{ marginTop: '0.75rem', fontSize: '0.86rem', color: 'var(--muted)' }}>
-              <div>
-                <strong style={{ color: 'var(--ink)' }}>Plan:</strong>{' '}
-                {String(s.planStart || s.createdAt).slice(0, 10)} →{' '}
-                {String(s.planEnd || s.expiry).slice(0, 10)} ({s.durationLabel})
-              </div>
-              <div>
-                <strong style={{ color: 'var(--ink)' }}>Payment:</strong>{' '}
-                <span className={`badge ${s.payment === 'paid' ? '' : 'warn'}`}>{s.payment}</span>
-                {s.paymentOverdue && <span className="badge danger">Overdue</span>}
-              </div>
-              <div>
-                <strong style={{ color: 'var(--ink)' }}>Products:</strong>{' '}
-                {s.plan?.unlimitedProducts || s.plan?.maxProducts == null
-                  ? 'Unlimited'
-                  : `max ${s.plan.maxProducts}`}
-                {s.plan?.hasPos ? ' · POS on' : ' · POS off'}
-              </div>
-            </div>
-
-            <div className="row" style={{ marginTop: '0.75rem' }}>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={async () => {
-                  const link =
-                    s.loginLink ||
-                    `${window.location.origin}/login?u=${encodeURIComponent(s.username || '')}`;
-                  const ok = await copyText(link);
-                  setMessage(ok ? `Link copied for ${s.name}` : 'Copy failed');
-                }}
-              >
-                Copy shop link
-              </button>
-              <button
-                className="btn btn-outline btn-sm"
-                disabled={revealingId === s._id}
-                onClick={() => viewPassword(s)}
-              >
-                {revealingId === s._id ? 'Loading...' : 'View password'}
-              </button>
-              <button className="btn btn-outline btn-sm" onClick={() => openEdit(s)}>
-                Edit plan
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${
-                  s.status === 'blocked' || s.status === 'suspended' ? 'btn-primary' : 'btn-danger'
-                }`}
-                onClick={() =>
-                  updateShopStatus(
-                    s._id,
-                    s.status === 'blocked' || s.status === 'suspended' ? 'active' : 'blocked'
-                  )
-                }
-              >
-                {s.status === 'blocked' || s.status === 'suspended' ? 'Unblock shop' : 'Block shop'}
-              </button>
-              <button className="btn btn-outline btn-sm" onClick={() => renew(s._id, { years: 1 })}>
-                +1 year
-              </button>
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={() => toggleRestrict(s, !s.restrictOnPaymentOverdue)}
-              >
-                {s.restrictOnPaymentOverdue ? 'Disable auto-restrict' : 'Enable auto-restrict'}
-              </button>
-              {s.paymentOverdue && (
-                <button className="btn btn-danger btn-sm" onClick={() => restrictIfOverdue(s)}>
-                  Restrict overdue
-                </button>
-              )}
-              {s.payment !== 'paid' && (
-                <button className="btn btn-primary btn-sm" onClick={() => markPaid(s)}>
-                  Mark paid
-                </button>
-              )}
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={() => {
-                  setResetPw({ shopId: s._id, newPassword: '' });
-                  setShowResetPw(false);
-                  setModal('reset');
-                }}
-              >
-                Reset password
-              </button>
-              <button className="btn btn-danger btn-sm" onClick={() => remove(s._id)}>
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="row" style={{ marginTop: '1rem', justifyContent: 'center' }}>
-        <button className="btn btn-outline btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          Prev
-        </button>
-        <span className="page-sub" style={{ margin: 0 }}>
-          Page {page} / {pages} · {total} shops
-        </span>
-        <button
-          className="btn btn-outline btn-sm"
-          disabled={page >= pages}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
+        <h1>All Shops</h1>
+        <button className="btn-add-shop" onClick={() => window.location.href = '/admin/shops/add'}>
+          + Add New Shop
         </button>
       </div>
 
-      {viewCreds && (
-        <div className="modal-backdrop" onClick={() => setViewCreds(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Shop credentials — {viewCreds.shopName}</h3>
-            <p>
-              Username: <code>{viewCreds.username}</code>
-            </p>
-            {viewCreds.recoverable ? (
-              <p>
-                Password: <code>{viewCreds.password}</code>
-              </p>
-            ) : (
-              <div className="error">
-                {viewCreds.message ||
-                  'Password not recoverable. Reset password once, then you can view it here.'}
-              </div>
-            )}
-            {viewCreds.loginLink && (
-              <p>
-                Link: <code>{viewCreds.loginLink}</code>
-              </p>
-            )}
-            <div className="row">
-              {viewCreds.recoverable && (
-                <button
-                  className="btn btn-primary btn-sm"
-                  type="button"
-                  onClick={async () => {
-                    const ok = await copyText(
-                      `Username: ${viewCreds.username}\nPassword: ${viewCreds.password}\nLink: ${viewCreds.loginLink}`
-                    );
-                    setMessage(ok ? 'Credentials copied' : 'Copy failed');
-                  }}
-                >
-                  Copy all
-                </button>
-              )}
-              <button className="btn btn-outline btn-sm" type="button" onClick={() => setViewCreds(null)}>
-                Close
-              </button>
-            </div>
+      <div className="stats-grid">
+        <div className="stat-card total">
+          <div className="stat-icon">🏪</div>
+          <div className="stat-info">
+            <span className="stat-number">{totalShops}</span>
+            <span className="stat-label">Total Shops</span>
           </div>
         </div>
-      )}
-
-      {(modal === 'create' || modal === 'edit') && (
-        <div className="modal-backdrop" onClick={() => setModal(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{modal === 'create' ? 'Create shop' : 'Edit plan & payment'}</h3>
-            <form onSubmit={modal === 'create' ? createShop : saveEdit}>
-              {planForm}
-              {error && <div className="error">{error}</div>}
-              <div className="row">
-                <button className="btn btn-primary" type="submit">
-                  {modal === 'create' ? 'Create shop' : 'Save changes'}
-                </button>
-                <button className="btn btn-outline" type="button" onClick={() => setModal(null)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
+        <div className="stat-card active">
+          <div className="stat-icon">✅</div>
+          <div className="stat-info">
+            <span className="stat-number">{activeShops}</span>
+            <span className="stat-label">Active Shops</span>
           </div>
         </div>
-      )}
+        <div className="stat-card expired">
+          <div className="stat-icon">⚠️</div>
+          <div className="stat-info">
+            <span className="stat-number">{expiredShops}</span>
+            <span className="stat-label">Expired Shops</span>
+          </div>
+        </div>
+        <div className="stat-card suspended">
+          <div className="stat-icon">🚫</div>
+          <div className="stat-info">
+            <span className="stat-number">{suspendedShops}</span>
+            <span className="stat-label">Suspended Shops</span>
+          </div>
+        </div>
+      </div>
 
-      {modal === 'reset' && (
-        <div className="modal-backdrop" onClick={() => setModal(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Reset shop password</h3>
-            <form onSubmit={resetPassword}>
-              <div className="field">
-                <label>New password</label>
-                <div className="password-wrapper">
-                  <input
-                    type={showResetPw ? 'text' : 'password'}
-                    value={resetPw.newPassword}
-                    onChange={(e) => setResetPw({ ...resetPw, newPassword: e.target.value })}
-                    required
-                    minLength={6}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    className="toggle-password"
-                    onClick={() => setShowResetPw((v) => !v)}
-                    aria-label={showResetPw ? 'Hide password' : 'Show password'}
-                    title={showResetPw ? 'Hide password' : 'Show password'}
-                  >
-                    {showResetPw ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                        <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
+      <div className="filters-section">
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="Search by name, owner or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <span className="search-icon">🔍</span>
+        </div>
+        <div className="filter-group">
+          <select value={filterPlan} onChange={(e) => setFilterPlan(e.target.value)}>
+            <option value="all">All Plans</option>
+            <option value="Basic">Basic</option>
+            <option value="Premium">Premium</option>
+            <option value="Enterprise">Enterprise</option>
+          </select>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="expired">Expired</option>
+            <option value="suspended">Suspended</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="table-container">
+        {filteredShops.length === 0 ? (
+          <div className="no-shops">
+            <p>No shops found matching your criteria.</p>
+          </div>
+        ) : (
+          <table className="shops-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Shop Name</th>
+                <th>Owner</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Plan</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredShops.map((shop, index) => (
+                <tr key={shop.id} className={shop.status === 'expired' ? 'expired-row' : ''}>
+                  <td>{index + 1}</td>
+                  <td><strong>{shop.name}</strong></td>
+                  <td>{shop.owner}</td>
+                  <td>{shop.email}</td>
+                  <td>{shop.phone}</td>
+                  <td>
+                    <span className={`plan-badge ${shop.plan.toLowerCase()}`}>
+                      {shop.plan}
+                    </span>
+                  </td>
+                  <td className={new Date(shop.expiry_date) < new Date() ? 'expired-date' : ''}>
+                    {new Date(shop.expiry_date).toLocaleDateString()}
+                  </td>
+                  <td>
+                    <span className={`status-badge ${shop.status}`}>
+                      {shop.status}
+                    </span>
+                  </td>
+                  <td className="actions-cell">
+                    <button className="btn-view" onClick={() => handleView(shop.id)}>
+                      👁️
+                    </button>
+                    {shop.status === 'expired' && (
+                      <button className="btn-renew" onClick={() => handleRenew(shop.id)}>
+                        🔄
+                      </button>
                     )}
-                  </button>
-                </div>
-              </div>
-              {error && <div className="error">{error}</div>}
-              <div className="row">
-                <button className="btn btn-primary" type="submit">
-                  Reset
-                </button>
-                <button className="btn btn-outline" type="button" onClick={() => setModal(null)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                    <button className="btn-delete" onClick={() => handleDelete(shop.id)}>
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="table-footer">
+        <span>Showing {filteredShops.length} of {shops.length} shops</span>
+      </div>
     </div>
   );
-}
+};
+
+export default AllShops;
