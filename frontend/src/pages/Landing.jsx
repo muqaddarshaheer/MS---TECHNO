@@ -65,6 +65,7 @@ const Landing = () => {
     e.preventDefault();
     
     try {
+      // Send to your backend API - Super Admin panel will receive this
       const response = await fetch('http://localhost:5000/api/demo-request', {
         method: 'POST',
         headers: {
@@ -76,7 +77,7 @@ const Landing = () => {
       const data = await response.json();
       
       if (response.ok) {
-        alert('✅ Demo request submitted successfully!\n\nOur team will contact you within 24 hours.');
+        alert('✅ Demo request sent successfully!\n\nOur team will contact you within 24 hours.');
         closeDemoModal();
         setFormData({
           name: '',
@@ -86,7 +87,7 @@ const Landing = () => {
           message: ''
         });
       } else {
-        alert('❌ Error: ' + data.message);
+        alert('❌ Error: ' + (data.message || 'Something went wrong'));
       }
     } catch (error) {
       alert('❌ Network error. Please check your connection and try again.');
