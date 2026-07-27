@@ -683,10 +683,73 @@ body {
   line-height: 1.6;
 }
 
+/* ========== HOW IT WORKS ========== */
+.how-it-works {
+  padding: 5rem 2rem;
+  background: #f9fcf9;
+}
+
+.steps-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.step {
+  text-align: center;
+  padding: 2.5rem 2rem;
+  background: #ffffff;
+  border-radius: 20px;
+  flex: 1;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(22, 163, 74, 0.04);
+}
+
+.step:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+}
+
+.step-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #16A34A;
+  opacity: 0.2;
+  line-height: 1;
+}
+
+.step-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.step h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 0.3rem;
+}
+
+.step p {
+  color: #111111;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
+
+.step-arrow {
+  font-size: 1.5rem;
+  color: rgba(22, 163, 74, 0.2);
+  padding: 0 0.5rem;
+}
+
 /* ========== PRICING ========== */
 .pricing {
   padding: 5rem 2rem;
-  background: #f9fcf9;
+  background: #ffffff;
 }
 
 .pricing-grid {
@@ -699,7 +762,7 @@ body {
 }
 
 .pricing-card {
-  background: #ffffff;
+  background: #f9fcf9;
   padding: 2.5rem 2rem;
   border-radius: 20px;
   text-align: center;
@@ -984,6 +1047,20 @@ body {
   .pricing-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
+
+  .steps-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .step-arrow {
+    transform: rotate(90deg);
+  }
+
+  .step {
+    width: 100%;
+    max-width: 400px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1134,5 +1211,9 @@ body {
 
   .modal-header h2 {
     font-size: 1.5rem;
+  }
+
+  .step {
+    padding: 1.5rem;
   }
 }

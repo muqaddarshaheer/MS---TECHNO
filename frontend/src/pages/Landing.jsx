@@ -47,11 +47,11 @@ const Landing = () => {
   };
 
   const handleLogin = () => {
-    alert('Login page will open here');
+    window.location.href = '/login';
   };
 
   const handleGetStarted = (plan) => {
-    alert(`You selected ${plan} plan. Signup form will open.`);
+    window.location.href = `/signup?plan=${plan.toLowerCase()}`;
   };
 
   const handleInputChange = (e) => {
@@ -61,17 +61,37 @@ const Landing = () => {
     });
   };
 
-  const handleSubmitDemo = (e) => {
+  const handleSubmitDemo = async (e) => {
     e.preventDefault();
-    alert(`Demo request submitted successfully!\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nCompany: ${formData.company}\nMessage: ${formData.message}`);
-    closeDemoModal();
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-      message: ''
-    });
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/demo-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert('✅ Demo request submitted successfully!\n\nOur team will contact you within 24 hours.');
+        closeDemoModal();
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          company: '',
+          message: ''
+        });
+      } else {
+        alert('❌ Error: ' + data.message);
+      }
+    } catch (error) {
+      alert('❌ Network error. Please check your connection and try again.');
+      console.error('Error:', error);
+    }
   };
 
   return (
@@ -87,6 +107,7 @@ const Landing = () => {
             <a href="#home" className="nav-link" onClick={(e) => smoothScroll(e, '#home')}>Home</a>
             <a href="#features" className="nav-link" onClick={(e) => smoothScroll(e, '#features')}>Features</a>
             <a href="#pricing" className="nav-link" onClick={(e) => smoothScroll(e, '#pricing')}>Pricing</a>
+            <a href="#about" className="nav-link" onClick={(e) => smoothScroll(e, '#about')}>About</a>
             <a href="#contact" className="nav-link" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
             <button className="nav-login" onClick={handleLogin}>Login</button>
             <button className="nav-demo" onClick={openDemoModal}>Request Demo</button>
@@ -295,6 +316,37 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* How It Works */}
+      <section id="about" className="how-it-works">
+        <div className="section-header">
+          <span className="section-tag">How It Works</span>
+          <h2>Get Started in 3 Simple Steps</h2>
+          <p>Start using MS TECHNO software quickly</p>
+        </div>
+        <div className="steps-container">
+          <div className="step">
+            <div className="step-number">1</div>
+            <div className="step-icon">📝</div>
+            <h3>Create Account</h3>
+            <p>Sign up and choose your plan</p>
+          </div>
+          <div className="step-arrow">→</div>
+          <div className="step">
+            <div className="step-number">2</div>
+            <div className="step-icon">⚙️</div>
+            <h3>Setup Your Shop</h3>
+            <p>Configure your business settings</p>
+          </div>
+          <div className="step-arrow">→</div>
+          <div className="step">
+            <div className="step-number">3</div>
+            <div className="step-icon">🚀</div>
+            <h3>Start Managing</h3>
+            <p>Begin using the software</p>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="pricing" className="pricing">
         <div className="section-header">
@@ -364,20 +416,20 @@ const Landing = () => {
           </div>
           <div className="footer-section">
             <h4>Product</h4>
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#contact">Demo</a>
+            <a href="#features" onClick={(e) => smoothScroll(e, '#features')}>Features</a>
+            <a href="#pricing" onClick={(e) => smoothScroll(e, '#pricing')}>Pricing</a>
+            <a href="#contact" onClick={(e) => smoothScroll(e, '#contact')}>Demo</a>
           </div>
           <div className="footer-section">
             <h4>Support</h4>
             <a href="#" onClick={handleLogin}>Login</a>
             <a href="#" onClick={openDemoModal}>Request Demo</a>
-            <a href="#contact">Contact</a>
+            <a href="#contact" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
           </div>
           <div className="footer-section">
             <h4>Contact</h4>
-            <p>03401227619</p>
-            <p>Karachi, Pakistan</p>
+            <p>📞03401227619</p>
+            <p>📍 Karachi, Pakistan</p>
           </div>
         </div>
         <div className="footer-bottom">
