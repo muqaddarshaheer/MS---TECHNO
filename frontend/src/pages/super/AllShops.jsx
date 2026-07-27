@@ -125,6 +125,7 @@ const AllShops = () => {
           font-size: 2rem;
           font-weight: 700;
           color: #111111;
+          margin: 0;
         }
 
         .btn-add-shop {
@@ -172,6 +173,7 @@ const AllShops = () => {
 
         .stat-icon {
           font-size: 2.5rem;
+          line-height: 1;
         }
 
         .stat-info {
@@ -183,6 +185,7 @@ const AllShops = () => {
           font-size: 1.8rem;
           font-weight: 700;
           color: #111111;
+          line-height: 1.2;
         }
 
         .stat-label {
@@ -446,6 +449,11 @@ const AllShops = () => {
             align-items: flex-start;
           }
 
+          .btn-add-shop {
+            width: 100%;
+            text-align: center;
+          }
+
           .stats-grid {
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
@@ -459,10 +467,18 @@ const AllShops = () => {
             font-size: 1.4rem;
           }
 
+          .stat-icon {
+            font-size: 2rem;
+          }
+
           .filters-section {
             flex-direction: column;
             align-items: stretch;
             padding: 1rem;
+          }
+
+          .search-box {
+            min-width: 100%;
           }
 
           .filter-group {
@@ -483,7 +499,8 @@ const AllShops = () => {
           }
 
           .actions-cell {
-            flex-direction: column;
+            flex-direction: row;
+            flex-wrap: wrap;
           }
 
           .actions-cell button {
@@ -517,9 +534,18 @@ const AllShops = () => {
             font-size: 1.5rem;
           }
 
-          .btn-add-shop {
-            width: 100%;
-            text-align: center;
+          .stat-number {
+            font-size: 1.2rem;
+          }
+
+          .stat-icon {
+            font-size: 1.5rem;
+          }
+
+          .actions-cell button {
+            width: 24px;
+            height: 24px;
+            font-size: 0.7rem;
           }
         }
       `}</style>
