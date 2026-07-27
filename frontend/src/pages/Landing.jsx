@@ -86,7 +86,7 @@ const Landing = () => {
       
       if (response.ok) {
         closeDemoModal();
-        // Success - no alert
+        // Request sent successfully - no alert
       } else {
         alert('Error: ' + (data.message || 'Something went wrong'));
       }
