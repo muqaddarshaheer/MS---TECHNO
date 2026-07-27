@@ -49,9 +49,10 @@ const Landing = () => {
             <span className="logo-text">MS TECHNO</span>
           </a>
           <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
-            <a href="/" className="nav-link">Home</a>
+            <a href="#home" className="nav-link" onClick={(e) => smoothScroll(e, '#home')}>Home</a>
             <a href="#features" className="nav-link" onClick={(e) => smoothScroll(e, '#features')}>Features</a>
             <a href="#pricing" className="nav-link" onClick={(e) => smoothScroll(e, '#pricing')}>Pricing</a>
+            <a href="#about" className="nav-link" onClick={(e) => smoothScroll(e, '#about')}>About</a>
             <a href="#contact" className="nav-link" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
             <button className="nav-login" onClick={handleLogin}>Login</button>
             <button className="nav-demo" onClick={handleDemo}>Request Demo</button>
@@ -68,22 +69,28 @@ const Landing = () => {
       <section id="home" className="hero">
         <div className="hero-container">
           <div className="hero-content">
-            <div className="hero-badge">🚀 Next-Gen ERP Solution</div>
+            <div className="hero-badge">✦ Next-Gen ERP Solution</div>
             <h1 className="hero-title">
-              Manage Your Business<br />
-              <span className="highlight">With Smart Software</span>
+              Smart Software To<br />
+              <span className="highlight">Grow Your Business</span>
             </h1>
             <p className="hero-description">
-              Complete POS, inventory and business management solution for shops and businesses.
+              Manage billing, inventory, sales and customers with one powerful platform.
             </p>
             <div className="hero-buttons">
-              <button className="btn-login" onClick={handleLogin}>Login</button>
-              <button className="btn-demo" onClick={handleDemo}>Request Free Demo</button>
+              <button className="btn-login" onClick={handleLogin}>
+                <span className="btn-icon">→</span>
+                Login Now
+              </button>
+              <button className="btn-demo" onClick={handleDemo}>
+                <span className="btn-icon">✦</span>
+                Request Free Demo
+              </button>
             </div>
             <div className="hero-stats">
               <div className="stat-item">
-                <span className="stat-number">10K+</span>
-                <span className="stat-label">Active Users</span>
+                <span className="stat-number">10,000+</span>
+                <span className="stat-label">Businesses</span>
               </div>
               <div className="stat-divider"></div>
               <div className="stat-item">
@@ -93,44 +100,46 @@ const Landing = () => {
               <div className="stat-divider"></div>
               <div className="stat-item">
                 <span className="stat-number">4.8</span>
-                <span className="stat-label">User Rating</span>
+                <span className="stat-label">Rating</span>
               </div>
             </div>
           </div>
           <div className="hero-image">
-            <div className="dashboard-mockup">
-              <div className="mockup-header">
-                <div className="mockup-controls">
+            <div className="dashboard-card">
+              <div className="dashboard-header">
+                <div className="dashboard-dots">
                   <span></span>
                   <span></span>
                   <span></span>
                 </div>
-                <div className="mockup-title">Dashboard Overview</div>
+                <span className="dashboard-title">Business Dashboard</span>
               </div>
-              <div className="mockup-content">
-                <div className="mockup-stats">
-                  <div className="mockup-stat">
-                    <span className="stat-value">$124.5K</span>
-                    <span className="stat-label">Revenue</span>
-                  </div>
-                  <div className="mockup-stat">
-                    <span className="stat-value">2,847</span>
-                    <span className="stat-label">Orders</span>
-                  </div>
-                  <div className="mockup-stat">
-                    <span className="stat-value">94%</span>
-                    <span className="stat-label">Satisfaction</span>
-                  </div>
+              <div className="dashboard-grid">
+                <div className="dashboard-item">
+                  <span className="dash-value">$124.5K</span>
+                  <span className="dash-label">Sales</span>
                 </div>
-                <div className="mockup-chart">
-                  <div className="chart-bar" style={{ height: '60%' }}></div>
-                  <div className="chart-bar" style={{ height: '40%' }}></div>
-                  <div className="chart-bar" style={{ height: '80%' }}></div>
-                  <div className="chart-bar" style={{ height: '55%' }}></div>
-                  <div className="chart-bar" style={{ height: '90%' }}></div>
-                  <div className="chart-bar" style={{ height: '65%' }}></div>
-                  <div className="chart-bar" style={{ height: '75%' }}></div>
+                <div className="dashboard-item">
+                  <span className="dash-value">2,847</span>
+                  <span className="dash-label">Products</span>
                 </div>
+                <div className="dashboard-item">
+                  <span className="dash-value">1,234</span>
+                  <span className="dash-label">Customers</span>
+                </div>
+                <div className="dashboard-item">
+                  <span className="dash-value">94%</span>
+                  <span className="dash-label">Growth</span>
+                </div>
+              </div>
+              <div className="dashboard-chart">
+                <div className="chart-bar" style={{ height: '65%' }}></div>
+                <div className="chart-bar" style={{ height: '45%' }}></div>
+                <div className="chart-bar" style={{ height: '85%' }}></div>
+                <div className="chart-bar" style={{ height: '55%' }}></div>
+                <div className="chart-bar" style={{ height: '95%' }}></div>
+                <div className="chart-bar" style={{ height: '70%' }}></div>
+                <div className="chart-bar" style={{ height: '80%' }}></div>
               </div>
             </div>
           </div>
@@ -142,38 +151,68 @@ const Landing = () => {
         <div className="section-header">
           <span className="section-tag">Features</span>
           <h2>Everything You Need</h2>
-          <p>Powerful tools to streamline your business operations</p>
+          <p>Powerful tools to manage your business efficiently</p>
         </div>
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon">🛒</div>
             <h3>POS Billing</h3>
-            <p>Fast and accurate point of sale system</p>
+            <p>Fast and simple billing system</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">📦</div>
-            <h3>Inventory</h3>
-            <p>Real-time stock management</p>
+            <h3>Inventory Management</h3>
+            <p>Track your stock easily</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">📊</div>
             <h3>Sales Reports</h3>
-            <p>Detailed business analytics</p>
+            <p>Understand your business growth</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">👤</div>
-            <h3>Customers</h3>
-            <p>Manage customer relationships</p>
+            <h3>Customer Management</h3>
+            <p>Manage customers and credit records</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">💰</div>
-            <h3>Expenses</h3>
-            <p>Track and manage expenses</p>
+            <h3>Expense Tracking</h3>
+            <p>Control your expenses</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">☁️</div>
-            <h3>Cloud Backup</h3>
-            <p>Secure data backup and sync</p>
+            <h3>Cloud Based Software</h3>
+            <p>Access your business anywhere</p>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="about" className="how-it-works">
+        <div className="section-header">
+          <span className="section-tag">How It Works</span>
+          <h2>Get Started in 3 Simple Steps</h2>
+        </div>
+        <div className="steps-container">
+          <div className="step">
+            <div className="step-number">01</div>
+            <div className="step-icon">📝</div>
+            <h3>Create Account</h3>
+            <p>Sign up and choose your plan</p>
+          </div>
+          <div className="step-arrow">→</div>
+          <div className="step">
+            <div className="step-number">02</div>
+            <div className="step-icon">⚙️</div>
+            <h3>Setup Your Shop</h3>
+            <p>Configure your business settings</p>
+          </div>
+          <div className="step-arrow">→</div>
+          <div className="step">
+            <div className="step-number">03</div>
+            <div className="step-icon">🚀</div>
+            <h3>Start Managing Business</h3>
+            <p>Begin using the software</p>
           </div>
         </div>
       </section>
@@ -183,7 +222,7 @@ const Landing = () => {
         <div className="section-header">
           <span className="section-tag">Pricing</span>
           <h2>Choose Your Plan</h2>
-          <p>Select the perfect plan for your business needs</p>
+          <p>Select the best plan for your business needs</p>
         </div>
         <div className="pricing-grid">
           <div className="pricing-card">
@@ -196,7 +235,9 @@ const Landing = () => {
               <li>✓ Customer Management</li>
               <li>✓ Email Support</li>
             </ul>
-            <button className="btn-pricing" onClick={() => handleGetStarted('Basic')}>Get Started</button>
+            <button className="btn-pricing" onClick={() => handleGetStarted('Basic')}>
+              Get Started
+            </button>
           </div>
           <div className="pricing-card premium">
             <div className="pricing-badge">Popular</div>
@@ -209,7 +250,9 @@ const Landing = () => {
               <li>✓ Priority Support</li>
               <li>✓ Cloud Backup</li>
             </ul>
-            <button className="btn-pricing primary" onClick={() => handleGetStarted('Premium')}>Get Started</button>
+            <button className="btn-pricing primary" onClick={() => handleGetStarted('Premium')}>
+              Get Started
+            </button>
           </div>
           <div className="pricing-card">
             <h3>Enterprise</h3>
@@ -221,7 +264,9 @@ const Landing = () => {
               <li>✓ Dedicated Support</li>
               <li>✓ Advanced Security</li>
             </ul>
-            <button className="btn-pricing" onClick={() => handleGetStarted('Enterprise')}>Get Started</button>
+            <button className="btn-pricing" onClick={() => handleGetStarted('Enterprise')}>
+              Get Started
+            </button>
           </div>
         </div>
       </section>
@@ -229,9 +274,11 @@ const Landing = () => {
       {/* Demo CTA Section */}
       <section id="contact" className="cta-section">
         <div className="cta-container">
-          <h2>Start Your Free Demo Today</h2>
-          <p>Experience the power of MS TECHNO software</p>
-          <button className="btn-demo-large" onClick={handleDemo}>Request Demo</button>
+          <h2>Ready To Manage Your Business Smarter?</h2>
+          <p>Start your free demo today and see the difference</p>
+          <button className="btn-demo-large" onClick={handleDemo}>
+            Request Demo
+          </button>
         </div>
       </section>
 
@@ -246,19 +293,20 @@ const Landing = () => {
             <p className="footer-description">Smart business management solution for modern enterprises.</p>
           </div>
           <div className="footer-section">
-            <h4>Product</h4>
+            <h4>Quick Links</h4>
+            <a href="#home" onClick={(e) => smoothScroll(e, '#home')}>Home</a>
             <a href="#features" onClick={(e) => smoothScroll(e, '#features')}>Features</a>
             <a href="#pricing" onClick={(e) => smoothScroll(e, '#pricing')}>Pricing</a>
-            <a href="#contact" onClick={(e) => smoothScroll(e, '#contact')}>Demo</a>
+            <a href="#about" onClick={(e) => smoothScroll(e, '#about')}>About</a>
           </div>
           <div className="footer-section">
             <h4>Support</h4>
-            <a href="/login" onClick={handleLogin}>Login</a>
-            <a href="#">Help Center</a>
+            <a href="#" onClick={handleLogin}>Login</a>
+            <a href="#" onClick={handleDemo}>Request Demo</a>
             <a href="#contact" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
           </div>
           <div className="footer-section">
-            <h4>Contact</h4>
+            <h4>Contact Us</h4>
             <p className="contact-item">📞 03401227619</p>
             <p className="contact-item">📍 Karachi, Pakistan</p>
           </div>

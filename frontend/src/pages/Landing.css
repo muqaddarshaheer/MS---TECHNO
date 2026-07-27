@@ -1,4 +1,6 @@
 /* Landing.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -10,7 +12,7 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #000000;
   background: #ffffff;
   line-height: 1.6;
@@ -28,15 +30,17 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(10px);
   padding: 1rem 2rem;
   z-index: 1000;
   transition: all 0.3s ease;
-  border-bottom: 1px solid rgba(0, 100, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 100, 0, 0.06);
 }
 
 .navbar.scrolled {
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+  padding: 0.7rem 2rem;
 }
 
 .nav-container {
@@ -52,9 +56,10 @@ body {
   align-items: center;
   gap: 0.6rem;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1.3rem;
   color: #000000;
+  letter-spacing: -0.5px;
 }
 
 .nav-logo .logo-icon {
@@ -63,7 +68,7 @@ body {
 }
 
 .nav-logo .logo-text {
-  letter-spacing: -0.5px;
+  color: #000000;
 }
 
 .nav-menu {
@@ -79,12 +84,13 @@ body {
   font-size: 0.95rem;
   transition: color 0.3s ease;
   position: relative;
+  padding: 0.3rem 0;
 }
 
 .nav-link::after {
   content: '';
   position: absolute;
-  bottom: -4px;
+  bottom: -2px;
   left: 0;
   width: 0;
   height: 2px;
@@ -111,12 +117,14 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  font-family: 'Inter', sans-serif;
 }
 
 .nav-login:hover {
   background: #006400;
   color: #ffffff;
   transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 100, 0, 0.15);
 }
 
 .nav-demo {
@@ -130,12 +138,13 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  font-family: 'Inter', sans-serif;
 }
 
 .nav-demo:hover {
   background: #004d00;
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 100, 0, 0.25);
+  box-shadow: 0 4px 25px rgba(0, 100, 0, 0.25);
 }
 
 .hamburger {
@@ -143,6 +152,7 @@ body {
   flex-direction: column;
   gap: 5px;
   cursor: pointer;
+  padding: 5px;
 }
 
 .hamburger .bar {
@@ -193,19 +203,20 @@ body {
   display: inline-block;
   background: rgba(0, 100, 0, 0.06);
   color: #006400;
-  padding: 0.3rem 1rem;
+  padding: 0.3rem 1.2rem;
   border-radius: 50px;
   font-size: 0.85rem;
   font-weight: 600;
   width: fit-content;
+  letter-spacing: 0.3px;
 }
 
 .hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
+  font-size: 3.8rem;
+  font-weight: 900;
   line-height: 1.1;
   color: #000000;
-  letter-spacing: -1px;
+  letter-spacing: -1.5px;
 }
 
 .hero-title .highlight {
@@ -225,11 +236,11 @@ body {
 }
 
 .hero-description {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   color: #000000;
   opacity: 0.7;
   max-width: 480px;
-  line-height: 1.7;
+  line-height: 1.8;
 }
 
 .hero-buttons {
@@ -239,15 +250,27 @@ body {
 }
 
 .btn-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   background: transparent;
   color: #000000;
   border: 2px solid #006400;
-  padding: 0.8rem 2.5rem;
+  padding: 0.9rem 2.5rem;
   border-radius: 50px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-login .btn-icon {
+  transition: transform 0.3s ease;
+}
+
+.btn-login:hover .btn-icon {
+  transform: rotate(45deg);
 }
 
 .btn-login:hover {
@@ -258,30 +281,42 @@ body {
 }
 
 .btn-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   background: #006400;
   color: #ffffff;
   border: none;
-  padding: 0.8rem 2.5rem;
+  padding: 0.9rem 2.5rem;
   border-radius: 50px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 100, 0, 0.2);
+  box-shadow: 0 4px 25px rgba(0, 100, 0, 0.2);
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-demo .btn-icon {
+  transition: transform 0.3s ease;
+}
+
+.btn-demo:hover .btn-icon {
+  transform: rotate(45deg);
 }
 
 .btn-demo:hover {
   background: #004d00;
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 100, 0, 0.3);
+  box-shadow: 0 8px 35px rgba(0, 100, 0, 0.3);
 }
 
 .hero-stats {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 2.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(0, 100, 0, 0.06);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .stat-item {
@@ -305,113 +340,113 @@ body {
 .stat-label {
   font-size: 0.85rem;
   color: #000000;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-/* Dashboard Mockup */
+/* Dashboard Card */
 .hero-image {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.dashboard-mockup {
+.dashboard-card {
   background: #f8faf8;
-  border-radius: 20px;
-  padding: 1.5rem;
+  border-radius: 24px;
+  padding: 1.8rem;
   width: 100%;
-  max-width: 520px;
+  max-width: 500px;
   border: 1px solid rgba(0, 100, 0, 0.06);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.04);
   transition: transform 0.3s ease;
 }
 
-.dashboard-mockup:hover {
-  transform: translateY(-4px);
+.dashboard-card:hover {
+  transform: translateY(-5px);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.06);
 }
 
-.mockup-header {
+.dashboard-header {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.8rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.mockup-controls {
+.dashboard-dots {
   display: flex;
   gap: 6px;
 }
 
-.mockup-controls span {
+.dashboard-dots span {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: #e0e0e0;
 }
 
-.mockup-controls span:first-child {
+.dashboard-dots span:first-child {
   background: #ff5f56;
 }
-.mockup-controls span:nth-child(2) {
+.dashboard-dots span:nth-child(2) {
   background: #ffbd2e;
 }
-.mockup-controls span:last-child {
+.dashboard-dots span:last-child {
   background: #27c93f;
 }
 
-.mockup-title {
+.dashboard-title {
   font-weight: 600;
   color: #000000;
   font-size: 0.95rem;
   margin-left: 0.5rem;
+  opacity: 0.7;
 }
 
-.mockup-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.mockup-stats {
+.dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.mockup-stat {
+.dashboard-item {
   background: #ffffff;
-  padding: 0.8rem;
+  padding: 1rem;
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.04);
+  text-align: center;
 }
 
-.mockup-stat .stat-value {
-  font-size: 1.2rem;
+.dash-value {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: #000000;
 }
 
-.mockup-stat .stat-label {
-  font-size: 0.75rem;
+.dash-label {
+  font-size: 0.8rem;
   color: #000000;
   opacity: 0.5;
+  margin-top: 2px;
 }
 
-.mockup-chart {
+.dashboard-chart {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
   height: 100px;
-  padding: 0.5rem 0;
+  padding-top: 0.5rem;
 }
 
 .chart-bar {
   flex: 1;
-  background: rgba(0, 100, 0, 0.1);
+  background: rgba(0, 100, 0, 0.08);
   border-radius: 4px 4px 0 0;
-  transition: height 0.5s ease;
+  transition: all 0.3s ease;
   min-height: 15px;
 }
 
@@ -427,14 +462,14 @@ body {
 
 .section-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 3.5rem;
 }
 
 .section-tag {
   display: inline-block;
   background: rgba(0, 100, 0, 0.06);
   color: #006400;
-  padding: 0.3rem 1rem;
+  padding: 0.3rem 1.2rem;
   border-radius: 50px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -468,14 +503,14 @@ body {
 .feature-card {
   background: #f8faf8;
   padding: 2.5rem 2rem;
-  border-radius: 16px;
+  border-radius: 20px;
   text-align: center;
   transition: all 0.3s ease;
   border: 1px solid rgba(0, 100, 0, 0.04);
 }
 
 .feature-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
   border-color: rgba(0, 100, 0, 0.08);
 }
@@ -497,26 +532,88 @@ body {
   color: #000000;
   opacity: 0.6;
   font-size: 0.95rem;
-  line-height: 1.5;
+  line-height: 1.6;
+}
+
+/* How It Works */
+.how-it-works {
+  padding: 5rem 2rem;
+  background: #f8faf8;
+}
+
+.steps-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.step {
+  text-align: center;
+  padding: 2.5rem 2rem;
+  background: #ffffff;
+  border-radius: 20px;
+  flex: 1;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 100, 0, 0.04);
+}
+
+.step:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+}
+
+.step-number {
+  font-size: 3rem;
+  font-weight: 800;
+  color: rgba(0, 100, 0, 0.08);
+  line-height: 1;
+}
+
+.step-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.step h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 0.3rem;
+}
+
+.step p {
+  color: #000000;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
+
+.step-arrow {
+  font-size: 1.5rem;
+  color: rgba(0, 100, 0, 0.2);
+  padding: 0 0.5rem;
 }
 
 /* Pricing Section */
 .pricing {
   padding: 5rem 2rem;
-  background: #f8faf8;
+  background: #ffffff;
 }
 
 .pricing-grid {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
   align-items: stretch;
 }
 
 .pricing-card {
-  background: #ffffff;
+  background: #f8faf8;
   padding: 2.5rem 2rem;
   border-radius: 20px;
   text-align: center;
@@ -528,7 +625,7 @@ body {
 }
 
 .pricing-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
 }
 
@@ -539,7 +636,7 @@ body {
 }
 
 .pricing-card.premium:hover {
-  transform: scale(1.02) translateY(-4px);
+  transform: scale(1.02) translateY(-5px);
   box-shadow: 0 20px 60px rgba(0, 100, 0, 0.15);
 }
 
@@ -570,7 +667,7 @@ body {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .pricing-card h3 {
@@ -619,6 +716,7 @@ body {
   transition: all 0.3s ease;
   width: 100%;
   font-size: 1rem;
+  font-family: 'Inter', sans-serif;
 }
 
 .btn-pricing:hover {
@@ -653,7 +751,7 @@ body {
   font-size: 3rem;
   font-weight: 800;
   color: #ffffff;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
   letter-spacing: -1px;
 }
 
@@ -674,6 +772,7 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  font-family: 'Inter', sans-serif;
 }
 
 .btn-demo-large:hover {
@@ -686,7 +785,7 @@ body {
 .footer {
   background: #f8faf8;
   padding: 4rem 2rem 2rem;
-  border-top: 1px solid rgba(0, 100, 0, 0.04);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .footer-container {
@@ -736,6 +835,7 @@ body {
   margin-bottom: 0.6rem;
   transition: all 0.3s ease;
   font-size: 0.95rem;
+  cursor: pointer;
 }
 
 .footer-section a:hover {
@@ -784,7 +884,25 @@ body {
   }
 
   .hero-title {
-    font-size: 3rem;
+    font-size: 3.2rem;
+  }
+
+  .pricing-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .steps-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .step-arrow {
+    transform: rotate(90deg);
+  }
+
+  .step {
+    width: 100%;
+    max-width: 400px;
   }
 
   .footer-container {
@@ -802,13 +920,14 @@ body {
     top: 0;
     right: -100%;
     width: 80%;
+    max-width: 350px;
     height: 100vh;
     background: #ffffff;
     flex-direction: column;
     justify-content: center;
     padding: 2rem;
     transition: all 0.3s ease;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.04);
     gap: 1.5rem;
   }
 
@@ -842,6 +961,7 @@ body {
 
   .hero-buttons button {
     width: 100%;
+    justify-content: center;
   }
 
   .hero-stats {
@@ -870,7 +990,7 @@ body {
   }
 
   .pricing-card.premium:hover {
-    transform: scale(1) translateY(-4px);
+    transform: scale(1) translateY(-5px);
   }
 
   .cta-container h2 {
@@ -882,16 +1002,16 @@ body {
     gap: 2rem;
   }
 
-  .mockup-stats {
+  .dashboard-grid {
     grid-template-columns: 1fr;
   }
 
-  .mockup-chart {
-    height: 70px;
+  .dashboard-card {
+    padding: 1.2rem;
   }
 
-  .dashboard-mockup {
-    padding: 1rem;
+  .dashboard-chart {
+    height: 70px;
   }
 }
 
@@ -919,5 +1039,9 @@ body {
 
   .section-header h2 {
     font-size: 1.8rem;
+  }
+
+  .step {
+    padding: 1.5rem;
   }
 }
