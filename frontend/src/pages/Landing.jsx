@@ -86,7 +86,6 @@ const Landing = () => {
       
       if (response.ok) {
         closeDemoModal();
-        // Request sent to super admin panel
       } else {
         alert('Error: ' + (data.message || 'Something went wrong'));
       }
@@ -96,6 +95,11 @@ const Landing = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // WhatsApp button handler
+  const handleWhatsApp = () => {
+    window.open('https://wa.me/923401227619', '_blank');
   };
 
   return (
@@ -123,6 +127,12 @@ const Landing = () => {
           </div>
         </div>
       </nav>
+
+      {/* WhatsApp Floating Button */}
+      <button className="whatsapp-float" onClick={handleWhatsApp}>
+        <span className="whatsapp-icon">💬</span>
+        <span className="whatsapp-text">Chat on WhatsApp</span>
+      </button>
 
       {/* Demo Modal */}
       {isDemoModalOpen && (
@@ -193,6 +203,12 @@ const Landing = () => {
                 {isSubmitting ? 'Submitting...' : 'Submit Demo Request'}
               </button>
             </form>
+            <div className="modal-whatsapp">
+              <span>Or contact us directly on</span>
+              <button className="modal-whatsapp-btn" onClick={handleWhatsApp}>
+                <span>💬</span> WhatsApp
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -218,6 +234,9 @@ const Landing = () => {
               </button>
               <button className="btn-secondary" onClick={handleLogin}>
                 Login
+              </button>
+              <button className="btn-whatsapp" onClick={handleWhatsApp}>
+                <span>💬</span> WhatsApp
               </button>
             </div>
             <div className="hero-stats">
@@ -404,6 +423,9 @@ const Landing = () => {
           <div className="cta-buttons">
             <button className="cta-primary" onClick={openDemoModal}>Request Demo</button>
             <button className="cta-secondary" onClick={handleLogin}>Login</button>
+            <button className="cta-whatsapp" onClick={handleWhatsApp}>
+              <span>💬</span> WhatsApp
+            </button>
           </div>
         </div>
       </section>
@@ -428,12 +450,16 @@ const Landing = () => {
             <h4>Support</h4>
             <a href="#" onClick={handleLogin}>Login</a>
             <a href="#" onClick={openDemoModal}>Request Demo</a>
+            <a href="#" onClick={handleWhatsApp}>WhatsApp</a>
             <a href="#contact" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
           </div>
           <div className="footer-section">
             <h4>Contact</h4>
-            <p>📞 03401227619</p>
+            <p>📞 0340-1227619</p>
             <p>📍 Karachi, Pakistan</p>
+            <button className="footer-whatsapp" onClick={handleWhatsApp}>
+              💬 Chat on WhatsApp
+            </button>
           </div>
         </div>
         <div className="footer-bottom">

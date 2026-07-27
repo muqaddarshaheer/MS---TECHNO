@@ -22,7 +22,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Navbar */
+/* ========== NAVBAR ========== */
 .navbar {
   position: fixed;
   top: 0;
@@ -172,7 +172,42 @@ body {
   transform: rotate(-45deg) translate(5px, -5px);
 }
 
-/* Demo Modal */
+/* ========== WHATSAPP FLOATING BUTTON ========== */
+.whatsapp-float {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #25D366;
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 999;
+  box-shadow: 0 4px 25px rgba(37, 211, 102, 0.4);
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.whatsapp-float:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 35px rgba(37, 211, 102, 0.5);
+}
+
+.whatsapp-float .whatsapp-icon {
+  font-size: 1.5rem;
+}
+
+.whatsapp-float .whatsapp-text {
+  display: inline;
+}
+
+/* ========== DEMO MODAL ========== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -337,7 +372,46 @@ body {
   box-shadow: 0 8px 30px rgba(22, 163, 74, 0.25);
 }
 
-/* Hero */
+.modal-whatsapp {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e8f0e8;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.modal-whatsapp span {
+  color: #111111;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
+
+.modal-whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #25D366;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1.8rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.modal-whatsapp-btn:hover {
+  background: #20b85a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
+}
+
+/* ========== HERO ========== */
 .hero {
   padding: 8rem 2rem 4rem;
   background: #ffffff;
@@ -465,6 +539,29 @@ body {
   box-shadow: 0 4px 20px rgba(22, 163, 74, 0.15);
 }
 
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #25D366;
+  color: #ffffff;
+  border: none;
+  padding: 0.9rem 2.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-shadow: 0 4px 25px rgba(37, 211, 102, 0.3);
+}
+
+.btn-whatsapp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 35px rgba(37, 211, 102, 0.4);
+  background: #20b85a;
+}
+
 .hero-stats {
   display: flex;
   align-items: center;
@@ -497,7 +594,7 @@ body {
   opacity: 0.5;
 }
 
-/* Dashboard Card */
+/* ========== DASHBOARD CARD ========== */
 .hero-image {
   display: flex;
   justify-content: center;
@@ -608,7 +705,7 @@ body {
   opacity: 0.7;
 }
 
-/* Features */
+/* ========== FEATURES ========== */
 .features {
   padding: 5rem 2rem;
   background: #ffffff;
@@ -688,7 +785,7 @@ body {
   line-height: 1.6;
 }
 
-/* How It Works */
+/* ========== HOW IT WORKS ========== */
 .how-it-works {
   padding: 5rem 2rem;
   background: #f9fcf9;
@@ -751,7 +848,7 @@ body {
   padding: 0 0.5rem;
 }
 
-/* Pricing */
+/* ========== PRICING ========== */
 .pricing {
   padding: 5rem 2rem;
   background: #ffffff;
@@ -879,7 +976,7 @@ body {
   transform: translateY(-2px);
 }
 
-/* CTA */
+/* ========== CTA ========== */
 .cta {
   padding: 5rem 2rem;
   background: #16A34A;
@@ -951,7 +1048,30 @@ body {
   transform: translateY(-3px);
 }
 
-/* Footer */
+.cta-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #25D366;
+  color: #ffffff;
+  border: none;
+  padding: 1rem 3.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-shadow: 0 8px 30px rgba(37, 211, 102, 0.3);
+}
+
+.cta-whatsapp:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(37, 211, 102, 0.4);
+  background: #20b85a;
+}
+
+/* ========== FOOTER ========== */
 .footer {
   background: #f9fcf9;
   padding: 4rem 2rem 2rem;
@@ -1012,6 +1132,26 @@ body {
   color: #16A34A;
 }
 
+.footer-whatsapp {
+  background: #25D366;
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  margin-top: 0.5rem;
+}
+
+.footer-whatsapp:hover {
+  background: #20b85a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
+}
+
 .footer-bottom {
   max-width: 1200px;
   margin: 0 auto;
@@ -1026,7 +1166,7 @@ body {
   font-size: 0.9rem;
 }
 
-/* Responsive */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
   .hero-container {
     grid-template-columns: 1fr;
@@ -1104,6 +1244,21 @@ body {
     text-align: center;
   }
 
+  .whatsapp-float {
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 18px;
+    border-radius: 50px;
+  }
+  
+  .whatsapp-float .whatsapp-text {
+    display: none;
+  }
+  
+  .whatsapp-float .whatsapp-icon {
+    font-size: 1.8rem;
+  }
+
   .hero {
     padding: 6rem 1.5rem 3rem;
   }
@@ -1119,7 +1274,12 @@ body {
 
   .hero-buttons button {
     width: 100%;
-    text-align: center;
+    justify-content: center;
+  }
+
+  .btn-whatsapp {
+    width: 100%;
+    justify-content: center;
   }
 
   .hero-stats {
@@ -1161,7 +1321,14 @@ body {
 
   .cta-buttons button {
     width: 100%;
-    text-align: center;
+    justify-content: center;
+  }
+
+  .cta-whatsapp {
+    width: 100%;
+    justify-content: center;
+    padding: 0.9rem 2rem;
+    font-size: 1rem;
   }
 
   .footer-container {
@@ -1209,7 +1376,8 @@ body {
   }
 
   .cta-primary,
-  .cta-secondary {
+  .cta-secondary,
+  .cta-whatsapp {
     padding: 0.9rem 2rem;
     font-size: 1rem;
   }
@@ -1220,5 +1388,15 @@ body {
 
   .step {
     padding: 1.5rem;
+  }
+
+  .whatsapp-float {
+    bottom: 15px;
+    right: 15px;
+    padding: 10px 15px;
+  }
+  
+  .whatsapp-float .whatsapp-icon {
+    font-size: 1.5rem;
   }
 }
