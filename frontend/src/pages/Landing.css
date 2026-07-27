@@ -22,7 +22,7 @@ body {
   overflow-x: hidden;
 }
 
-/* ========== NAVBAR ========== */
+/* Navbar */
 .navbar {
   position: fixed;
   top: 0;
@@ -172,7 +172,7 @@ body {
   transform: rotate(-45deg) translate(5px, -5px);
 }
 
-/* ========== DEMO MODAL ========== */
+/* Demo Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -337,7 +337,7 @@ body {
   box-shadow: 0 8px 30px rgba(22, 163, 74, 0.25);
 }
 
-/* ========== HERO ========== */
+/* Hero */
 .hero {
   padding: 8rem 2rem 4rem;
   background: #ffffff;
@@ -497,7 +497,7 @@ body {
   opacity: 0.5;
 }
 
-/* ========== DASHBOARD CARD ========== */
+/* Dashboard Card */
 .hero-image {
   display: flex;
   justify-content: center;
@@ -608,7 +608,7 @@ body {
   opacity: 0.7;
 }
 
-/* ========== FEATURES ========== */
+/* Features */
 .features {
   padding: 5rem 2rem;
   background: #ffffff;
@@ -688,7 +688,7 @@ body {
   line-height: 1.6;
 }
 
-/* ========== HOW IT WORKS ========== */
+/* How It Works */
 .how-it-works {
   padding: 5rem 2rem;
   background: #f9fcf9;
@@ -751,7 +751,7 @@ body {
   padding: 0 0.5rem;
 }
 
-/* ========== PRICING ========== */
+/* Pricing */
 .pricing {
   padding: 5rem 2rem;
   background: #ffffff;
@@ -879,7 +879,7 @@ body {
   transform: translateY(-2px);
 }
 
-/* ========== CTA ========== */
+/* CTA */
 .cta {
   padding: 5rem 2rem;
   background: #16A34A;
@@ -951,7 +951,7 @@ body {
   transform: translateY(-3px);
 }
 
-/* ========== FOOTER ========== */
+/* Footer */
 .footer {
   background: #f9fcf9;
   padding: 4rem 2rem 2rem;
@@ -1026,7 +1026,7 @@ body {
   font-size: 0.9rem;
 }
 
-/* ========== RESPONSIVE ========== */
+/* Responsive */
 @media (max-width: 1024px) {
   .hero-container {
     grid-template-columns: 1fr;

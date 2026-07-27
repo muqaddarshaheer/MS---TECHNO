@@ -74,7 +74,7 @@ const Landing = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/demo-request', {
+      const response = await fetch('/api/demo-request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ const Landing = () => {
       
       if (response.ok) {
         closeDemoModal();
-        // Request sent successfully - no alert
+        // Request sent to super admin panel
       } else {
         alert('Error: ' + (data.message || 'Something went wrong'));
       }
@@ -432,7 +432,7 @@ const Landing = () => {
           </div>
           <div className="footer-section">
             <h4>Contact</h4>
-            <p>📞03401227619</p>
+            <p>📞 03401227619</p>
             <p>📍 Karachi, Pakistan</p>
           </div>
         </div>
