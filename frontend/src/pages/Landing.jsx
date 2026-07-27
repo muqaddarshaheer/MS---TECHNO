@@ -5,6 +5,14 @@ import './Landing.css';
 const Landing = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    message: ''
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,16 +35,43 @@ const Landing = () => {
     }
   };
 
+  const openDemoModal = () => {
+    setIsDemoModalOpen(true);
+    setIsMenuOpen(false);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeDemoModal = () => {
+    setIsDemoModalOpen(false);
+    document.body.style.overflow = 'auto';
+  };
+
   const handleLogin = () => {
     alert('Login page will open here');
   };
 
-  const handleDemo = () => {
-    alert('Demo request form will open here');
-  };
-
   const handleGetStarted = (plan) => {
     alert(`You selected ${plan} plan. Signup form will open.`);
+  };
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmitDemo = (e) => {
+    e.preventDefault();
+    alert(`Demo request submitted successfully!\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nCompany: ${formData.company}\nMessage: ${formData.message}`);
+    closeDemoModal();
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      message: ''
+    });
   };
 
   return (
@@ -54,7 +89,7 @@ const Landing = () => {
             <a href="#pricing" className="nav-link" onClick={(e) => smoothScroll(e, '#pricing')}>Pricing</a>
             <a href="#contact" className="nav-link" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
             <button className="nav-login" onClick={handleLogin}>Login</button>
-            <button className="nav-demo" onClick={handleDemo}>Request Demo</button>
+            <button className="nav-demo" onClick={openDemoModal}>Request Demo</button>
           </div>
           <div className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
             <span className="bar"></span>
@@ -63,6 +98,79 @@ const Landing = () => {
           </div>
         </div>
       </nav>
+
+      {/* Demo Modal */}
+      {isDemoModalOpen && (
+        <div className="modal-overlay" onClick={closeDemoModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeDemoModal}>×</button>
+            <div className="modal-header">
+              <span className="modal-icon">✦</span>
+              <h2>Request a Demo</h2>
+              <p>Fill in your details and we'll get back to you within 24 hours</p>
+            </div>
+            <form className="modal-form" onSubmit={handleSubmitDemo}>
+              <div className="form-group">
+                <label>Full Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email Address *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email address"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone Number *</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  placeholder="Enter your phone number"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Company Name</label>
+                <input
+                  type="text"
+                  name="company"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  placeholder="Enter your company name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Message</label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  placeholder="Tell us about your business needs"
+                  rows="3"
+                ></textarea>
+              </div>
+              <button type="submit" className="modal-submit">
+                <span className="btn-icon">✦</span>
+                Submit Demo Request
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section id="home" className="hero">
@@ -80,7 +188,7 @@ const Landing = () => {
               Powerful POS, inventory and business management software to simplify your daily operations.
             </p>
             <div className="hero-buttons">
-              <button className="btn-primary" onClick={handleDemo}>
+              <button className="btn-primary" onClick={openDemoModal}>
                 Request Free Demo
               </button>
               <button className="btn-secondary" onClick={handleLogin}>
@@ -238,7 +346,7 @@ const Landing = () => {
           <h2>Start Your Free Demo Today</h2>
           <p>Experience the power of MS TECHNO software</p>
           <div className="cta-buttons">
-            <button className="cta-primary" onClick={handleDemo}>Request Demo</button>
+            <button className="cta-primary" onClick={openDemoModal}>Request Demo</button>
             <button className="cta-secondary" onClick={handleLogin}>Login</button>
           </div>
         </div>
@@ -263,13 +371,12 @@ const Landing = () => {
           <div className="footer-section">
             <h4>Support</h4>
             <a href="#" onClick={handleLogin}>Login</a>
-            <a href="#" onClick={handleDemo}>Request Demo</a>
+            <a href="#" onClick={openDemoModal}>Request Demo</a>
             <a href="#contact">Contact</a>
           </div>
           <div className="footer-section">
             <h4>Contact</h4>
-            <p>info@mstechno.com</p>
-            <p>0340127619</p>
+            <p>03401227619</p>
             <p>Karachi, Pakistan</p>
           </div>
         </div>
