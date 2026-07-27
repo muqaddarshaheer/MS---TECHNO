@@ -318,15 +318,20 @@ body {
   margin-top: 0.5rem;
 }
 
+.modal-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .modal-submit .btn-icon {
   transition: transform 0.3s ease;
 }
 
-.modal-submit:hover .btn-icon {
+.modal-submit:hover:not(:disabled) .btn-icon {
   transform: rotate(45deg);
 }
 
-.modal-submit:hover {
+.modal-submit:hover:not(:disabled) {
   background: #15803d;
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(22, 163, 74, 0.25);

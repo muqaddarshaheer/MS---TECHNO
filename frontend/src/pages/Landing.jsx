@@ -13,6 +13,7 @@ const Landing = () => {
     company: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,6 +45,13 @@ const Landing = () => {
   const closeDemoModal = () => {
     setIsDemoModalOpen(false);
     document.body.style.overflow = 'auto';
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      message: ''
+    });
   };
 
   const handleLogin = () => {
@@ -63,9 +71,9 @@ const Landing = () => {
 
   const handleSubmitDemo = async (e) => {
     e.preventDefault();
-    
+    setIsSubmitting(true);
+
     try {
-      // Send to your backend API - Super Admin panel will receive this
       const response = await fetch('http://localhost:5000/api/demo-request', {
         method: 'POST',
         headers: {
@@ -77,21 +85,16 @@ const Landing = () => {
       const data = await response.json();
       
       if (response.ok) {
-        alert('✅ Demo request sent successfully!\n\nOur team will contact you within 24 hours.');
         closeDemoModal();
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          company: '',
-          message: ''
-        });
+        // Success - no alert
       } else {
-        alert('❌ Error: ' + (data.message || 'Something went wrong'));
+        alert('Error: ' + (data.message || 'Something went wrong'));
       }
     } catch (error) {
-      alert('❌ Network error. Please check your connection and try again.');
+      alert('Network error. Please check your connection.');
       console.error('Error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -185,9 +188,9 @@ const Landing = () => {
                   rows="3"
                 ></textarea>
               </div>
-              <button type="submit" className="modal-submit">
+              <button type="submit" className="modal-submit" disabled={isSubmitting}>
                 <span className="btn-icon">✦</span>
-                Submit Demo Request
+                {isSubmitting ? 'Submitting...' : 'Submit Demo Request'}
               </button>
             </form>
           </div>
