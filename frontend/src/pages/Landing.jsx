@@ -1,45 +1,26 @@
 // landing.jsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './landing.css';
-import { 
-  TrendingUp, 
-  Package, 
-  FileText, 
-  Barcode, 
-  Users, 
-  Receipt, 
-  Cloud, 
-  CreditCard,
-  ArrowRight,
-  Menu,
-  X,
-  Phone,
-  Zap,
-  ShoppingBag,
-  Layers,
-  CheckCircle,
-  Sparkles,
-  MoveRight,
-  Building2,
-  Store,
-  Globe,
-  Award,
-  ChevronRight
-} from 'lucide-react';
 
 const Landing = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
-  const [isVisible, setIsVisible] = useState({});
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const heroRef = useRef(null);
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+
+    const interval = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % 6);
+    }, 3000);
+
+    // Intersection Observer for animations
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setIsVisible(prev => ({ ...prev, [entry.target.id]: true }));
+            entry.target.classList.add('visible');
           }
         });
       },
@@ -50,58 +31,52 @@ const Landing = () => {
       observer.observe(el);
     });
 
-    // Mouse tracking for parallax
-    const handleMouseMove = (e) => {
-      const rect = heroRef.current?.getBoundingClientRect();
-      if (rect) {
-        const x = (e.clientX - rect.left) / rect.width - 0.5;
-        const y = (e.clientY - rect.top) / rect.height - 0.5;
-        setMousePosition({ x, y });
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    // Auto rotate features
-    const interval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % 6);
-    }, 4000);
-
     return () => {
-      observer.disconnect();
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
       clearInterval(interval);
+      observer.disconnect();
     };
   }, []);
 
-  const handleWhatsAppClick = () => {
-    window.open('https://wa.me/923001234567?text=Hi!%20I%20want%20to%20book%20a%20demo%20for%20ProBilling', '_blank');
-  };
-
-  const stats = [
-    { number: '500+', label: 'Active Businesses' },
-    { number: '99.9%', label: 'Uptime' },
-    { number: '4.9★', label: 'User Rating' },
+  const features = [
+    { icon: '💳', title: 'POS Billing', desc: 'Fast and intuitive point-of-sale billing system' },
+    { icon: '📦', title: 'Inventory', desc: 'Real-time inventory tracking and management' },
+    { icon: '📊', title: 'Reports', desc: 'Comprehensive reports and analytics' },
+    { icon: '📱', title: 'Barcode', desc: 'Integrated barcode scanning support' },
+    { icon: '👥', title: 'Customers', desc: 'Complete customer management system' },
+    { icon: '☁️', title: 'Cloud Backup', desc: 'Automatic cloud data backup' },
   ];
 
-  const rotatingFeatures = [
-    'Smart Billing',
-    'Real-time Inventory',
-    'Analytics & Reports',
-    'Customer Management',
-    'Cloud Backup',
-    'Multi-store Support'
+  const plans = [
+    {
+      name: 'Starter',
+      price: '2,500',
+      features: ['500 transactions', 'Basic inventory', 'Single user', 'Email support'],
+      popular: false
+    },
+    {
+      name: 'Business',
+      price: '3,500',
+      features: ['Unlimited transactions', 'Advanced inventory', '5 users', 'Priority support', 'Reports'],
+      popular: true
+    },
+    {
+      name: 'Enterprise',
+      price: '4,500',
+      features: ['Unlimited transactions', 'Custom inventory', 'Unlimited users', '24/7 support', 'API access'],
+      popular: false
+    }
   ];
+
+  const rotatingTexts = ['Smart Billing', 'Inventory Management', 'Analytics', 'Customer Management', 'Cloud Backup', 'Multi-store'];
 
   return (
-    <div className="landing-container">
+    <div className="app">
       {/* Navbar */}
-      <nav className="navbar">
-        <div className="nav-container">
-          <div className="nav-logo">
-            <div className="logo-icon">
-              <Zap size={20} strokeWidth={2.5} />
-            </div>
+      <nav className={`navbar ${scrollY > 50 ? 'scrolled' : ''}`}>
+        <div className="nav-inner">
+          <div className="logo">
+            <span className="logo-icon">P</span>
             <span className="logo-text">ProBilling</span>
           </div>
           
@@ -109,160 +84,125 @@ const Landing = () => {
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
             <a href="#login">Login</a>
-            <button className="btn-primary btn-demo">
-              Book Demo
-              <MoveRight size={16} />
-            </button>
+            <button className="btn-primary">Book Demo →</button>
           </div>
 
-          <button className="nav-mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button className="menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? '✕' : '☰'}
           </button>
         </div>
 
         {isMenuOpen && (
-          <div className="nav-mobile">
+          <div className="mobile-menu">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
             <a href="#login">Login</a>
-            <button className="btn-primary btn-demo">Book Demo</button>
+            <button className="btn-primary">Book Demo</button>
           </div>
         )}
       </nav>
 
-      {/* Hero Section with Dynamic Effects */}
-      <section className="hero-section" ref={heroRef}>
+      {/* Hero */}
+      <section className="hero">
         <div className="hero-bg">
-          <div className="gradient-sphere" 
-               style={{ 
-                 transform: `translate(${mousePosition.x * 40}px, ${mousePosition.y * 40}px)`
-               }}
-          />
-          <div className="gradient-sphere-2"
-               style={{ 
-                 transform: `translate(${mousePosition.x * -30}px, ${mousePosition.y * -30}px)`
-               }}
-          />
-          <div className="grid-pattern" />
+          <div className="circle circle-1"></div>
+          <div className="circle circle-2"></div>
         </div>
 
-        <div className="hero-container">
-          <div className="hero-content">
-            <div className="hero-badge">
-              <div className="pulse-dot"></div>
-              <span>Trusted by 500+ Businesses</span>
+        <div className="hero-inner">
+          <div className="hero-left">
+            <div className="badge">
+              <span className="dot"></span>
+              Trusted by 500+ businesses
+            </div>
+            
+            <h1>
+              Modern Billing
+              <br />
+              <span className="highlight">{rotatingTexts[activeFeature]}</span>
+              <br />
+              for Your Business
+            </h1>
+            
+            <p className="hero-desc">
+              Streamline your billing, inventory, and customer management with our 
+              all-in-one POS solution built for growing businesses.
+            </p>
+            
+            <div className="hero-btns">
+              <button className="btn-primary btn-large">Book Demo →</button>
+              <button className="btn-secondary btn-large">Login</button>
             </div>
 
-            <h1 className="hero-title">
-              The Future of
-              <span className="hero-highlight">
-                <span className="rotating-text">{rotatingFeatures[activeFeature]}</span>
-              </span>
-              <span className="hero-sub-text">for Your Business</span>
-            </h1>
-
-            <p className="hero-description">
-              ProBilling is the modern POS solution that combines intelligent billing,
-              real-time inventory, and powerful analytics in one seamless platform.
-            </p>
-
-            <div className="hero-actions">
-              <div className="hero-buttons">
-                <button className="btn-primary btn-large btn-glow">
-                  Book Demo
-                  <ArrowRight size={18} />
-                </button>
-                <button className="btn-secondary btn-large">Login</button>
+            <div className="stats">
+              <div>
+                <span className="num">500+</span>
+                <span className="label">Businesses</span>
               </div>
-              
-              <div className="hero-stats">
-                {stats.map((stat, index) => (
-                  <div key={index} className="hero-stat">
-                    <span className="stat-number">{stat.number}</span>
-                    <span className="stat-label">{stat.label}</span>
-                  </div>
-                ))}
+              <div>
+                <span className="num">99.9%</span>
+                <span className="label">Uptime</span>
+              </div>
+              <div>
+                <span className="num">4.9★</span>
+                <span className="label">Rating</span>
               </div>
             </div>
           </div>
 
-          <div className="hero-dashboard">
-            <div className="dashboard-container">
-              <div className="dashboard-glow" />
-              <div className="dashboard-mockup">
-                <div className="dashboard-header">
-                  <div className="header-left">
-                    <div className="dashboard-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                    <span className="dashboard-title">ProBilling Dashboard</span>
-                  </div>
-                  <div className="header-right">
-                    <span className="live-badge">● Live</span>
+          <div className="hero-right">
+            <div className="dashboard">
+              <div className="dash-header">
+                <div className="dots">
+                  <span></span><span></span><span></span>
+                </div>
+                <span className="dash-title">Dashboard</span>
+                <span className="live">● Live</span>
+              </div>
+              
+              <div className="dash-grid">
+                <div className="card card-1">
+                  <span className="icon">💰</span>
+                  <div>
+                    <span className="label">Revenue</span>
+                    <span className="value">$48,295</span>
+                    <span className="change up">↑ 12.5%</span>
                   </div>
                 </div>
-
-                <div className="dashboard-main">
-                  <div className="dashboard-widgets">
-                    <div className="widget widget-revenue floating-card" style={{ animationDelay: '0s' }}>
-                      <div className="widget-icon revenue">💰</div>
-                      <div className="widget-content">
-                        <span className="widget-label">Revenue</span>
-                        <span className="widget-value">$48,295</span>
-                        <div className="widget-change positive">
-                          <TrendingUp size={12} />
-                          +12.5%
-                        </div>
-                      </div>
+                <div className="card card-2">
+                  <span className="icon">📦</span>
+                  <div>
+                    <span className="label">Orders</span>
+                    <span className="value">1,284</span>
+                    <span className="change up">↑ 8.3%</span>
+                  </div>
+                </div>
+                <div className="card card-3">
+                  <span className="icon">💳</span>
+                  <div>
+                    <span className="label">Sales</span>
+                    <span className="value">$32,450</span>
+                    <span className="change up">↑ 15.7%</span>
+                  </div>
+                </div>
+                <div className="card card-4">
+                  <span className="icon">📋</span>
+                  <div>
+                    <span className="label">Inventory</span>
+                    <span className="value">3,842</span>
+                    <span className="change">In Stock</span>
+                  </div>
+                </div>
+                <div className="card card-wide">
+                  <span className="icon">📊</span>
+                  <div>
+                    <span className="label">Today's Performance</span>
+                    <div className="bar">
+                      <div className="bar-fill" style={{ width: '78%' }}></div>
                     </div>
-
-                    <div className="widget widget-orders floating-card" style={{ animationDelay: '0.3s' }}>
-                      <div className="widget-icon orders">📦</div>
-                      <div className="widget-content">
-                        <span className="widget-label">Orders</span>
-                        <span className="widget-value">1,284</span>
-                        <div className="widget-change positive">
-                          <TrendingUp size={12} />
-                          +8.3%
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="widget widget-sales floating-card" style={{ animationDelay: '0.6s' }}>
-                      <div className="widget-icon sales">💳</div>
-                      <div className="widget-content">
-                        <span className="widget-label">Sales</span>
-                        <span className="widget-value">$32,450</span>
-                        <div className="widget-change positive">
-                          <TrendingUp size={12} />
-                          +15.7%
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="widget widget-inventory floating-card" style={{ animationDelay: '0.9s' }}>
-                      <div className="widget-icon inventory">📋</div>
-                      <div className="widget-content">
-                        <span className="widget-label">Inventory</span>
-                        <span className="widget-value">3,842</span>
-                        <div className="widget-change neutral">In Stock</div>
-                      </div>
-                    </div>
-
-                    <div className="widget widget-wide floating-card" style={{ animationDelay: '0.4s' }}>
-                      <div className="widget-icon">📊</div>
-                      <div className="widget-content">
-                        <span className="widget-label">Today's Performance</span>
-                        <div className="performance-bar">
-                          <div className="bar-fill" style={{ width: '78%' }}></div>
-                        </div>
-                        <div className="performance-labels">
-                          <span>$8,450</span>
-                          <span>Target: $12,000</span>
-                        </div>
-                      </div>
+                    <div className="bar-labels">
+                      <span>$8,450</span>
+                      <span>Target: $12,000</span>
                     </div>
                   </div>
                 </div>
@@ -272,283 +212,123 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Features Section with Interactive Cards */}
-      <section id="features" className="features-section">
-        <div className="features-container">
-          <div className="section-header animate-on-scroll" id="features-header">
-            <div className="section-badge">
-              <Sparkles size={14} />
-              Features
-            </div>
-            <h2 className="section-title">Everything You Need to Scale</h2>
-            <p className="section-subtitle">
-              Powerful tools designed to streamline your business operations
-            </p>
+      {/* Features */}
+      <section id="features" className="features">
+        <div className="features-inner">
+          <div className="section-header animate-on-scroll">
+            <span className="tag">Features</span>
+            <h2>Everything You Need to Scale</h2>
+            <p>Powerful tools designed to streamline your business operations</p>
           </div>
 
           <div className="features-grid">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="feature-card animate-on-scroll" 
-                id={`feature-${index}`}
-                style={{ transitionDelay: `${index * 0.08}s` }}
-              >
-                <div className="feature-number">0{index + 1}</div>
-                <div className="feature-icon-wrapper">
-                  <div className="feature-icon">{feature.icon}</div>
-                </div>
-                <h3 className="feature-title">{feature.title}</h3>
-                <p className="feature-description">{feature.description}</p>
-                <div className="feature-link">
-                  <span>Learn more</span>
-                  <ChevronRight size={16} />
-                </div>
+            {features.map((f, i) => (
+              <div key={i} className="feature-card animate-on-scroll" style={{ transitionDelay: `${i * 0.1}s` }}>
+                <div className="f-icon">{f.icon}</div>
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
+                <span className="f-link">Learn more →</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section with Dynamic Cards */}
-      <section id="pricing" className="pricing-section">
-        <div className="pricing-container">
-          <div className="section-header animate-on-scroll" id="pricing-header">
-            <div className="section-badge">Pricing</div>
-            <h2 className="section-title">Choose Your Plan</h2>
-            <p className="section-subtitle">
-              Flexible pricing for businesses of every size
-            </p>
+      {/* Pricing */}
+      <section id="pricing" className="pricing">
+        <div className="pricing-inner">
+          <div className="section-header animate-on-scroll">
+            <span className="tag">Pricing</span>
+            <h2>Choose Your Plan</h2>
+            <p>Flexible pricing for businesses of every size</p>
           </div>
 
           <div className="pricing-grid">
-            {pricingPlans.map((plan, index) => (
-              <div 
-                key={index} 
-                className={`pricing-card animate-on-scroll ${plan.popular ? 'popular' : ''}`}
-                id={`pricing-${index}`}
-              >
-                {plan.popular && (
-                  <div className="popular-badge">
-                    <Sparkles size={12} />
-                    Most Popular
-                  </div>
-                )}
-                
-                <div className="pricing-header">
-                  <div className="plan-icon">{plan.icon}</div>
-                  <h3 className="plan-name">{plan.name}</h3>
-                  <div className="plan-price">
-                    <span className="currency">Rs.</span>
-                    <span className="amount">{plan.price}</span>
-                    <span className="period">/month</span>
-                  </div>
-                  <p className="plan-description">{plan.description}</p>
+            {plans.map((plan, i) => (
+              <div key={i} className={`pricing-card animate-on-scroll ${plan.popular ? 'popular' : ''}`}>
+                {plan.popular && <div className="popular-badge">★ Most Popular</div>}
+                <h3>{plan.name}</h3>
+                <div className="price">
+                  <span className="currency">Rs.</span>
+                  <span className="amount">{plan.price}</span>
+                  <span className="period">/month</span>
                 </div>
-
-                <ul className="plan-features">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx}>
-                      <CheckCircle size={16} />
-                      {feature}
-                    </li>
+                <ul>
+                  {plan.features.map((f, idx) => (
+                    <li key={idx}>✓ {f}</li>
                   ))}
                 </ul>
-
                 <button className={`btn-${plan.popular ? 'primary' : 'secondary'} btn-full`}>
-                  Get Started
-                  <ArrowRight size={16} />
+                  Get Started →
                 </button>
               </div>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="pricing-note animate-on-scroll" id="pricing-note">
-            <p>All plans include a 14-day free trial. No credit card required.</p>
+      {/* CTA */}
+      <section className="cta">
+        <div className="cta-inner animate-on-scroll">
+          <h2>Ready to Grow Your Business?</h2>
+          <p>Join 500+ businesses already using ProBilling to manage their operations.</p>
+          <div className="cta-btns">
+            <button className="btn-primary btn-large">Book Demo →</button>
+            <button className="btn-secondary btn-large">Login</button>
           </div>
         </div>
       </section>
 
-      {/* CTA Section with Dynamic Background */}
-      <section className="cta-section">
-        <div className="cta-container animate-on-scroll" id="cta">
-          <div className="cta-content">
-            <div className="cta-badge">
-              <span>🚀 Get Started</span>
-            </div>
-            <h2 className="cta-title">Ready to Transform Your Business?</h2>
-            <p className="cta-subtitle">
-              Join 500+ businesses already using ProBilling to manage their operations efficiently.
-            </p>
-            <div className="cta-buttons">
-              <button className="btn-primary btn-large btn-glow">
-                Book Demo
-                <ArrowRight size={18} />
-              </button>
-              <button className="btn-secondary btn-large">Login</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer with Social Links */}
+      {/* Footer */}
       <footer className="footer">
-        <div className="footer-container">
-          <div className="footer-content">
+        <div className="footer-inner">
+          <div className="footer-top">
             <div className="footer-brand">
-              <div className="logo-icon">
-                <Zap size={20} strokeWidth={2.5} />
+              <div className="logo">
+                <span className="logo-icon">P</span>
+                <span className="logo-text">ProBilling</span>
               </div>
-              <span className="logo-text">ProBilling</span>
-              <p className="footer-description">
-                Modern billing software built for growing businesses in Pakistan.
-              </p>
-              <div className="footer-social">
-                <a href="#" className="social-link">
-                  <span>FB</span>
-                </a>
-                <a href="#" className="social-link">
-                  <span>IG</span>
-                </a>
-                <a href="#" className="social-link">
-                  <span>LI</span>
-                </a>
-                <a href="#" className="social-link">
-                  <span>YT</span>
-                </a>
+              <p>Modern billing software for growing businesses.</p>
+              <div className="social">
+                <a href="#">FB</a>
+                <a href="#">IG</a>
+                <a href="#">LI</a>
               </div>
             </div>
-
             <div className="footer-links">
-              <div className="footer-column">
+              <div>
                 <h4>Product</h4>
                 <a href="#features">Features</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#">Integrations</a>
-                <a href="#">Changelog</a>
               </div>
-              <div className="footer-column">
+              <div>
                 <h4>Company</h4>
                 <a href="#">About</a>
                 <a href="#">Careers</a>
-                <a href="#">Blog</a>
                 <a href="#">Contact</a>
               </div>
-              <div className="footer-column">
+              <div>
                 <h4>Support</h4>
                 <a href="#">Help Center</a>
                 <a href="#">Documentation</a>
-                <a href="#">API Status</a>
-                <a href="#">Privacy Policy</a>
+                <a href="#">Privacy</a>
               </div>
             </div>
           </div>
-
           <div className="footer-bottom">
-            <p>© 2024 ProBilling. All rights reserved. Made with ❤️ in Pakistan</p>
+            <p>© 2024 ProBilling. All rights reserved.</p>
           </div>
         </div>
       </footer>
 
-      {/* WhatsApp Button with Hover Effects */}
-      <button className="whatsapp-button" onClick={handleWhatsAppClick}>
-        <div className="whatsapp-ring"></div>
-        <Phone size={24} strokeWidth={2} />
+      {/* WhatsApp */}
+      <button className="whatsapp" onClick={() => window.open('https://wa.me/923001234567', '_blank')}>
+        <span className="whatsapp-icon">💬</span>
         <span className="whatsapp-tooltip">Chat with us</span>
       </button>
     </div>
   );
 };
-
-const features = [
-  { 
-    icon: <Receipt size={22} />, 
-    title: 'Smart POS Billing', 
-    description: 'Intuitive point-of-sale with barcode scanning and quick checkout.' 
-  },
-  { 
-    icon: <Package size={22} />, 
-    title: 'Real-time Inventory', 
-    description: 'Track stock levels, set low stock alerts, and manage suppliers.' 
-  },
-  { 
-    icon: <TrendingUp size={22} />, 
-    title: 'Advanced Analytics', 
-    description: 'Comprehensive reports with visual insights for better decisions.' 
-  },
-  { 
-    icon: <Barcode size={22} />, 
-    title: 'Barcode Integration', 
-    description: 'Seamless barcode scanning for fast and accurate product lookup.' 
-  },
-  { 
-    icon: <Users size={22} />, 
-    title: 'Customer Management', 
-    description: 'Build detailed customer profiles and track purchase history.' 
-  },
-  { 
-    icon: <Cloud size={22} />, 
-    title: 'Cloud Backup', 
-    description: 'Automatic backup ensures your business data is always safe.' 
-  },
-  { 
-    icon: <CreditCard size={22} />, 
-    title: 'Credit Management', 
-    description: 'Handle credit sales and manage customer payments efficiently.' 
-  },
-  { 
-    icon: <Store size={22} />, 
-    title: 'Multi-store Support', 
-    description: 'Manage multiple store locations from a single dashboard.' 
-  },
-];
-
-const pricingPlans = [
-  {
-    name: 'Starter',
-    price: '2,500',
-    icon: <Building2 size={24} />,
-    description: 'Perfect for small businesses just getting started',
-    features: [
-      '500 transactions/month',
-      'Basic inventory',
-      'Single user access',
-      'Email support',
-      '1 store location'
-    ],
-    popular: false,
-  },
-  {
-    name: 'Business',
-    price: '3,500',
-    icon: <Store size={24} />,
-    description: 'The most popular choice for growing businesses',
-    features: [
-      'Unlimited transactions',
-      'Advanced inventory',
-      'Multi-user access (5 users)',
-      'Priority support',
-      'Advanced reporting',
-      '5 store locations'
-    ],
-    popular: true,
-  },
-  {
-    name: 'Enterprise',
-    price: '4,500',
-    icon: <Globe size={24} />,
-    description: 'For large businesses with complex needs',
-    features: [
-      'Unlimited transactions',
-      'Custom inventory solutions',
-      'Unlimited users',
-      '24/7 dedicated support',
-      'API access',
-      'Custom integrations',
-      'Unlimited locations'
-    ],
-    popular: false,
-  },
-];
 
 export default Landing;
