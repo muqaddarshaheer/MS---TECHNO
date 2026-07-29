@@ -1,7 +1,7 @@
-// BillingSystem.jsx - Complete Code (No CSS file needed)
-import React, { useState } from 'react';
+// ThermalReceipt.jsx
+import React, { useState, useRef } from 'react';
 
-const BillingSystem = () => {
+const ThermalReceipt = () => {
   const [items, setItems] = useState([]);
   const [customer, setCustomer] = useState({
     name: '',
@@ -16,6 +16,9 @@ const BillingSystem = () => {
   const [taxRate, setTaxRate] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [shopName, setShopName] = useState('My Shop');
+  const [shopAddress, setShopAddress] = useState('123 Main Street, Karachi');
+  const [shopPhone, setShopPhone] = useState('021-1234567');
 
   const addItem = () => {
     if (currentItem.name && currentItem.quantity > 0 && currentItem.price > 0) {
@@ -46,19 +49,24 @@ const BillingSystem = () => {
     }).format(amount);
   };
 
-  const printBill = () => {
-    const printWindow = window.open('', '_blank');
-    const billContent = generateBillHTML();
-    printWindow.document.write(billContent);
+  // Direct Print to Thermal Printer
+  const printReceipt = () => {
+    const printWindow = window.open('', '_blank', 'width=300,height=600');
+    const receiptHTML = generateReceiptHTML();
+    printWindow.document.write(receiptHTML);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.print();
-    printWindow.onafterprint = function() {
-      printWindow.close();
-    };
+    
+    // Auto print
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.onafterprint = function() {
+        printWindow.close();
+      };
+    }, 500);
   };
 
-  const generateBillHTML = () => {
+  const generateReceiptHTML = () => {
     const date = new Date();
     const formattedDate = date.toLocaleDateString('en-PK', {
       day: '2-digit',
@@ -75,60 +83,182 @@ const BillingSystem = () => {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Bill</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Receipt</title>
         <style>
-          @page { size: 80mm auto; margin: 0; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            width: 80mm;
+          * {
             margin: 0;
-            padding: 6px 4px;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            width: 80mm;
+            margin: 0 auto;
+            padding: 8px 4px;
             background: white;
             color: black;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
           }
-          .bill { width: 100%; max-width: 80mm; margin: 0 auto; color: black; }
-          .header { text-align: center; border-bottom: 2px dashed black; padding-bottom: 6px; margin-bottom: 6px; }
-          .header h1 { font-size: 20px; margin: 0; font-weight: bold; letter-spacing: 4px; color: black; }
-          .header p { margin: 1px 0; font-size: 9px; color: black; }
-          .divider { border-top: 1px dashed black; margin: 4px 0; }
-          .customer-info { font-size: 10px; padding: 3px 0; color: black; }
-          .customer-info p { margin: 1px 0; color: black; }
-          .items-table { width: 100%; border-collapse: collapse; font-size: 10px; color: black; }
-          .items-table th { text-align: left; font-size: 9px; border-bottom: 1px solid black; padding: 3px 0; color: black; }
-          .items-table td { padding: 3px 0; border-bottom: 1px dotted #ccc; color: black; }
-          .items-table .text-right { text-align: right; }
-          .totals { margin-top: 6px; border-top: 2px solid black; padding-top: 6px; color: black; }
-          .totals p { display: flex; justify-content: space-between; margin: 2px 0; font-size: 10px; color: black; }
-          .totals .grand-total { font-size: 16px; font-weight: bold; border-top: 2px solid black; padding-top: 4px; margin-top: 4px; color: black; }
-          .grand-total p { font-size: 16px; color: black; }
-          .footer { text-align: center; margin-top: 8px; border-top: 2px dashed black; padding-top: 6px; font-size: 9px; color: black; }
-          .footer p { margin: 1px 0; color: black; }
-          .barcode { text-align: center; font-family: 'Courier New', monospace; letter-spacing: 2px; font-size: 20px; margin: 6px 0; color: black; }
-          @media print { body { margin: 0; padding: 3px; } }
+          .receipt {
+            width: 100%;
+            max-width: 80mm;
+            margin: 0 auto;
+          }
+          /* Header */
+          .header {
+            text-align: center;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 8px;
+            margin-bottom: 6px;
+          }
+          .header h1 {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin: 0;
+            text-transform: uppercase;
+          }
+          .header p {
+            font-size: 10px;
+            margin: 2px 0;
+            line-height: 1.3;
+          }
+          .header .divider {
+            border-top: 1px dashed #000;
+            margin: 4px 0;
+          }
+          /* Customer */
+          .customer {
+            font-size: 10px;
+            padding: 4px 0;
+            border-bottom: 1px dashed #000;
+            margin-bottom: 4px;
+          }
+          .customer p {
+            margin: 2px 0;
+          }
+          /* Items Table */
+          .items {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin: 4px 0;
+          }
+          .items th {
+            text-align: left;
+            font-size: 9px;
+            border-bottom: 1px solid #000;
+            padding: 3px 0;
+            text-transform: uppercase;
+          }
+          .items td {
+            padding: 3px 0;
+            border-bottom: 1px dotted #ccc;
+          }
+          .items .text-right {
+            text-align: right;
+          }
+          .items .text-center {
+            text-align: center;
+          }
+          /* Totals */
+          .totals {
+            border-top: 2px solid #000;
+            padding-top: 6px;
+            margin-top: 4px;
+          }
+          .totals .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-size: 10px;
+          }
+          .totals .grand {
+            font-size: 16px;
+            font-weight: bold;
+            border-top: 2px solid #000;
+            padding-top: 4px;
+            margin-top: 4px;
+          }
+          .totals .grand .row {
+            font-size: 16px;
+          }
+          /* Payment */
+          .payment {
+            border-top: 1px dashed #000;
+            padding-top: 4px;
+            margin-top: 4px;
+            font-size: 10px;
+          }
+          .payment p {
+            margin: 2px 0;
+          }
+          /* Barcode */
+          .barcode {
+            text-align: center;
+            font-size: 22px;
+            letter-spacing: 3px;
+            padding: 6px 0;
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+            margin: 6px 0;
+            font-family: 'Courier New', monospace;
+          }
+          /* Footer */
+          .footer {
+            text-align: center;
+            border-top: 2px dashed #000;
+            padding-top: 8px;
+            margin-top: 8px;
+            font-size: 10px;
+          }
+          .footer p {
+            margin: 2px 0;
+          }
+          .footer .thanks {
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+          }
+          /* Small helper */
+          .small {
+            font-size: 8px;
+          }
+          .bold {
+            font-weight: bold;
+          }
+          .mt-1 { margin-top: 4px; }
+          .mb-1 { margin-bottom: 4px; }
+          
+          @media print {
+            body { margin: 0; padding: 4px; }
+            .no-print { display: none; }
+          }
         </style>
       </head>
       <body>
-        <div class="bill">
+        <div class="receipt">
+          <!-- Shop Header -->
           <div class="header">
-            <h1>PROBILLING</h1>
-            <p>123 Business Street, Karachi</p>
-            <p>Tel: 021-1234567 | Shop: B-12</p>
+            <h1>${shopName}</h1>
+            <p>${shopAddress}</p>
+            <p>Tel: ${shopPhone}</p>
             <p>NTN: 1234567-8 | GST: 123456789</p>
             <div class="divider"></div>
-            <p style="font-size:9px;">${formattedDate} ${formattedTime}</p>
+            <p>${formattedDate}  ${formattedTime}</p>
+            <p>Bill #: ${String(Date.now()).slice(-8)}</p>
           </div>
-          <div class="customer-info">
-            <p><strong>Customer:</strong> ${customer.name || 'Walk-in Customer'}</p>
-            ${customer.phone ? `<p><strong>Phone:</strong> ${customer.phone}</p>` : ''}
-            ${customer.address ? `<p><strong>Address:</strong> ${customer.address}</p>` : ''}
-            <p><strong>Bill #:</strong> ${Date.now().toString().slice(-8)}</p>
+
+          <!-- Customer -->
+          <div class="customer">
+            <p><span class="bold">Customer:</span> ${customer.name || 'Walk-in Customer'}</p>
+            ${customer.phone ? `<p><span class="bold">Phone:</span> ${customer.phone}</p>` : ''}
+            ${customer.address ? `<p><span class="bold">Address:</span> ${customer.address}</p>` : ''}
           </div>
-          <div class="divider"></div>
-          <table class="items-table">
+
+          <!-- Items -->
+          <table class="items">
             <thead>
               <tr>
                 <th>Item</th>
@@ -148,22 +278,47 @@ const BillingSystem = () => {
               `).join('')}
             </tbody>
           </table>
-          <div class="divider"></div>
+
+          <!-- Totals -->
           <div class="totals">
-            <p><span>Subtotal:</span><span>${subtotal}</span></p>
-            ${taxRate > 0 ? `<p><span>GST (${taxRate}%):</span><span>${taxAmount}</span></p>` : ''}
-            ${discount > 0 ? `<p><span>Discount (${discount}%):</span><span>-${discountAmount}</span></p>` : ''}
-            <div class="grand-total">
-              <p><span>TOTAL:</span><span>${grandTotal}</span></p>
+            <div class="row">
+              <span>Subtotal</span>
+              <span>${subtotal}</span>
             </div>
-            <p style="font-size:9px; margin-top:3px;"><strong>Payment:</strong> ${paymentMethod.toUpperCase()}</p>
+            ${taxRate > 0 ? `
+              <div class="row">
+                <span>GST (${taxRate}%)</span>
+                <span>${taxAmount}</span>
+              </div>
+            ` : ''}
+            ${discount > 0 ? `
+              <div class="row">
+                <span>Discount (${discount}%)</span>
+                <span>-${discountAmount}</span>
+              </div>
+            ` : ''}
+            <div class="row grand">
+              <span>TOTAL</span>
+              <span>${grandTotal}</span>
+            </div>
           </div>
+
+          <!-- Payment -->
+          <div class="payment">
+            <p><span class="bold">Payment:</span> ${paymentMethod.toUpperCase()}</p>
+            <p><span class="bold">Amount:</span> ${grandTotal}</p>
+          </div>
+
+          <!-- Barcode -->
           <div class="barcode">${String(Date.now()).slice(-8)}</div>
+
+          <!-- Footer -->
           <div class="footer">
-            <p><strong>THANK YOU FOR SHOPPING!</strong></p>
+            <p class="thanks">THANK YOU!</p>
             <p>Visit Again • We Value Your Business</p>
-            <p style="font-size:8px;">Items: ${items.length} | Qty: ${items.reduce((sum, i) => sum + i.quantity, 0)}</p>
-            <p style="font-size:8px; margin-top:3px;">Powered by ProBilling</p>
+            <p class="small">Items: ${items.length} | Qty: ${items.reduce((sum, i) => sum + i.quantity, 0)}</p>
+            <p class="small mt-1">Powered by ProBilling</p>
+            <p class="small">www.probilling.com</p>
           </div>
         </div>
       </body>
@@ -171,9 +326,7 @@ const BillingSystem = () => {
     `;
   };
 
-  const isBillEmpty = items.length === 0;
-
-  // All styles inline - No CSS file needed!
+  // Styles
   const styles = {
     container: {
       minHeight: '100vh',
@@ -181,8 +334,8 @@ const BillingSystem = () => {
       padding: '20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     },
-    grid: {
-      maxWidth: '1440px',
+    main: {
+      maxWidth: '1200px',
       margin: '0 auto',
       display: 'grid',
       gridTemplateColumns: '1fr 1fr',
@@ -191,26 +344,25 @@ const BillingSystem = () => {
     },
     panel: {
       background: 'white',
-      borderRadius: '24px',
+      borderRadius: '16px',
       boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
       padding: '24px',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden'
     },
-    panelHeader: {
+    header: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '20px',
-      paddingBottom: '16px',
+      marginBottom: '16px',
+      paddingBottom: '12px',
       borderBottom: '2px solid #f0f0f0',
       flexShrink: 0
     },
-    panelTitle: {
+    title: {
       fontSize: '20px',
       fontWeight: '700',
-      color: '#1a1a1a',
       margin: 0
     },
     badge: {
@@ -218,35 +370,26 @@ const BillingSystem = () => {
       color: '#8a8a8a',
       background: '#f5f5f5',
       padding: '4px 14px',
-      borderRadius: '20px',
-      fontWeight: '600'
-    },
-    previewBadge: {
-      fontSize: '11px',
-      color: '#16a34a',
-      background: 'rgba(22,163,74,0.08)',
-      padding: '4px 14px',
-      borderRadius: '20px',
-      fontWeight: '600'
+      borderRadius: '20px'
     },
     section: {
-      marginBottom: '16px',
+      marginBottom: '12px',
       flexShrink: 0
     },
     sectionTitle: {
-      fontSize: '13px',
+      fontSize: '12px',
       fontWeight: '600',
       color: '#4a4a4a',
-      marginBottom: '10px',
       textTransform: 'uppercase',
-      letterSpacing: '0.5px'
+      letterSpacing: '0.5px',
+      marginBottom: '8px'
     },
-    formRow: {
+    row: {
       display: 'flex',
       gap: '12px',
-      marginBottom: '10px'
+      marginBottom: '8px'
     },
-    formGroup: {
+    group: {
       flex: 1
     },
     label: {
@@ -255,141 +398,105 @@ const BillingSystem = () => {
       fontWeight: '600',
       color: '#8a8a8a',
       textTransform: 'uppercase',
-      letterSpacing: '0.5px',
       marginBottom: '4px'
     },
     input: {
       width: '100%',
-      padding: '10px 14px',
-      border: '1.5px solid #e8e8e8',
-      borderRadius: '12px',
+      padding: '8px 12px',
+      border: '1.5px solid #e5e5e5',
+      borderRadius: '10px',
       fontSize: '14px',
       background: '#fafafa',
-      color: '#1a1a1a',
-      outline: 'none',
-      transition: 'all 0.2s ease'
+      outline: 'none'
     },
     inputSmall: {
       width: '100%',
-      padding: '8px 12px',
-      border: '1.5px solid #e8e8e8',
-      borderRadius: '12px',
+      padding: '6px 10px',
+      border: '1.5px solid #e5e5e5',
+      borderRadius: '10px',
       fontSize: '14px',
       background: '#fafafa',
-      color: '#1a1a1a',
       outline: 'none'
     },
     btnAdd: {
       background: '#16a34a',
       color: 'white',
       border: 'none',
-      padding: '10px 20px',
-      borderRadius: '12px',
+      padding: '10px',
+      borderRadius: '10px',
       fontSize: '14px',
       fontWeight: '600',
       cursor: 'pointer',
-      width: '100%',
-      transition: 'all 0.3s ease'
+      width: '100%'
     },
-    itemsList: {
+    list: {
       flex: 1,
       overflowY: 'auto',
-      marginBottom: '16px',
-      minHeight: '100px',
-      maxHeight: '200px'
+      marginBottom: '12px',
+      minHeight: '80px',
+      maxHeight: '180px'
     },
-    emptyState: {
+    empty: {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       height: '100%',
-      color: '#b0b0b0',
-      padding: '20px'
+      color: '#b0b0b0'
     },
-    emptyIcon: {
-      fontSize: '32px',
-      marginBottom: '8px'
-    },
-    emptyText: {
-      fontSize: '14px',
-      color: '#b0b0b0',
-      margin: 0
-    },
-    emptySmall: {
-      fontSize: '12px',
-      color: '#ccc',
-      marginTop: '4px'
-    },
-    itemRow: {
+    item: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '10px 12px',
+      padding: '8px 12px',
       background: '#f8f9fa',
-      borderRadius: '12px',
-      marginBottom: '6px'
-    },
-    itemInfo: {
-      display: 'flex',
-      flexDirection: 'column',
-      flex: 1
+      borderRadius: '10px',
+      marginBottom: '4px'
     },
     itemName: {
       fontSize: '14px',
-      fontWeight: '600',
-      color: '#1a1a1a'
+      fontWeight: '600'
     },
     itemDetails: {
       fontSize: '12px',
       color: '#8a8a8a'
     },
-    itemActions: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px'
-    },
     itemTotal: {
       fontSize: '14px',
-      fontWeight: '700',
-      color: '#1a1a1a'
+      fontWeight: '700'
     },
     btnRemove: {
       background: '#fee2e2',
       color: '#dc2626',
       border: 'none',
-      width: '28px',
-      height: '28px',
-      borderRadius: '8px',
-      fontSize: '18px',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
+      width: '24px',
+      height: '24px',
+      borderRadius: '6px',
+      fontSize: '16px',
+      cursor: 'pointer'
     },
     summary: {
       borderTop: '2px solid #f0f0f0',
-      paddingTop: '16px',
+      paddingTop: '12px',
       flexShrink: 0
     },
     summaryRow: {
       display: 'flex',
       justifyContent: 'space-between',
-      padding: '4px 0',
+      padding: '2px 0',
       fontSize: '14px',
       color: '#4a4a4a'
     },
-    grandTotal: {
+    grand: {
       borderTop: '2px solid #1a1a1a',
-      marginTop: '8px',
-      paddingTop: '8px'
+      marginTop: '6px',
+      paddingTop: '6px'
     },
-    grandTotalLabel: {
+    grandLabel: {
       fontSize: '18px',
-      fontWeight: '700',
-      color: '#1a1a1a'
+      fontWeight: '700'
     },
-    grandTotalValue: {
+    grandValue: {
       fontSize: '20px',
       fontWeight: '800',
       color: '#16a34a'
@@ -401,174 +508,192 @@ const BillingSystem = () => {
       flexShrink: 0
     },
     btnPrint: {
-      flex: 1,
+      flex: 2,
       background: '#16a34a',
       color: 'white',
       border: 'none',
-      padding: '14px',
-      borderRadius: '14px',
+      padding: '12px',
+      borderRadius: '12px',
       fontSize: '16px',
       fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease'
+      cursor: 'pointer'
     },
     btnClear: {
       flex: 1,
       background: '#f5f5f5',
       color: '#4a4a4a',
       border: 'none',
-      padding: '14px',
-      borderRadius: '14px',
+      padding: '12px',
+      borderRadius: '12px',
       fontSize: '16px',
       fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease'
+      cursor: 'pointer'
     },
-    previewContainer: {
+    preview: {
       flex: 1,
       overflow: 'auto',
       background: '#fafafa',
-      borderRadius: '16px',
-      padding: '16px',
+      borderRadius: '12px',
+      padding: '12px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     },
-    billPreview: {
+    receiptPreview: {
       width: '80mm',
       background: 'white',
       padding: '4px',
       borderRadius: '4px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+    },
+    shopSettings: {
+      display: 'flex',
+      gap: '8px',
+      marginBottom: '8px',
+      flexWrap: 'wrap'
+    },
+    shopInput: {
+      flex: 1,
+      minWidth: '120px',
+      padding: '6px 10px',
+      border: '1.5px solid #e5e5e5',
+      borderRadius: '8px',
+      fontSize: '12px',
+      background: '#fafafa',
+      outline: 'none'
     }
   };
 
-  // Hover effects via style tag
-  React.useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      .btn-add:hover { background: #15803d !important; transform: translateY(-2px) !important; }
-      .btn-remove:hover { background: #fecaca !important; transform: scale(1.1) !important; }
-      .btn-print:hover:not(:disabled) { background: #15803d !important; transform: translateY(-2px) !important; box-shadow: 0 8px 24px rgba(22,163,74,0.3) !important; }
-      .btn-clear:hover { background: #e8e8e8 !important; }
-      input:focus, select:focus { border-color: #16a34a !important; background: white !important; box-shadow: 0 0 0 4px rgba(22,163,74,0.06) !important; }
-      .item-row:hover { background: #f0f0f0 !important; }
-      .btn-print:disabled { opacity: 0.5; cursor: not-allowed; }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
-
   return (
     <div style={styles.container}>
-      <div style={styles.grid}>
-        {/* Left Panel - Input */}
+      <div style={styles.main}>
+        {/* Left Panel */}
         <div style={styles.panel}>
-          <div style={styles.panelHeader}>
-            <h2 style={styles.panelTitle}>🧾 New Bill</h2>
+          <div style={styles.header}>
+            <h2 style={styles.title}>🧾 New Receipt</h2>
             <span style={styles.badge}>#BILL-{Date.now().toString().slice(-6)}</span>
           </div>
 
+          {/* Shop Settings */}
           <div style={styles.section}>
-            <h3 style={styles.sectionTitle}>Customer Details</h3>
-            <div style={styles.formRow}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Customer Name</label>
+            <h3 style={styles.sectionTitle}>Shop Settings</h3>
+            <div style={styles.shopSettings}>
+              <input
+                style={styles.shopInput}
+                placeholder="Shop Name"
+                value={shopName}
+                onChange={(e) => setShopName(e.target.value)}
+              />
+              <input
+                style={styles.shopInput}
+                placeholder="Shop Address"
+                value={shopAddress}
+                onChange={(e) => setShopAddress(e.target.value)}
+              />
+              <input
+                style={{...styles.shopInput, minWidth: '100px'}}
+                placeholder="Phone"
+                value={shopPhone}
+                onChange={(e) => setShopPhone(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Customer */}
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Customer</h3>
+            <div style={styles.row}>
+              <div style={styles.group}>
+                <label style={styles.label}>Name</label>
                 <input
-                  type="text"
-                  placeholder="Walk-in Customer"
                   style={styles.input}
+                  placeholder="Walk-in Customer"
                   value={customer.name}
                   onChange={(e) => setCustomer({...customer, name: e.target.value})}
                 />
               </div>
-              <div style={styles.formGroup}>
+              <div style={styles.group}>
                 <label style={styles.label}>Phone</label>
                 <input
-                  type="text"
-                  placeholder="03XX-XXXXXXX"
                   style={styles.input}
+                  placeholder="03XX-XXXXXXX"
                   value={customer.phone}
                   onChange={(e) => setCustomer({...customer, phone: e.target.value})}
                 />
               </div>
             </div>
-            <div style={styles.formGroup}>
+            <div style={styles.group}>
               <label style={styles.label}>Address</label>
               <input
-                type="text"
-                placeholder="Customer Address"
                 style={styles.input}
+                placeholder="Address"
                 value={customer.address}
                 onChange={(e) => setCustomer({...customer, address: e.target.value})}
               />
             </div>
           </div>
 
+          {/* Items */}
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>Add Items</h3>
-            <div style={styles.formRow}>
-              <div style={{...styles.formGroup, flex: 2 }}>
-                <label style={styles.label}>Item Name</label>
+            <div style={styles.row}>
+              <div style={{...styles.group, flex: 2 }}>
                 <input
-                  type="text"
-                  placeholder="Enter item name"
                   style={styles.input}
+                  placeholder="Item name"
                   value={currentItem.name}
                   onChange={(e) => setCurrentItem({...currentItem, name: e.target.value})}
                   onKeyPress={(e) => e.key === 'Enter' && addItem()}
                 />
               </div>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Qty</label>
+              <div style={styles.group}>
                 <input
-                  type="number"
-                  min="1"
                   style={styles.input}
+                  type="number"
+                  placeholder="Qty"
+                  min="1"
                   value={currentItem.quantity}
                   onChange={(e) => setCurrentItem({...currentItem, quantity: parseInt(e.target.value) || 1})}
                 />
               </div>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Price</label>
+              <div style={styles.group}>
                 <input
-                  type="number"
-                  min="0"
                   style={styles.input}
+                  type="number"
+                  placeholder="Price"
+                  min="0"
                   value={currentItem.price}
                   onChange={(e) => setCurrentItem({...currentItem, price: parseFloat(e.target.value) || 0})}
                 />
               </div>
             </div>
-            <button className="btn-add" style={styles.btnAdd} onClick={addItem}>
-              + Add Item
-            </button>
+            <button style={styles.btnAdd} onClick={addItem}>+ Add Item</button>
           </div>
 
-          <div style={styles.itemsList}>
+          {/* Items List */}
+          <div style={styles.list}>
             {items.length === 0 ? (
-              <div style={styles.emptyState}>
-                <span style={styles.emptyIcon}>📋</span>
-                <p style={styles.emptyText}>No items added yet</p>
+              <div style={styles.empty}>
+                <span style={{fontSize: '32px'}}>📋</span>
+                <p>No items added</p>
               </div>
             ) : (
               items.map((item, index) => (
-                <div key={index} className="item-row" style={styles.itemRow}>
-                  <div style={styles.itemInfo}>
-                    <span style={styles.itemName}>{item.name}</span>
-                    <span style={styles.itemDetails}>{item.quantity} × {item.price}</span>
+                <div key={index} style={styles.item}>
+                  <div>
+                    <div style={styles.itemName}>{item.name}</div>
+                    <div style={styles.itemDetails}>{item.quantity} × {item.price}</div>
                   </div>
-                  <div style={styles.itemActions}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                     <span style={styles.itemTotal}>{item.total}</span>
-                    <button className="btn-remove" style={styles.btnRemove} onClick={() => removeItem(index)}>×</button>
+                    <button style={styles.btnRemove} onClick={() => removeItem(index)}>×</button>
                   </div>
                 </div>
               ))
             )}
           </div>
 
+          {/* Summary */}
           <div style={styles.summary}>
             <div style={styles.summaryRow}>
               <span>Items:</span>
@@ -578,87 +703,90 @@ const BillingSystem = () => {
               <span>Subtotal:</span>
               <span>{subtotal}</span>
             </div>
-            <div style={styles.formRow}>
-              <div style={{...styles.formGroup, flex: 1 }}>
+            <div style={styles.row}>
+              <div style={styles.group}>
                 <label style={styles.label}>GST %</label>
                 <input
+                  style={styles.inputSmall}
                   type="number"
                   min="0"
                   max="100"
-                  style={styles.inputSmall}
                   value={taxRate}
                   onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
                 />
               </div>
-              <div style={{...styles.formGroup, flex: 1 }}>
+              <div style={styles.group}>
                 <label style={styles.label}>Discount %</label>
                 <input
+                  style={styles.inputSmall}
                   type="number"
                   min="0"
                   max="100"
-                  style={styles.inputSmall}
                   value={discount}
                   onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
                 />
               </div>
+              <div style={styles.group}>
+                <label style={styles.label}>Payment</label>
+                <select
+                  style={styles.inputSmall}
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                >
+                  <option value="cash">Cash</option>
+                  <option value="card">Card</option>
+                  <option value="bank">Bank</option>
+                  <option value="easypaisa">EasyPaisa</option>
+                  <option value="jazzcash">JazzCash</option>
+                </select>
+              </div>
             </div>
-            <div style={{...styles.summaryRow, ...styles.grandTotal}}>
-              <span style={styles.grandTotalLabel}>Grand Total:</span>
-              <span style={styles.grandTotalValue}>{grandTotal}</span>
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Payment Method</label>
-              <select
-                style={styles.input}
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              >
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="bank">Bank Transfer</option>
-                <option value="easypaisa">EasyPaisa</option>
-                <option value="jazzcash">JazzCash</option>
-              </select>
+            <div style={{...styles.summaryRow, ...styles.grand}}>
+              <span style={styles.grandLabel}>Grand Total:</span>
+              <span style={styles.grandValue}>{grandTotal}</span>
             </div>
           </div>
 
+          {/* Actions */}
           <div style={styles.actions}>
             <button
-              className="btn-print"
-              style={{...styles.btnPrint, opacity: isBillEmpty ? 0.5 : 1, cursor: isBillEmpty ? 'not-allowed' : 'pointer'}}
-              onClick={printBill}
-              disabled={isBillEmpty}
+              style={{...styles.btnPrint, opacity: items.length === 0 ? 0.5 : 1, cursor: items.length === 0 ? 'not-allowed' : 'pointer'}}
+              onClick={printReceipt}
+              disabled={items.length === 0}
             >
-              🖨️ Print Bill
+              🖨️ Print Receipt
             </button>
-            <button className="btn-clear" style={styles.btnClear} onClick={() => {
-              if (window.confirm('Clear all items?')) {
-                setItems([]);
-                setCustomer({ name: '', phone: '', address: '' });
-              }
-            }}>
-              Clear All
+            <button
+              style={styles.btnClear}
+              onClick={() => {
+                if (window.confirm('Clear all?')) {
+                  setItems([]);
+                  setCustomer({ name: '', phone: '', address: '' });
+                }
+              }}
+            >
+              Clear
             </button>
           </div>
         </div>
 
         {/* Right Panel - Preview */}
         <div style={styles.panel}>
-          <div style={styles.panelHeader}>
-            <h3 style={styles.panelTitle}>📄 Bill Preview</h3>
-            <span style={styles.previewBadge}>80mm Thermal • B&W</span>
+          <div style={styles.header}>
+            <h3 style={styles.title}>📄 Receipt Preview</h3>
+            <span style={{...styles.badge, background: 'rgba(22,163,74,0.08)', color: '#16a34a'}}>
+              80mm Thermal
+            </span>
           </div>
-          <div style={styles.previewContainer}>
-            {isBillEmpty ? (
-              <div style={styles.emptyState}>
-                <span style={styles.emptyIcon}>🧾</span>
-                <p style={styles.emptyText}>Add items to see bill preview</p>
-                <small style={styles.emptySmall}>Black & White • 80mm Thermal Format</small>
+          <div style={styles.preview}>
+            {items.length === 0 ? (
+              <div style={styles.empty}>
+                <span style={{fontSize: '32px'}}>🧾</span>
+                <p>Add items to preview</p>
+                <small style={{color: '#ccc', fontSize: '12px'}}>80mm Thermal Format</small>
               </div>
             ) : (
-              <div style={styles.billPreview} dangerouslySetInnerHTML={{
-                __html: generateBillHTML()
-              }} />
+              <div style={styles.receiptPreview} dangerouslySetInnerHTML={{ __html: generateReceiptHTML() }} />
             )}
           </div>
         </div>
@@ -667,4 +795,4 @@ const BillingSystem = () => {
   );
 };
 
-export default BillingSystem;
+export default ThermalReceipt;
