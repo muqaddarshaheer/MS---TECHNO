@@ -1,297 +1,145 @@
-// Landing.jsx
-import React, { useState, useEffect } from 'react';
-import './Landing.css';
+// landing.jsx
+import React, { useEffect, useRef, useState } from 'react';
+import './landing.css';
+import { 
+  BarChart3, 
+  Package, 
+  FileText, 
+  Barcode, 
+  Users, 
+  Receipt, 
+  Cloud, 
+  CreditCard,
+  ArrowRight,
+  Menu,
+  X,
+  Phone
+} from 'lucide-react';
 
 const Landing = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    message: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVisible, setIsVisible] = useState({});
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(prev => ({ ...prev, [entry.target.id]: true }));
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    document.querySelectorAll('.animate-on-scroll').forEach((el) => {
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
   }, []);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const smoothScroll = (e, targetId) => {
-    e.preventDefault();
-    const target = document.querySelector(targetId);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setIsMenuOpen(false);
-    }
-  };
-
-  const openDemoModal = () => {
-    setIsDemoModalOpen(true);
-    setIsMenuOpen(false);
-    document.body.style.overflow = 'hidden';
-  };
-
-  const closeDemoModal = () => {
-    setIsDemoModalOpen(false);
-    document.body.style.overflow = 'auto';
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-      message: ''
-    });
-  };
-
-  const handleLogin = () => {
-    window.location.href = '/login';
-  };
-
-  const handleGetStarted = (plan) => {
-    window.location.href = `/signup?plan=${plan.toLowerCase()}`;
-  };
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmitDemo = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch('/api/demo-request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        closeDemoModal();
-      } else {
-        alert('Error: ' + (data.message || 'Something went wrong'));
-      }
-    } catch (error) {
-      alert('Network error. Please check your connection.');
-      console.error('Error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // WhatsApp button handler
-  const handleWhatsApp = () => {
-    window.open('https://wa.me/923401227619', '_blank');
-  };
-
   return (
-    <div className="landing">
+    <div className="landing-container">
       {/* Navbar */}
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      <nav className="navbar">
         <div className="nav-container">
-          <a href="/" className="nav-logo">
-            <span className="logo-icon">◈</span>
-            <span className="logo-text">MS TECHNO</span>
-          </a>
-          <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
-            <a href="#home" className="nav-link" onClick={(e) => smoothScroll(e, '#home')}>Home</a>
-            <a href="#features" className="nav-link" onClick={(e) => smoothScroll(e, '#features')}>Features</a>
-            <a href="#pricing" className="nav-link" onClick={(e) => smoothScroll(e, '#pricing')}>Pricing</a>
-            <a href="#about" className="nav-link" onClick={(e) => smoothScroll(e, '#about')}>About</a>
-            <a href="#contact" className="nav-link" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
-            <button className="nav-login" onClick={handleLogin}>Login</button>
-            <button className="nav-demo" onClick={openDemoModal}>Request Demo</button>
+          <div className="nav-logo">
+            <div className="logo-icon">P</div>
+            <span className="logo-text">ProBilling</span>
           </div>
-          <div className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
-            <span className="bar"></span>
-            <span className="bar"></span>
-            <span className="bar"></span>
+          
+          <div className="nav-links">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#login">Login</a>
+            <button className="btn-primary btn-demo">Book Demo</button>
           </div>
+
+          <button className="nav-mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
+
+        {isMenuOpen && (
+          <div className="nav-mobile">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#login">Login</a>
+            <button className="btn-primary btn-demo">Book Demo</button>
+          </div>
+        )}
       </nav>
 
-      {/* WhatsApp Floating Button */}
-      <button className="whatsapp-float" onClick={handleWhatsApp}>
-        <span className="whatsapp-icon">💬</span>
-        <span className="whatsapp-text">Chat on WhatsApp</span>
-      </button>
-
-      {/* Demo Modal */}
-      {isDemoModalOpen && (
-        <div className="modal-overlay" onClick={closeDemoModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={closeDemoModal}>×</button>
-            <div className="modal-header">
-              <span className="modal-icon">✦</span>
-              <h2>Request a Demo</h2>
-              <p>Fill in your details and we'll get back to you within 24 hours</p>
-            </div>
-            <form className="modal-form" onSubmit={handleSubmitDemo}>
-              <div className="form-group">
-                <label>Full Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Email Address *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter your email address"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Phone Number *</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="Enter your phone number"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Company Name</label>
-                <input
-                  type="text"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleInputChange}
-                  placeholder="Enter your company name"
-                />
-              </div>
-              <div className="form-group">
-                <label>Message</label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  placeholder="Tell us about your business needs"
-                  rows="3"
-                ></textarea>
-              </div>
-              <button type="submit" className="modal-submit" disabled={isSubmitting}>
-                <span className="btn-icon">✦</span>
-                {isSubmitting ? 'Submitting...' : 'Submit Demo Request'}
-              </button>
-            </form>
-            <div className="modal-whatsapp">
-              <span>Or contact us directly on</span>
-              <button className="modal-whatsapp-btn" onClick={handleWhatsApp}>
-                <span>💬</span> WhatsApp
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Hero Section */}
-      <section id="home" className="hero">
+      <section className="hero-section">
         <div className="hero-container">
           <div className="hero-content">
             <div className="hero-badge">
-              <span className="badge-dot"></span>
-              Software for Modern Business
+              <span>🚀 Trusted by 500+ businesses</span>
             </div>
             <h1 className="hero-title">
-              Manage Your Business<br />
-              <span>Smarter With MS TECHNO</span>
+              Modern Billing Software
+              <br />
+              <span className="hero-highlight">For Growing Businesses</span>
             </h1>
-            <p className="hero-description">
-              Powerful POS, inventory and business management software to simplify your daily operations.
+            <p className="hero-subtitle">
+              Streamline your billing, inventory, and customer management with 
+              our all-in-one POS solution. Built for efficiency, designed for growth.
             </p>
             <div className="hero-buttons">
-              <button className="btn-primary" onClick={openDemoModal}>
-                Request Free Demo
-              </button>
-              <button className="btn-secondary" onClick={handleLogin}>
-                Login
-              </button>
-              <button className="btn-whatsapp" onClick={handleWhatsApp}>
-                <span>💬</span> WhatsApp
-              </button>
-            </div>
-            <div className="hero-stats">
-              <div className="stat">
-                <span className="stat-number">10,000+</span>
-                <span className="stat-label">Businesses</span>
-              </div>
-              <div className="stat-divider"></div>
-              <div className="stat">
-                <span className="stat-number">99.9%</span>
-                <span className="stat-label">Uptime</span>
-              </div>
-              <div className="stat-divider"></div>
-              <div className="stat">
-                <span className="stat-number">4.8</span>
-                <span className="stat-label">User Rating</span>
-              </div>
+              <button className="btn-primary btn-large">Book Demo</button>
+              <button className="btn-secondary btn-large">Login</button>
             </div>
           </div>
-          <div className="hero-image">
-            <div className="dashboard-card">
+
+          <div className="hero-dashboard">
+            <div className="dashboard-mockup">
               <div className="dashboard-header">
                 <div className="dashboard-dots">
                   <span></span>
                   <span></span>
                   <span></span>
                 </div>
-                <span className="dashboard-title">Dashboard Overview</span>
+                <div className="dashboard-header-text">Dashboard</div>
               </div>
+              
               <div className="dashboard-grid">
-                <div className="dash-item">
-                  <span className="dash-value">$124.5K</span>
-                  <span className="dash-label">Revenue</span>
+                <div className="stat-card floating-card" style={{ animationDelay: '0s' }}>
+                  <div className="stat-icon revenue">📊</div>
+                  <div className="stat-content">
+                    <span className="stat-label">Revenue</span>
+                    <span className="stat-value">$48,295</span>
+                    <span className="stat-change positive">↑ 12.5%</span>
+                  </div>
                 </div>
-                <div className="dash-item">
-                  <span className="dash-value">2,847</span>
-                  <span className="dash-label">Orders</span>
+
+                <div className="stat-card floating-card" style={{ animationDelay: '0.5s' }}>
+                  <div className="stat-icon orders">📦</div>
+                  <div className="stat-content">
+                    <span className="stat-label">Orders</span>
+                    <span className="stat-value">1,284</span>
+                    <span className="stat-change positive">↑ 8.3%</span>
+                  </div>
                 </div>
-                <div className="dash-item">
-                  <span className="dash-value">1,234</span>
-                  <span className="dash-label">Customers</span>
+
+                <div className="stat-card floating-card" style={{ animationDelay: '1s' }}>
+                  <div className="stat-icon sales">💳</div>
+                  <div className="stat-content">
+                    <span className="stat-label">Sales</span>
+                    <span className="stat-value">$32,450</span>
+                    <span className="stat-change positive">↑ 15.7%</span>
+                  </div>
                 </div>
-                <div className="dash-item">
-                  <span className="dash-value">94%</span>
-                  <span className="dash-label">Growth</span>
+
+                <div className="stat-card floating-card" style={{ animationDelay: '1.5s' }}>
+                  <div className="stat-icon inventory">📋</div>
+                  <div className="stat-content">
+                    <span className="stat-label">Inventory</span>
+                    <span className="stat-value">3,842</span>
+                    <span className="stat-change neutral">In Stock</span>
+                  </div>
                 </div>
-              </div>
-              <div className="dashboard-chart">
-                <div className="chart-bar" style={{ height: '60%' }}></div>
-                <div className="chart-bar" style={{ height: '40%' }}></div>
-                <div className="chart-bar" style={{ height: '80%' }}></div>
-                <div className="chart-bar" style={{ height: '55%' }}></div>
-                <div className="chart-bar" style={{ height: '90%' }}></div>
-                <div className="chart-bar" style={{ height: '65%' }}></div>
-                <div className="chart-bar" style={{ height: '75%' }}></div>
               </div>
             </div>
           </div>
@@ -299,133 +147,82 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="features">
-        <div className="section-header">
-          <span className="section-tag">Features</span>
-          <h2>Everything You Need</h2>
-          <p>Powerful tools to manage your business efficiently</p>
-        </div>
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon">🛒</div>
-            <h3>POS Billing</h3>
-            <p>Fast and accurate billing system</p>
+      <section id="features" className="features-section">
+        <div className="features-container">
+          <div className="section-header animate-on-scroll" id="features-header">
+            <h2 className="section-title">Everything you need to grow</h2>
+            <p className="section-subtitle">
+              Powerful features designed to streamline your business operations
+            </p>
           </div>
-          <div className="feature-card">
-            <div className="feature-icon">📦</div>
-            <h3>Inventory Management</h3>
-            <p>Track stock in real-time</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">👤</div>
-            <h3>Customer Management</h3>
-            <p>Build strong relationships</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">📊</div>
-            <h3>Sales Reports</h3>
-            <p>Data-driven insights</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">💰</div>
-            <h3>Expense Tracking</h3>
-            <p>Control your spending</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">☁️</div>
-            <h3>Cloud Based</h3>
-            <p>Access from anywhere</p>
-          </div>
-        </div>
-      </section>
 
-      {/* How It Works */}
-      <section id="about" className="how-it-works">
-        <div className="section-header">
-          <span className="section-tag">How It Works</span>
-          <h2>Get Started in 3 Simple Steps</h2>
-          <p>Start using MS TECHNO software quickly</p>
-        </div>
-        <div className="steps-container">
-          <div className="step">
-            <div className="step-number">1</div>
-            <div className="step-icon">📝</div>
-            <h3>Create Account</h3>
-            <p>Sign up and choose your plan</p>
-          </div>
-          <div className="step-arrow">→</div>
-          <div className="step">
-            <div className="step-number">2</div>
-            <div className="step-icon">⚙️</div>
-            <h3>Setup Your Shop</h3>
-            <p>Configure your business settings</p>
-          </div>
-          <div className="step-arrow">→</div>
-          <div className="step">
-            <div className="step-number">3</div>
-            <div className="step-icon">🚀</div>
-            <h3>Start Managing</h3>
-            <p>Begin using the software</p>
+          <div className="features-grid">
+            {features.map((feature, index) => (
+              <div 
+                key={index} 
+                className="feature-card animate-on-scroll" 
+                id={`feature-${index}`}
+                style={{ transitionDelay: `${index * 0.1}s` }}
+              >
+                <div className="feature-icon">{feature.icon}</div>
+                <h3 className="feature-title">{feature.title}</h3>
+                <p className="feature-description">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="pricing">
-        <div className="section-header">
-          <span className="section-tag">Pricing</span>
-          <h2>Choose Your Plan</h2>
-          <p>Select the perfect plan for your business</p>
-        </div>
-        <div className="pricing-grid">
-          <div className="pricing-card">
-            <h3>Basic</h3>
-            <div className="price">Rs. 2,500<span>/month</span></div>
-            <ul>
-              <li>✓ POS Billing</li>
-              <li>✓ Inventory Management</li>
-              <li>✓ Sales Reports</li>
-              <li>✓ Email Support</li>
-            </ul>
-            <button onClick={() => handleGetStarted('Basic')}>Get Started</button>
+      <section id="pricing" className="pricing-section">
+        <div className="pricing-container">
+          <div className="section-header animate-on-scroll" id="pricing-header">
+            <h2 className="section-title">Simple, transparent pricing</h2>
+            <p className="section-subtitle">
+              Choose the plan that fits your business needs
+            </p>
           </div>
-          <div className="pricing-card premium">
-            <div className="badge">Popular</div>
-            <h3>Premium</h3>
-            <div className="price">Rs. 3,500<span>/month</span></div>
-            <ul>
-              <li>✓ All Basic Features</li>
-              <li>✓ Advanced Analytics</li>
-              <li>✓ Expense Tracking</li>
-              <li>✓ Priority Support</li>
-            </ul>
-            <button onClick={() => handleGetStarted('Premium')}>Get Started</button>
-          </div>
-          <div className="pricing-card">
-            <h3>Enterprise</h3>
-            <div className="price">Rs. 4,500<span>/month</span></div>
-            <ul>
-              <li>✓ All Premium Features</li>
-              <li>✓ Custom Reports</li>
-              <li>✓ Multi-User Access</li>
-              <li>✓ Dedicated Support</li>
-            </ul>
-            <button onClick={() => handleGetStarted('Enterprise')}>Get Started</button>
+
+          <div className="pricing-grid">
+            {pricingPlans.map((plan, index) => (
+              <div 
+                key={index} 
+                className={`pricing-card animate-on-scroll ${plan.popular ? 'popular' : ''}`}
+                id={`pricing-${index}`}
+              >
+                {plan.popular && <div className="popular-badge">Most Popular</div>}
+                <div className="pricing-header">
+                  <h3 className="plan-name">{plan.name}</h3>
+                  <div className="plan-price">
+                    <span className="currency">Rs.</span>
+                    <span className="amount">{plan.price}</span>
+                    <span className="period">/month</span>
+                  </div>
+                </div>
+                <ul className="plan-features">
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx}>{feature}</li>
+                  ))}
+                </ul>
+                <button className={`btn-${plan.popular ? 'primary' : 'secondary'} btn-full`}>
+                  Get Started
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Demo CTA Section */}
-      <section id="contact" className="cta">
-        <div className="cta-container">
-          <h2>Start Your Free Demo Today</h2>
-          <p>Experience the power of MS TECHNO software</p>
+      {/* Final CTA */}
+      <section className="cta-section">
+        <div className="cta-container animate-on-scroll" id="cta">
+          <h2 className="cta-title">Ready to Grow Your Business?</h2>
+          <p className="cta-subtitle">
+            Join thousands of businesses already using ProBilling to manage their operations.
+          </p>
           <div className="cta-buttons">
-            <button className="cta-primary" onClick={openDemoModal}>Request Demo</button>
-            <button className="cta-secondary" onClick={handleLogin}>Login</button>
-            <button className="cta-whatsapp" onClick={handleWhatsApp}>
-              <span>💬</span> WhatsApp
-            </button>
+            <button className="btn-primary btn-large">Book Demo</button>
+            <button className="btn-secondary btn-large">Login</button>
           </div>
         </div>
       </section>
@@ -433,41 +230,79 @@ const Landing = () => {
       {/* Footer */}
       <footer className="footer">
         <div className="footer-container">
-          <div className="footer-section">
-            <div className="footer-logo">
-              <span className="logo-icon">◈</span>
-              <span>MS TECHNO</span>
+          <div className="footer-content">
+            <div className="footer-brand">
+              <div className="logo-icon">P</div>
+              <span className="logo-text">ProBilling</span>
+              <p className="footer-description">
+                Modern billing software for growing businesses.
+              </p>
             </div>
-            <p>Smart business management software</p>
+            <div className="footer-links">
+              <div className="footer-column">
+                <h4>Product</h4>
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#">Integrations</a>
+              </div>
+              <div className="footer-column">
+                <h4>Company</h4>
+                <a href="#">About</a>
+                <a href="#">Careers</a>
+                <a href="#">Contact</a>
+              </div>
+              <div className="footer-column">
+                <h4>Support</h4>
+                <a href="#">Help Center</a>
+                <a href="#">Documentation</a>
+                <a href="#">API Status</a>
+              </div>
+            </div>
           </div>
-          <div className="footer-section">
-            <h4>Product</h4>
-            <a href="#features" onClick={(e) => smoothScroll(e, '#features')}>Features</a>
-            <a href="#pricing" onClick={(e) => smoothScroll(e, '#pricing')}>Pricing</a>
-            <a href="#contact" onClick={(e) => smoothScroll(e, '#contact')}>Demo</a>
+          <div className="footer-bottom">
+            <p>&copy; 2024 ProBilling. All rights reserved.</p>
           </div>
-          <div className="footer-section">
-            <h4>Support</h4>
-            <a href="#" onClick={handleLogin}>Login</a>
-            <a href="#" onClick={openDemoModal}>Request Demo</a>
-            <a href="#" onClick={handleWhatsApp}>WhatsApp</a>
-            <a href="#contact" onClick={(e) => smoothScroll(e, '#contact')}>Contact</a>
-          </div>
-          <div className="footer-section">
-            <h4>Contact</h4>
-            <p>📞 0340-1227619</p>
-            <p>📍 Karachi, Pakistan</p>
-            <button className="footer-whatsapp" onClick={handleWhatsApp}>
-              💬 Chat on WhatsApp
-            </button>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <p>© 2026 MS TECHNO. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Button */}
+      <button className="whatsapp-button">
+        <Phone size={24} />
+      </button>
     </div>
   );
 };
+
+const features = [
+  { icon: <Receipt size={24} />, title: 'POS Billing', description: 'Fast and intuitive point-of-sale billing with barcode support.' },
+  { icon: <Package size={24} />, title: 'Inventory Management', description: 'Real-time inventory tracking with low stock alerts.' },
+  { icon: <BarChart3 size={24} />, title: 'Reports & Analytics', description: 'Comprehensive reports to track your business performance.' },
+  { icon: <Barcode size={24} />, title: 'Barcode Scanning', description: 'Quick product lookup with integrated barcode scanner support.' },
+  { icon: <Users size={24} />, title: 'Customer Management', description: 'Build customer profiles and track purchase history.' },
+  { icon: <Receipt size={24} />, title: 'Expense Tracking', description: 'Monitor expenses and maintain accurate financial records.' },
+  { icon: <Cloud size={24} />, title: 'Cloud Backup', description: 'Automatic cloud backup to keep your data safe.' },
+  { icon: <CreditCard size={24} />, title: 'Credit Customers', description: 'Manage credit sales and customer payments.' },
+];
+
+const pricingPlans = [
+  {
+    name: 'Starter',
+    price: '2,500',
+    features: ['Up to 500 transactions/month', 'Basic inventory', 'Single user', 'Email support'],
+    popular: false,
+  },
+  {
+    name: 'Business',
+    price: '3,500',
+    features: ['Unlimited transactions', 'Advanced inventory', 'Multi-user access', 'Priority support', 'Advanced reporting'],
+    popular: true,
+  },
+  {
+    name: 'Enterprise',
+    price: '4,500',
+    features: ['Unlimited transactions', 'Custom inventory', 'Unlimited users', '24/7 dedicated support', 'API access', 'Custom integrations'],
+    popular: false,
+  },
+];
 
 export default Landing;
